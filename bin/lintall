@@ -2,9 +2,9 @@
 
 set -e
 
-PACKAGE=${PACKAGE:-github.com/hamfist/artifacts-service}
+PACKAGE=${PACKAGE:-github.com/travis-pro/worker-manager-service}
 
 golint "${PACKAGE}"
-for pkg in artifact auth metadata server store ; do
-  golint "${PACKAGE}/${pkg}"
-done
+# for pkg in ; do
+#   golint "${PACKAGE}/${pkg}"
+# done

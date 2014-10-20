@@ -1,4 +1,4 @@
-PACKAGE := github.com/hamfist/worker-manager-service
+PACKAGE := github.com/travis-pro/worker-manager-service
 SUBPACKAGES :=
 
 VERSION_VAR := main.VersionString

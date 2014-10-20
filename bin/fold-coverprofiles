@@ -8,8 +8,8 @@ if [[ $# -lt 1 ]] ; then
 fi
 
 GO=${GO:-deppy go}
-OUT_TMP=$(mktemp artifacts-service.XXXXX)
-PACKAGE=${PACKAGE:-github.com/hamfist/artifacts-service}
+OUT_TMP=$(mktemp worker-manager-service.XXXXX)
+PACKAGE=${PACKAGE:-github.com/travis-pro/worker-manager-service}
 
 ${GO} test \
   -covermode=count \

@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/hamfist/worker-manager-service",
+	"ImportPath": "github.com/travis-pro/worker-manager-service",
 	"GoVersion": "go1.3.3",
 	"Deps": [
 		{
