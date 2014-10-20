@@ -1,0 +1,16 @@
+{
+	"ImportPath": "github.com/hamfist/worker-manager-service",
+	"GoVersion": "go1.3.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.5.1-33-g3d46664",
+			"Rev": "3d46664b062c3a468b50e367f115179e26a9462c"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-26-gf7ebb76",
+			"Rev": "f7ebb761e83e21225d1d8954fde853bf8edd46c4"
+		}
+	]
+}

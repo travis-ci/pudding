@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+if [[ $# -lt 1 ]] ; then
+  echo "Usage: $(basename $0) [coverprofile, coverprofile, ...]"
+  exit 1
+fi
+
+GO=${GO:-deppy go}
+OUT_TMP=$(mktemp artifacts-service.XXXXX)
+PACKAGE=${PACKAGE:-github.com/hamfist/artifacts-service}
+
+${GO} test \
+  -covermode=count \
+  -coverprofile=${OUT_TMP} \
+  ${GOBUILD_LDFLAGS} \
+  ${PACKAGE} 1>&2
+
+echo 'mode: count'
+grep -h -v 'mode: count' "${OUT_TMP}"
+rm -f "${OUT_TMP}"
+grep -h -v 'mode: count' $*

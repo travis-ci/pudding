@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+PACKAGE=${PACKAGE:-github.com/hamfist/artifacts-service}
+
+golint "${PACKAGE}"
+for pkg in artifact auth metadata server store ; do
+  golint "${PACKAGE}/${pkg}"
+done
