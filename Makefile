@@ -32,7 +32,7 @@ COVERPROFILES :=
 all: clean deps test lintall
 
 .PHONY: test
-test: build fmtpolice test-deps coverage.html
+test: build fmtpolice test-deps
 
 .PHONY: test-deps
 test-deps:
@@ -42,12 +42,12 @@ test-deps:
 # test-race:
 # 	$(GO) test -race $(GOBUILD_LDFLAGS) $(PACKAGE) $(SUBPACKAGES)
 
-coverage.html: coverage.coverprofile
-	$(GO) tool cover -html=$^ -o $@
+# coverage.html: coverage.coverprofile
+# 	$(GO) tool cover -html=$^ -o $@
 
-coverage.coverprofile: $(COVERPROFILES)
-	./bin/fold-coverprofiles $^ > $@
-	$(GO) tool cover -func=$@
+# coverage.coverprofile: $(COVERPROFILES)
+# 	./bin/fold-coverprofiles $^ > $@
+# 	$(GO) tool cover -func=$@
 
 .PHONY: build
 build:
@@ -55,7 +55,7 @@ build:
 
 .PHONY: deps
 deps:
-	$(GO) get $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(PACKAGE)
+	$(GO) get -t $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(PACKAGE)
 
 .PHONY: clean
 clean:
