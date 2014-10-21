@@ -7,7 +7,8 @@ GO=${GO:-go}
 PACKAGE=${PACKAGE:-github.com/travis-pro/worker-manager-service}
 # SUBPACKAGES=$(echo ${PACKAGE}/{})
 
-rm -vf "${TOP_GOPATH}/bin/worker-manager-service"
+rm -vf "${TOP_GOPATH}/bin/wm-server"
+rm -vf "${TOP_GOPATH}/bin/wm-workers"
 rm -vf coverage.html *coverage.coverprofile
 ${GO} clean ${PACKAGE} ${SUBPACKAGES} || true
 if [ -d ${TOP_GOPATH}/pkg ] ; then
