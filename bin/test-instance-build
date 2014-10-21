@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+exec curl -X POST -s http://localhost:${PORT:-42151}/instance-builds -d "{
+  \"instance_builds\": {
+    \"site\": \"org\",
+    \"env\": \"staging\",
+    \"queue\": \"docker\",
+    \"instance_type\": \"c3.4xlarge\"
+  }
+}"
