@@ -11,6 +11,31 @@
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-26-gf7ebb76",
 			"Rev": "f7ebb761e83e21225d1d8954fde853bf8edd46c4"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/negroni",
+			"Comment": "v0.1-32-gc64702c",
+			"Rev": "c64702ca03d0f858ab7866638b69e85f0d4c6ee7"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Rev": "08550c8cc5b9d419fc472629d749d33b98f1d785"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+		},
+		{
+			"ImportPath": "github.com/gorilla/feeds",
+			"Rev": "2e133eb352fab1ff3569ee169e9a3a94f69c9081"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "4b8fbc56f3b2400a7c7ea3dba9b3539787c486b6"
+		},
+		{
+			"ImportPath": "github.com/meatballhat/negroni-logrus",
+			"Rev": "d5e114d7a445f7a3652cf807d3f83d5dceb8de26"
 		}
 	]
 }
