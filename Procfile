@@ -1,1 +1,2 @@
-web: worker-manager-service
+web: wm-server
+workers: wm-workers

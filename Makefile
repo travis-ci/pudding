@@ -1,5 +1,10 @@
 PACKAGE := github.com/travis-pro/worker-manager-service
-SUBPACKAGES :=
+SUBPACKAGES := \
+	$(PACKAGE)/cmd/wm-server \
+	$(PACKAGE)/cmd/wm-workers \
+	$(PACKAGE)/server \
+	$(PACKAGE)/server/jsonapi \
+	$(PACKAGE)/common
 
 VERSION_VAR := main.VersionString
 VERSION_VALUE := $(shell git describe --always --dirty --tags)
@@ -51,11 +56,11 @@ test-deps:
 
 .PHONY: build
 build:
-	$(GO) install $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(PACKAGE)
+	$(GO) install $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(PACKAGE) $(SUBPACKAGES)
 
 .PHONY: deps
 deps:
-	$(GO) get -t $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(PACKAGE)
+	$(GO) get -t $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) $(PACKAGE) $(SUBPACKAGES)
 
 .PHONY: clean
 clean:
