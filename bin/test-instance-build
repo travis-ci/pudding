@@ -2,18 +2,26 @@
 
 case "$1" in
   bogus)
-    exec curl -X POST -s http://localhost:${PORT:-42151}/instance-builds -d "{
-      \"instance_builds\": {}
-    }"
+    exec curl \
+      -H 'Authorization: token swordfish' \
+      -X POST \
+      -s \
+      -d "{\"instance_builds\": {}}" \
+      http://localhost:${PORT:-42151}/instance-builds 
   ;;
   *)
-    exec curl -X POST -s http://localhost:${PORT:-42151}/instance-builds -d "{
-      \"instance_builds\": {
-        \"site\": \"org\",
-        \"env\": \"staging\",
-        \"queue\": \"docker\",
-        \"instance_type\": \"c3.4xlarge\"
-      }
-    }"
+    exec curl \
+      -H 'Authorization: token swordfish' \
+      -X POST \
+      -s \
+      -d "{
+        \"instance_builds\": {
+          \"site\": \"org\",
+          \"env\": \"staging\",
+          \"queue\": \"docker\",
+          \"instance_type\": \"c3.4xlarge\"
+        }
+      }" \
+      http://localhost:${PORT:-42151}/instance-builds
   ;;
 esac

@@ -13,7 +13,9 @@ import (
 )
 
 type server struct {
-	addr    string
+	addr      string
+	authToken string
+
 	log     *logrus.Logger
 	builder *instanceBuilder
 
@@ -21,13 +23,15 @@ type server struct {
 	r *mux.Router
 }
 
-func newServer(addr, redisURL string, queueNames map[string]string) (*server, error) {
+func newServer(addr, authToken, redisURL string, queueNames map[string]string) (*server, error) {
 	builder, err := newInstanceBuilder(redisURL, queueNames["instance-builds"])
 	if err != nil {
 		return nil, err
 	}
 	srv := &server{
-		addr:    addr,
+		addr:      addr,
+		authToken: authToken,
+
 		log:     logrus.New(),
 		builder: builder,
 
@@ -54,6 +58,7 @@ func (srv *server) setupRoutes() {
 }
 
 func (srv *server) setupMiddleware() {
+	srv.n.Use(newTokenAuthMiddleware(srv.authToken))
 	srv.n.Use(negroni.NewRecovery())
 	srv.n.Use(negronilogrus.NewMiddleware())
 	srv.n.UseHandler(srv.r)

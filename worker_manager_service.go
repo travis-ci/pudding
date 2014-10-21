@@ -40,6 +40,11 @@ func main() {
 			Value:  "instance-builds",
 			EnvVar: "WORKER_MANAGER_INSTANCE_BUILDS_QUEUE_NAME",
 		},
+		cli.StringFlag{
+			Name:   "A, auth-token",
+			Value:  "swordfish",
+			EnvVar: "WORKER_MANAGER_AUTH_TOKEN",
+		},
 	}
 	app.Action = runServer
 
@@ -47,7 +52,7 @@ func main() {
 }
 
 func runServer(c *cli.Context) {
-	server.Main(c.String("addr"), c.String("redis-url"),
+	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
 		map[string]string{
 			"instance-builds": c.String("instance-builds-queue-name"),
 		})
