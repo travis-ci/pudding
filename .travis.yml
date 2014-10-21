@@ -14,15 +14,18 @@ before_install:
 install:
 - deppy restore
 before_script:
-- redis-server --port 16379 > redis-server.log 2>&1 &
+- redis-server --port 16379 > redis-server.log 2>&1 & ;
+  export REDIS_SERVER_PID="$!"
 script:
 - go get -x -v ./...
 - go test -v ./...
 - ~/gopath/bin/worker-manager-service >> server.log 2>&1 &
 - for r in 0 1 2 3 4 ; do
-    ./bin/test-instance-build ;
+  ./bin/test-request instance-build ;
   done
 - redis-cli -r 5 --raw -p "$REDIS_PORT" RPOP "worker-manager:queue:instance-builds" |
     while read line ; do echo $line | python -m json.tool ; done
+- kill "$REDIS_SERVER_PID"
+- ./bin/test-request die
 after_script:
 - cat server.log

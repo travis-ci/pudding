@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+case "$1" in
+  instance-build)
+    exec curl \
+      -H 'Authorization: token swordfish' \
+      -X POST \
+      -s \
+      -d "{
+          \"instance_builds\": {
+          \"site\": \"org\",
+          \"env\": \"staging\",
+          \"queue\": \"docker\",
+          \"instance_type\": \"c3.4xlarge\"
+        }
+      }" \
+      http://localhost:${PORT:-42151}/instance-builds
+    ;;
+  bogus-instance-build)
+    exec curl \
+      -H 'Authorization: token swordfish' \
+      -X POST \
+      -s \
+      -d "{\"instance_builds\": {}}" \
+      http://localhost:${PORT:-42151}/instance-builds
+    ;;
+  shutdown)
+    exec curl \
+      -H 'Authorization: token swordfish' \
+      -X DELETE \
+      http://localhost:${PORT:-42151}/
+    ;;
+  *)
+    echo "unknown request type '$1'"
+    ;;
+esac

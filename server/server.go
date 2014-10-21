@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/braintree/manners"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
@@ -21,6 +22,7 @@ type server struct {
 
 	n *negroni.Negroni
 	r *mux.Router
+	s *manners.GracefulServer
 }
 
 func newServer(addr, authToken, redisURL string, queueNames map[string]string) (*server, error) {
@@ -37,6 +39,7 @@ func newServer(addr, authToken, redisURL string, queueNames map[string]string) (
 
 		n: negroni.New(),
 		r: mux.NewRouter(),
+		s: manners.NewServer(),
 	}
 
 	return srv, nil
@@ -49,11 +52,11 @@ func (srv *server) Setup() {
 
 func (srv *server) Run() {
 	srv.log.WithField("addr", srv.addr).Info("Listening")
-	srv.n.Run(srv.addr)
+	srv.s.ListenAndServe(srv.addr, srv.n)
 }
 
 func (srv *server) setupRoutes() {
-	srv.r.HandleFunc(`/`, srv.handleRoot).Methods("GET").Name("root")
+	srv.r.HandleFunc(`/`, srv.handleRoot).Methods("GET", "DELETE").Name("root")
 	srv.r.HandleFunc(`/instance-builds`, srv.handleInstanceBuilds).Methods("GET", "POST").Name("instance-builds")
 }
 
@@ -65,9 +68,15 @@ func (srv *server) setupMiddleware() {
 }
 
 func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text-plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "ohai\n")
+	switch req.Method {
+	case "DELETE":
+		w.WriteHeader(http.StatusNoContent)
+		srv.s.Shutdown <- true
+	case "GET":
+		w.Header().Set("Content-Type", "text-plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "ohai\n")
+	}
 }
 
 func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request) {
