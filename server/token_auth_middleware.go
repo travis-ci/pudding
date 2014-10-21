@@ -14,6 +14,12 @@ func newTokenAuthMiddleware(token string) *tokenAuthMiddleware {
 }
 
 func (tam *tokenAuthMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	switch req.Method {
+	case "GET", "HEAD", "OPTIONS":
+		next(w, req)
+		return
+	}
+
 	if req.Header.Get("Authorization") == ("token "+tam.Token) ||
 		req.Header.Get("Authorization") == ("token="+tam.Token) {
 		next(w, req)
