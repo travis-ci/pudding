@@ -1,0 +1,1 @@
+web: worker-manager-service
