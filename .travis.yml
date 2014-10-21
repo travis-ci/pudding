@@ -14,8 +14,8 @@ before_install:
 install:
 - deppy restore
 before_script:
-- redis-server --port 16379 > redis-server.log 2>&1 & ;
-  export REDIS_SERVER_PID="$!"
+- redis-server --port 16379 > redis-server.log 2>&1 &
+- export REDIS_SERVER_PID="$!"
 script:
 - go get -x -v ./...
 - go test -v ./...
