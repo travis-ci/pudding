@@ -15,7 +15,7 @@ install:
 - deppy restore
 before_script:
 - redis-server --port 16379 > redis-server.log 2>&1 &
-- export REDIS_SERVER_PID="$!"
+- echo $! > redis-server.pid
 script:
 - go get -x -v ./...
 - go test -v ./...
@@ -25,7 +25,7 @@ script:
   done
 - redis-cli -r 5 --raw -p "$REDIS_PORT" RPOP "worker-manager:queue:instance-builds" |
     while read line ; do echo $line | python -m json.tool ; done
-- kill "$REDIS_SERVER_PID"
-- ./bin/test-request die
+- kill "$(cat redis-server.pid)"
+- ./bin/test-request shutdown
 after_script:
 - cat server.log
