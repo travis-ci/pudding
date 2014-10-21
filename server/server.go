@@ -76,10 +76,16 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 		return
 	}
 	build := payload.InstanceBuilds
+	validationErrors := build.Validate()
+	if len(validationErrors) > 0 {
+		jsonapi.Errors(w, validationErrors, http.StatusBadRequest)
+		return
+	}
 
 	details, err := srv.builder.Build(build)
 	if err != nil {
 		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
 	}
 
 	build.UpdateFromDetails(details)
