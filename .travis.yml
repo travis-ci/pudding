@@ -8,7 +8,7 @@ env:
   - REDIS_PORT=16379
   - REDIS_URL="redis://localhost:$REDIS_PORT/0"
 before_install:
-- go get github.com/meatballhat/deppy
+- go get github.com/hamfist/deppy
 - go get github.com/golang/lint/golint
 - go get code.google.com/p/go.tools/cmd/cover
 install:
