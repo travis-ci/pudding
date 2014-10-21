@@ -22,7 +22,7 @@ script:
 - for r in 0 1 2 3 4 ; do
     ./bin/test-instance-build ;
   done
-- redis-cli -r 5 --raw -p "$REDIS_PORT" RPOP "worker-manager:queue:instance-builds" | \
+- redis-cli -r 5 --raw -p "$REDIS_PORT" RPOP "worker-manager:queue:instance-builds" |
     while read line ; do echo $line | python -m json.tool ; done
 after_script:
 - cat server.log
