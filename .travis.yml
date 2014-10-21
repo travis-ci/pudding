@@ -11,6 +11,8 @@ before_install:
 - go get github.com/meatballhat/deppy
 - go get github.com/golang/lint/golint
 - go get code.google.com/p/go.tools/cmd/cover
+install:
+- deppy restore
 before_script:
 - redis-server --port 16379 > redis-server.log 2>&1 &
 script:
