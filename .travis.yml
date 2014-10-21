@@ -9,4 +9,15 @@ before_install:
 - go get github.com/meatballhat/deppy
 - go get github.com/golang/lint/golint
 - go get code.google.com/p/go.tools/cmd/cover
-# - go install -a -race std
+script:
+- go get -x -v ./...
+- go test -v ./...
+- ~/gopath/bin/worker-manager-service >> server.log 2>&1 &
+- for r in 0 1 2 3 4 ; do
+    ./bin/test-instance-build ;
+  done
+- for r in 0 1 2 3 4 ; do
+    redis-cli RPOP "worker-manager:queue:instance-builds" | cat | python -m json.tool ;
+  done
+after_script:
+- cat server.log

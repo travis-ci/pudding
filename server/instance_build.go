@@ -47,5 +47,9 @@ func (b *instanceBuild) Validate() []error {
 }
 
 func (b *instanceBuild) UpdateFromDetails(d *instanceBuildDetails) {
+	if d.ID != "" {
+		b.ID = d.ID
+	}
+
 	return
 }

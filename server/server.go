@@ -21,15 +21,21 @@ type server struct {
 	r *mux.Router
 }
 
-func newServer(addr, redisURL string) *server {
-	return &server{
+func newServer(addr, redisURL string, queueNames map[string]string) (*server, error) {
+	builder, err := newInstanceBuilder(redisURL, queueNames["instance-builds"])
+	if err != nil {
+		return nil, err
+	}
+	srv := &server{
 		addr:    addr,
 		log:     logrus.New(),
-		builder: newInstanceBuilder(redisURL),
+		builder: builder,
 
 		n: negroni.New(),
 		r: mux.NewRouter(),
 	}
+
+	return srv, nil
 }
 
 func (srv *server) Setup() {

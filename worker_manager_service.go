@@ -35,6 +35,11 @@ func main() {
 			}(),
 			EnvVar: "WORKER_MANAGER_REDIS_URL",
 		},
+		cli.StringFlag{
+			Name:   "instance-builds-queue-name",
+			Value:  "instance-builds",
+			EnvVar: "WORKER_MANAGER_INSTANCE_BUILDS_QUEUE_NAME",
+		},
 	}
 	app.Action = runServer
 
@@ -42,5 +47,8 @@ func main() {
 }
 
 func runServer(c *cli.Context) {
-	server.Main(c.String("addr"), c.String("redis-url"))
+	server.Main(c.String("addr"), c.String("redis-url"),
+		map[string]string{
+			"instance-builds": c.String("instance-builds-queue-name"),
+		})
 }
