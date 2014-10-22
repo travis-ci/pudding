@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/travis-pro/worker-manager-service/common"
 	"github.com/travis-pro/worker-manager-service/server"
 )
 
@@ -23,31 +24,8 @@ func main() {
 
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name: "a, addr",
-			Value: func() string {
-				v := ":" + os.Getenv("PORT")
-				if v == ":" {
-					v = ":42151"
-				}
-				return v
-			}(),
-			EnvVar: "WORKER_MANAGER_ADDR",
-		},
-		cli.StringFlag{
-			Name: "r, redis-url",
-			Value: func() string {
-				v := os.Getenv("REDISGREEN_URL")
-				if v == "" {
-					v = os.Getenv("REDIS_URL")
-				}
-				if v == "" {
-					v = "redis://localhost:6379/0"
-				}
-				return v
-			}(),
-			EnvVar: "WORKER_MANAGER_REDIS_URL",
-		},
+		common.AddrFlag,
+		common.RedisURLFlag,
 		cli.StringFlag{
 			Name:   "instance-builds-queue-name",
 			Value:  "instance-builds",

@@ -40,7 +40,7 @@ func newInstanceBuilder(redisURL, queueName string) (*instanceBuilder, error) {
 	ib := &instanceBuilder{
 		RedisURL:       u,
 		QueueName:      queueName,
-		RedisNamespace: "worker-manager",
+		RedisNamespace: common.RedisNamespace,
 	}
 	ib.Setup()
 	return ib, nil

@@ -68,7 +68,7 @@ clean:
 
 .PHONY: save
 save:
-	$(DEPPY) save
+	$(DEPPY) save ./...
 
 .PHONY: fmtpolice
 fmtpolice:

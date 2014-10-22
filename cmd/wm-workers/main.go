@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/travis-pro/worker-manager-service/common"
 	"github.com/travis-pro/worker-manager-service/workers"
 )
 
@@ -22,10 +23,18 @@ func main() {
 	cli.VersionPrinter = customVersionPrinter
 
 	app := cli.NewApp()
+	app.Flags = []cli.Flag{
+		common.RedisURLFlag,
+		cli.StringFlag{
+			Name:   "q, queues",
+			Value:  "instance-builds",
+			EnvVar: "QUEUES",
+		},
+	}
 	app.Action = runWorkers
 	app.Run(os.Args)
 }
 
 func runWorkers(c *cli.Context) {
-	workers.Main(c.String("redis-url"))
+	workers.Main(c.String("queues"), c.String("redis-url"))
 }

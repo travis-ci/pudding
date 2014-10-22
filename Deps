@@ -1,11 +1,39 @@
 {
 	"ImportPath": "github.com/travis-pro/worker-manager-service",
 	"GoVersion": "go1.3.3",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/vitess/go/pools",
+			"Comment": "weekly:weekly.2012-08-23.go.4fdf6aa4f602-740",
+			"Rev": "20aec5105bdc7ae2bc1f39deb44ec3fd5596716d"
+		},
+		{
+			"ImportPath": "code.google.com/p/vitess/go/sync2",
+			"Comment": "weekly:weekly.2012-08-23.go.4fdf6aa4f602-740",
+			"Rev": "20aec5105bdc7ae2bc1f39deb44ec3fd5596716d"
+		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.5.1-33-g3d46664",
 			"Rev": "3d46664b062c3a468b50e367f115179e26a9462c"
+		},
+		{
+			"ImportPath": "github.com/benmanns/goworker",
+			"Comment": "v0.1.0-15-g0ea6ffb",
+			"Rev": "0ea6ffb95ff41859e18f686ab50459b4ea6dc1b7"
+		},
+		{
+			"ImportPath": "github.com/braintree/manners",
+			"Comment": "0.3.1-2-g5280e25",
+			"Rev": "5280e250f2795914acbeb2bf3b55dd5a2d1fba52"
+		},
+		{
+			"ImportPath": "github.com/cihub/seelog",
+			"Comment": "go1.1-48-g14e0891",
+			"Rev": "14e08919e23178f4311df308dae5386affb51511"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -31,7 +59,7 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Rev": "4b8fbc56f3b2400a7c7ea3dba9b3539787c486b6"
+			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
 		},
 		{
 			"ImportPath": "github.com/meatballhat/negroni-logrus",
