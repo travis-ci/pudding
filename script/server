@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")/.."
+: ${PORT:=3000}
+: ${RACK_ENV:=development}
+
+cmd="wm-server"
+if [[ $RACK_ENV == "development" ]] ; then
+  exec rerun -p '*/**.{js,css,go}' "make && $cmd"
+fi
+exec $cmd

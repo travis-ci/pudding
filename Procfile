@@ -1,2 +1,2 @@
-web: wm-server
-workers: wm-workers
+web: script/server
+workers: script/workers

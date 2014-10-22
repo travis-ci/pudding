@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/codegangsta/cli"
+	"github.com/travis-pro/worker-manager-service/workers"
 )
 
 var (
@@ -27,8 +27,5 @@ func main() {
 }
 
 func runWorkers(c *cli.Context) {
-	for {
-		time.Sleep(1000 * time.Millisecond)
-		fmt.Println("zzz")
-	}
+	workers.Main(c.String("redis-url"))
 }
