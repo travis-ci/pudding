@@ -5,6 +5,6 @@ cd "$(dirname "$0")/.."
 
 cmd="wm-server"
 if [[ $RACK_ENV == "development" ]] ; then
-  exec rerun -p '*/**.{js,css,go}' "make && $cmd"
+  exec rerun -p '**/*.{js,css,go}' "make && $cmd"
 fi
 exec $cmd
