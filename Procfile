@@ -1,2 +1,2 @@
 web: script/server
-workers: script/workers
+worker: script/workers
