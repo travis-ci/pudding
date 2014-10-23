@@ -10,6 +10,7 @@ import (
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
+	"github.com/travis-pro/worker-manager-service/common"
 	"github.com/travis-pro/worker-manager-service/server/jsonapi"
 )
 
@@ -89,7 +90,7 @@ func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
-	payload := &instanceBuildsCollectionSingular{}
+	payload := &common.InstanceBuildsCollectionSingular{}
 	err := json.NewDecoder(req.Body).Decode(payload)
 	if err != nil {
 		jsonapi.Error(w, err, http.StatusBadRequest)
@@ -109,13 +110,13 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 	}
 
 	build.UpdateFromDetails(details)
-	jsonapi.Respond(w, &instanceBuildsCollection{
-		InstanceBuilds: []*instanceBuild{build},
+	jsonapi.Respond(w, &common.InstanceBuildsCollection{
+		InstanceBuilds: []*common.InstanceBuild{build},
 	}, http.StatusAccepted)
 }
 
 func (srv *server) handleInstanceBuildsList(w http.ResponseWriter, req *http.Request) {
 	jsonapi.Respond(w,
-		&instanceBuildsCollection{InstanceBuilds: []*instanceBuild{}},
+		&common.InstanceBuildsCollection{InstanceBuilds: []*common.InstanceBuild{}},
 		http.StatusOK)
 }

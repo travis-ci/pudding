@@ -18,19 +18,6 @@ type instanceBuilder struct {
 	r              *redis.Pool
 }
 
-type instanceBuildDetails struct {
-	ID string
-}
-
-type instanceBuildPayload struct {
-	Class      string        `json:"class"`
-	Args       []interface{} `json:"args"`
-	Queue      string        `json:"queue,omitempty"`
-	JID        string        `json:"jid,omitempty"`
-	RetryCount string        `json:"retry_count,omitempty"`
-	FailedAt   float64       `json:"failed_at,omitempty"`
-}
-
 func newInstanceBuilder(redisURL, queueName string) (*instanceBuilder, error) {
 	u, err := url.Parse(redisURL)
 	if err != nil {
@@ -77,7 +64,7 @@ func (ib *instanceBuilder) buildRedisPool() {
 	}
 }
 
-func (ib *instanceBuilder) Build(b *instanceBuild) (*instanceBuildDetails, error) {
+func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuildDetails, error) {
 	conn := ib.r.Get()
 	defer conn.Close()
 
@@ -86,13 +73,21 @@ func (ib *instanceBuilder) Build(b *instanceBuild) (*instanceBuildDetails, error
 		return nil, err
 	}
 
-	d := &instanceBuildDetails{}
+	d := &common.InstanceBuildDetails{}
 	d.ID = feeds.NewUUID().String()
 
-	buildPayload := &instanceBuildPayload{
-		Class: common.InstanceBuildClassname,
-		Args:  []interface{}{d.ID, b},
-		Queue: ib.QueueName,
+	jid := feeds.NewUUID().String()
+	if err != nil {
+		return nil, err
+	}
+
+	buildPayload := &common.InstanceBuildPayload{
+		Class:      common.InstanceBuildClassname,
+		Args:       []interface{}{d.ID, b},
+		Queue:      ib.QueueName,
+		JID:        jid,
+		Retry:      true,
+		EnqueuedAt: float64(time.Now().UTC().Unix()),
 	}
 
 	buildPayloadJSON, err := json.Marshal(buildPayload)

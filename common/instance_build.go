@@ -1,4 +1,4 @@
-package server
+package common
 
 import "fmt"
 
@@ -9,15 +9,15 @@ var (
 	errEmptyInstanceType = fmt.Errorf("empty \"instance_type\" param")
 )
 
-type instanceBuildsCollectionSingular struct {
-	InstanceBuilds *instanceBuild `json:"instance_builds"`
+type InstanceBuildsCollectionSingular struct {
+	InstanceBuilds *InstanceBuild `json:"instance_builds"`
 }
 
-type instanceBuildsCollection struct {
-	InstanceBuilds []*instanceBuild `json:"instance_builds"`
+type InstanceBuildsCollection struct {
+	InstanceBuilds []*InstanceBuild `json:"instance_builds"`
 }
 
-type instanceBuild struct {
+type InstanceBuild struct {
 	Site         string `json:"site"`
 	Env          string `json:"env"`
 	AMI          string `json:"ami"`
@@ -28,7 +28,7 @@ type instanceBuild struct {
 	ID           string `json:"id,omitempty"`
 }
 
-func (b *instanceBuild) Validate() []error {
+func (b *InstanceBuild) Validate() []error {
 	errors := []error{}
 	if b.Site == "" {
 		errors = append(errors, errEmptySite)
@@ -46,7 +46,7 @@ func (b *instanceBuild) Validate() []error {
 	return errors
 }
 
-func (b *instanceBuild) UpdateFromDetails(d *instanceBuildDetails) {
+func (b *InstanceBuild) UpdateFromDetails(d *InstanceBuildDetails) {
 	if d.ID != "" {
 		b.ID = d.ID
 	}
