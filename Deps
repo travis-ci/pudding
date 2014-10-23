@@ -7,8 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.5.1-33-g3d46664",
-			"Rev": "3d46664b062c3a468b50e367f115179e26a9462c"
+			"Comment": "v0.5.1-35-g2e36101",
+			"Rev": "2e36101a197f56f60ca6c37c3c256ed3713a9649"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
@@ -35,6 +35,10 @@
 			"Rev": "08550c8cc5b9d419fc472629d749d33b98f1d785"
 		},
 		{
+			"ImportPath": "github.com/getsentry/raven-go",
+			"Rev": "1ae8a89da90a71ca1bb7648919bb30928acaab46"
+		},
+		{
 			"ImportPath": "github.com/gorilla/context",
 			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
 		},
@@ -56,11 +60,11 @@
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/aws",
-			"Rev": "120cc0545a60ef926d0c3c8786e3b5df34d7db02"
+			"Rev": "0f046dbd40a3a0f00c7d26d94bc441ae2a4429a0"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/ec2",
-			"Rev": "120cc0545a60ef926d0c3c8786e3b5df34d7db02"
+			"Rev": "0f046dbd40a3a0f00c7d26d94bc441ae2a4429a0"
 		},
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",
