@@ -26,9 +26,25 @@ func main() {
 	app.Flags = []cli.Flag{
 		common.RedisURLFlag,
 		cli.StringFlag{
+			Name:   "redis-pool-size",
+			Value:  "30",
+			EnvVar: "WORKER_MANAGER_REDIS_POOL_SIZE",
+		},
+		cli.StringFlag{
 			Name:   "q, queues",
 			Value:  "instance-builds",
 			EnvVar: "QUEUES",
+		},
+		cli.StringFlag{
+			Name: "P, process-id",
+			Value: func() string {
+				v := os.Getenv("DYNO")
+				if v == "" {
+					v = fmt.Sprintf("%d", os.Getpid())
+				}
+				return v
+			}(),
+			EnvVar: "WORKER_MANAGER_PROCESS_ID",
 		},
 		cli.StringFlag{
 			Name:   "K, aws-key",
@@ -49,6 +65,7 @@ func main() {
 }
 
 func runWorkers(c *cli.Context) {
-	workers.Main(c.String("queues"), c.String("redis-url"),
+	workers.Main(c.String("queues"), c.String("redis-pool-size"),
+		c.String("redis-url"), c.String("process-id"),
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"))
 }

@@ -2,6 +2,7 @@ package workers
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/aws"
@@ -34,5 +35,7 @@ func newInstanceBuilderWorker(auth aws.Auth, region aws.Region) *instanceBuilder
 
 func (ibw *instanceBuilderWorker) Build(b *common.InstanceBuild) {
 	log.WithField("build", b).Info("not really building this")
+	time.Sleep(10 * time.Second)
+	log.WithField("build", b).Info("not really done building this")
 	// TODO: port the guts of the thing
 }
