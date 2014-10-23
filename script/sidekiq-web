@@ -21,4 +21,6 @@ configure do
   end if ENV['DYNO']
 end
 
-Sidekiq::Web.run!
+class App < Sidekiq::Web
+  run!
+end

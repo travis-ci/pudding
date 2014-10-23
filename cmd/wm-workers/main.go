@@ -59,6 +59,16 @@ func main() {
 			Value:  "us-east-1",
 			EnvVar: "AWS_DEFAULT_REGION",
 		},
+		cli.StringFlag{
+			Name:   "docker-rsa",
+			Value:  common.GetDockerRSAKey(),
+			EnvVar: "WORKER_MANAGER_DOCKER_RSA",
+		},
+		cli.StringFlag{
+			Name:   "setup-rsa",
+			Value:  common.GetDefaultRSAKey(),
+			EnvVar: "WORKER_MANAGER_SETUP_RSA",
+		},
 	}
 	app.Action = runWorkers
 	app.Run(os.Args)
@@ -67,5 +77,6 @@ func main() {
 func runWorkers(c *cli.Context) {
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),
 		c.String("redis-url"), c.String("process-id"),
-		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"))
+		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
+		c.String("docker-rsa"), c.String("setup-rsa"))
 }

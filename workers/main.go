@@ -3,6 +3,7 @@ package workers
 import (
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -12,15 +13,25 @@ import (
 
 var (
 	log *logrus.Logger
-	cfg *config
+
+	defaultQueueFuncs = map[string]func(*config, *workers.Msg){}
 )
 
 func init() {
 	log = logrus.New()
-	cfg = &config{}
 }
 
-func Main(queues, redisPoolSize, redisURLString, processID, awsKey, awsSecret, awsRegion string) {
+func Main(queues, redisPoolSize, redisURLString, processID, awsKey, awsSecret, awsRegion, dockerRSA, setupRSA string) {
+	cfg := &config{
+		DockerRSA:          dockerRSA,
+		SetupRSA:           setupRSA,
+		ProcessID:          processID,
+		RedisPoolSize:      redisPoolSize,
+		Queues:             []string{},
+		QueueConcurrencies: map[string]int{},
+		QueueFuncs:         defaultQueueFuncs,
+	}
+
 	auth, err := aws.GetAuth(awsKey, awsSecret)
 	if err != nil {
 		log.WithField("err", err).Fatal("failed to load aws auth")
@@ -35,35 +46,79 @@ func Main(queues, redisPoolSize, redisURLString, processID, awsKey, awsSecret, a
 	cfg.AWSAuth = auth
 	cfg.AWSRegion = region
 
+	if cfg.DockerRSA == "" {
+		log.Fatal("missing docker rsa key")
+		os.Exit(1)
+	}
+
+	if cfg.SetupRSA == "" {
+		log.Fatal("missing setup rsa key")
+		os.Exit(1)
+	}
+
+	for _, queue := range strings.Split(queues, ",") {
+		concurrency := 10
+		qParts := strings.Split(queue, ":")
+		if len(qParts) == 2 {
+			queue = qParts[0]
+			parsedConcurrency, err := strconv.ParseUint(qParts[1], 10, 64)
+			if err != nil {
+				log.WithFields(logrus.Fields{
+					"err":   err,
+					"queue": queue,
+				}).Warn("failed to parse concurrency for queue, defaulting to 10")
+				concurrency = 10
+			} else {
+				concurrency = int(parsedConcurrency)
+			}
+		}
+		queue = strings.TrimSpace(queue)
+		cfg.QueueConcurrencies[queue] = concurrency
+		cfg.Queues = append(cfg.Queues, queue)
+	}
+
 	redisURL, err := url.Parse(redisURLString)
 	if err != nil {
 		log.WithField("err", err).Fatal("failed to parse redis url")
 		os.Exit(1)
 	}
 
-	runWorkers(queues, redisPoolSize, processID, redisURL)
+	cfg.RedisURL = redisURL
+
+	runWorkers(cfg)
 }
 
-func runWorkers(queues, pool, process string, redisURL *url.URL) {
+func runWorkers(cfg *config) {
+	workers.Configure(optsFromConfig(cfg))
+
+	for _, queue := range cfg.Queues {
+		registered, ok := cfg.QueueFuncs[queue]
+		if !ok {
+			log.WithField("queue", queue).Warn("no worker func available for queue")
+			continue
+		}
+
+		workers.Process(queue, func(msg *workers.Msg) {
+			registered(cfg, msg)
+		}, cfg.QueueConcurrencies[queue])
+	}
+	workers.Run()
+}
+
+func optsFromConfig(cfg *config) map[string]string {
 	opts := map[string]string{
-		"server":    redisURL.Host,
-		"database":  strings.TrimLeft(redisURL.Path, "/"),
-		"pool":      pool,
-		"process":   process,
+		"server":    cfg.RedisURL.Host,
+		"database":  strings.TrimLeft(cfg.RedisURL.Path, "/"),
+		"pool":      cfg.RedisPoolSize,
+		"process":   cfg.ProcessID,
 		"namespace": "worker-manager",
 	}
-	if redisURL.User != nil {
-		if p, ok := redisURL.User.Password(); ok {
+
+	if cfg.RedisURL.User != nil {
+		if p, ok := cfg.RedisURL.User.Password(); ok {
 			opts["password"] = p
 		}
 	}
-	workers.Configure(opts)
 
-	for _, queue := range strings.Split(queues, ",") {
-		switch queue {
-		case "instance-builds":
-			workers.Process(queue, instanceBuildsMain, 1)
-		}
-	}
-	workers.Run()
+	return opts
 }

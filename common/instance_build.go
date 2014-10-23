@@ -4,7 +4,9 @@ import "fmt"
 
 var (
 	errEmptySite         = fmt.Errorf("empty \"site\" param")
+	errInvalidSite       = fmt.Errorf("site must be either org or com")
 	errEmptyEnv          = fmt.Errorf("empty \"env\" param")
+	errInvalidEnv        = fmt.Errorf("env must be either prod or staging")
 	errEmptyQueue        = fmt.Errorf("empty \"queue\" param")
 	errEmptyInstanceType = fmt.Errorf("empty \"instance_type\" param")
 )
@@ -33,8 +35,14 @@ func (b *InstanceBuild) Validate() []error {
 	if b.Site == "" {
 		errors = append(errors, errEmptySite)
 	}
+	if b.Site != "org" && b.Site != "com" {
+		errors = append(errors, errInvalidSite)
+	}
 	if b.Env == "" {
 		errors = append(errors, errEmptyEnv)
+	}
+	if b.Env != "prod" && b.Env != "staging" {
+		errors = append(errors, errInvalidEnv)
 	}
 	if b.Queue == "" {
 		errors = append(errors, errEmptyQueue)
