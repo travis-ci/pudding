@@ -6,34 +6,19 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/vitess/go/pools",
-			"Comment": "weekly:weekly.2012-08-23.go.4fdf6aa4f602-740",
-			"Rev": "20aec5105bdc7ae2bc1f39deb44ec3fd5596716d"
-		},
-		{
-			"ImportPath": "code.google.com/p/vitess/go/sync2",
-			"Comment": "weekly:weekly.2012-08-23.go.4fdf6aa4f602-740",
-			"Rev": "20aec5105bdc7ae2bc1f39deb44ec3fd5596716d"
-		},
-		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.5.1-33-g3d46664",
 			"Rev": "3d46664b062c3a468b50e367f115179e26a9462c"
 		},
 		{
-			"ImportPath": "github.com/benmanns/goworker",
-			"Comment": "v0.1.0-15-g0ea6ffb",
-			"Rev": "0ea6ffb95ff41859e18f686ab50459b4ea6dc1b7"
+			"ImportPath": "github.com/bitly/go-simplejson",
+			"Comment": "v0.4.3-28-g3378bdc",
+			"Rev": "3378bdcb5cebedcbf8b5750edee28010f128fe24"
 		},
 		{
 			"ImportPath": "github.com/braintree/manners",
 			"Comment": "0.3.1-2-g5280e25",
 			"Rev": "5280e250f2795914acbeb2bf3b55dd5a2d1fba52"
-		},
-		{
-			"ImportPath": "github.com/cihub/seelog",
-			"Comment": "go1.1-48-g14e0891",
-			"Rev": "14e08919e23178f4311df308dae5386affb51511"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -62,8 +47,24 @@
 			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
 		},
 		{
+			"ImportPath": "github.com/jrallison/go-workers",
+			"Rev": "00f954fb9278b9ceed81fccba4cd30bd14f6a012"
+		},
+		{
 			"ImportPath": "github.com/meatballhat/negroni-logrus",
 			"Rev": "d5e114d7a445f7a3652cf807d3f83d5dceb8de26"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/aws",
+			"Rev": "120cc0545a60ef926d0c3c8786e3b5df34d7db02"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/ec2",
+			"Rev": "120cc0545a60ef926d0c3c8786e3b5df34d7db02"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		}
 	]
 }
