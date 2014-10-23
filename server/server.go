@@ -65,6 +65,8 @@ func (srv *server) setupMiddleware() {
 	srv.n.Use(newTokenAuthMiddleware(srv.authToken))
 	srv.n.Use(negroni.NewRecovery())
 	srv.n.Use(negronilogrus.NewMiddleware())
+	// TODO: implement the raven middleware, eh
+	// srv.n.Use(negroniraven.NewMiddleware(sentryDSN))
 	srv.n.UseHandler(srv.r)
 }
 

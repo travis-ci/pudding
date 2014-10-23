@@ -89,6 +89,8 @@ func Main(queues, redisPoolSize, redisURLString, processID, awsKey, awsSecret, a
 }
 
 func runWorkers(cfg *config) {
+	// TODO: implement the raven middleware
+	// workers.Middleware.Prepend(NewRavenMiddleware(sentryDSN))
 	workers.Configure(optsFromConfig(cfg))
 
 	for _, queue := range cfg.Queues {
