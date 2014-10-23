@@ -8,7 +8,7 @@ import (
 
 func ResolveAMI(conn *ec2.EC2, ID string) (*ec2.Image, error) {
 	if ID != "" {
-		resp, err := conn.Images([]string{}, &ec2.Filter{})
+		resp, err := conn.Images([]string{ID}, &ec2.Filter{})
 		if err != nil {
 			return nil, err
 		}
@@ -23,7 +23,9 @@ func ResolveAMI(conn *ec2.EC2, ID string) (*ec2.Image, error) {
 }
 
 func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
-	allImages, err := conn.Images([]string{}, &ec2.Filter{})
+	filter := ec2.NewFilter()
+	filter.Add("tag:role", "worker")
+	allImages, err := conn.Images([]string{}, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -31,24 +33,11 @@ func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
 	imgNames := []string{}
 	imgMap := map[string]*ec2.Image{}
 
-	for _, img := range imagesWithTag("role", "worker", allImages.Images) {
+	for _, img := range allImages.Images {
 		imgNames = append(imgNames, img.Name)
-		imgMap[img.Name] = img
+		imgMap[img.Name] = &img
 	}
 
 	sort.Strings(imgNames)
 	return imgMap[imgNames[len(imgNames)-1]], nil
-}
-
-func imagesWithTag(key, value string, images []ec2.Image) []*ec2.Image {
-	out := []*ec2.Image{}
-	for _, img := range images {
-		for _, tag := range img.Tags {
-			if tag.Key == key && tag.Value == value {
-				out = append(out, &img)
-			}
-		}
-	}
-
-	return out
 }

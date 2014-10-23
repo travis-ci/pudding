@@ -26,13 +26,14 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 	}
 
 	err = newInstanceBuilderWorker(buildPayload.InstanceBuild(),
-		cfg.AWSAuth, cfg.AWSRegion).Build()
+		cfg.AWSAuth, cfg.AWSRegion, msg.Jid()).Build()
 	if err != nil {
 		log.WithField("err", err).Panic("instance build failed")
 	}
 }
 
 type instanceBuilderWorker struct {
+	jid    string
 	ec2    *ec2.EC2
 	sg     *ec2.SecurityGroup
 	sgName string
@@ -41,8 +42,9 @@ type instanceBuilderWorker struct {
 	i      []*ec2.Instance
 }
 
-func newInstanceBuilderWorker(b *common.InstanceBuild, auth aws.Auth, region aws.Region) *instanceBuilderWorker {
+func newInstanceBuilderWorker(b *common.InstanceBuild, auth aws.Auth, region aws.Region, jid string) *instanceBuilderWorker {
 	return &instanceBuilderWorker{
+		jid:    jid,
 		b:      b,
 		i:      []*ec2.Instance{},
 		sgName: fmt.Sprintf("docker-worker-%d", time.Now().UTC().Unix()),
@@ -52,57 +54,86 @@ func newInstanceBuilderWorker(b *common.InstanceBuild, auth aws.Auth, region aws
 
 func (ibw *instanceBuilderWorker) Build() error {
 	var err error
+
+	log.WithField("jid", ibw.jid).Info("resolving ami by id")
 	ibw.ami, err = common.ResolveAMI(ibw.ec2, ibw.b.AMI)
 	if err != nil {
 		log.WithFields(logrus.Fields{
+			"jid":    ibw.jid,
 			"ami_id": ibw.b.AMI,
 			"err":    err,
 		}).Error("failed to resolve ami")
 		return err
 	}
 
+	log.WithField("jid", ibw.jid).Info("creating security group")
 	err = ibw.createSecurityGroup()
 	if err != nil {
 		log.WithFields(logrus.Fields{
+			"jid": ibw.jid,
 			"security_group_name": ibw.sgName,
 			"err": err,
 		}).Error("failed to create security group")
 		return err
 	}
 
+	log.WithField("jid", ibw.jid).Info("creating instances")
 	err = ibw.createInstances()
 	if err != nil {
-		log.WithField("err", err).Error("failed to create instance(s)")
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Error("failed to create instance(s)")
 		return err
 	}
 
+	log.WithField("jid", ibw.jid).Info("tagging instances instances")
 	err = ibw.tagInstances()
 	if err != nil {
-		log.WithField("err", err).Error("failed to tag instance(s)")
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Error("failed to tag instance(s)")
 		return err
 	}
 
+	log.WithField("jid", ibw.jid).Info("waiting for instances")
 	err = ibw.waitForInstances()
 	if err != nil {
-		log.WithField("err", err).Error("failed to wait for instance(s)")
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Error("failed to wait for instance(s)")
 		return err
 	}
 
 	ibw.notifyInstancesLaunched()
+
+	log.WithField("jid", ibw.jid).Info("setting up instances")
 	err = ibw.setupInstances()
 	if err != nil {
-		log.WithField("err", err).Error("failed to set up instance(s)")
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Error("failed to set up instance(s)")
 		return err
 	}
 
+	log.WithField("jid", ibw.jid).Info("all done")
 	return nil
 }
 
 func (ibw *instanceBuilderWorker) createSecurityGroup() error {
-	newSg := ec2.SecurityGroup{Name: ibw.sgName}
+	newSg := ec2.SecurityGroup{
+		Name:        ibw.sgName,
+		Description: "custom docker worker security group",
+	}
 	resp, err := ibw.ec2.CreateSecurityGroup(newSg)
 	if err != nil {
-		log.WithField("err", err).Error("failed to create security group")
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Error("failed to create security group")
 		return err
 	}
 
@@ -112,6 +143,7 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 
 func (ibw *instanceBuilderWorker) createInstances() error {
 	log.WithFields(logrus.Fields{
+		"jid":           ibw.jid,
 		"instance_type": ibw.b.InstanceType,
 		"ami.id":        ibw.ami.Id,
 		"ami.name":      ibw.ami.Name,
@@ -137,7 +169,7 @@ func (ibw *instanceBuilderWorker) createInstances() error {
 func (ibw *instanceBuilderWorker) tagInstances() error {
 	_, err := ibw.ec2.CreateTags(ibw.instanceIDs(), []ec2.Tag{
 		ec2.Tag{Key: "role", Value: "worker"},
-		ec2.Tag{Key: "Name", Value: fmt.Sprintf("travis-%s-%s-%s-%d", ibw.b.Site, ibw.b.Env, ibw.b.Queue, time.Now().UTC().Unix())},
+		ec2.Tag{Key: "Name", Value: fmt.Sprintf("travis-%s-%s-%s", ibw.b.Site, ibw.b.Env, ibw.b.Queue)},
 		ec2.Tag{Key: "site", Value: ibw.b.Site},
 		ec2.Tag{Key: "env", Value: ibw.b.Env},
 		ec2.Tag{Key: "queue", Value: ibw.b.Queue},
@@ -148,20 +180,28 @@ func (ibw *instanceBuilderWorker) tagInstances() error {
 
 func (ibw *instanceBuilderWorker) waitForInstances() error {
 	for {
-		resp, err := ibw.ec2.DescribeInstanceStatus(&ec2.DescribeInstanceStatus{
-			InstanceIds:         ibw.instanceIDs(),
-			IncludeAllInstances: true,
-			MaxResults:          int64(len(ibw.i)),
-		}, &ec2.Filter{})
+		resp, err := ibw.ec2.Instances(ibw.instanceIDs(), ec2.NewFilter())
 
 		if err != nil {
-			return err
+			log.WithFields(logrus.Fields{
+				"err": err,
+				"jid": ibw.jid,
+			}).Warn("failed to get status while waiting for instances")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		if resp == nil || len(resp.Reservations) == 0 || len(resp.Reservations[0].Instances) == 0 {
+			time.Sleep(5 * time.Second)
+			continue
 		}
 
 		statuses := map[string]int{}
 
-		for _, st := range resp.InstanceStatus {
-			statuses[st.InstanceStatus.Status] = 1
+		for _, res := range resp.Reservations {
+			for _, inst := range res.Instances {
+				statuses[inst.State.Name] = 1
+			}
 		}
 
 		if _, ok := statuses["pending"]; !ok {
@@ -173,8 +213,9 @@ func (ibw *instanceBuilderWorker) waitForInstances() error {
 }
 
 func (ibw *instanceBuilderWorker) notifyInstancesLaunched() {
-	// TODO: notify instance launched
+	// TODO: notify instance launched in Slack or some such
 	log.WithFields(logrus.Fields{
+		"jid":          ibw.jid,
 		"instance_ids": ibw.instanceIDs(),
 	}).Info("launched instances")
 }
