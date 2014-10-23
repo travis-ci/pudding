@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
+: ${HOST:=http://localhost}
+: ${PORT:=42151}
+: ${WORKER_MANAGER_AUTH_TOKEN:=swordfish}
+
 case "$1" in
   instance-build)
     exec curl \
-      -H 'Authorization: token swordfish' \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X POST \
-      -s \
       -d "{
           \"instance_builds\": {
           \"site\": \"org\",
@@ -14,21 +17,20 @@ case "$1" in
           \"instance_type\": \"c3.4xlarge\"
         }
       }" \
-      http://localhost:${PORT:-42151}/instance-builds
+      ${HOST}:${PORT}/instance-builds
     ;;
   bogus-instance-build)
     exec curl \
-      -H 'Authorization: token swordfish' \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X POST \
-      -s \
       -d "{\"instance_builds\": {}}" \
-      http://localhost:${PORT:-42151}/instance-builds
+      ${HOST}:${PORT}/instance-builds
     ;;
   shutdown)
     exec curl \
-      -H 'Authorization: token swordfish' \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X DELETE \
-      http://localhost:${PORT:-42151}/
+      ${HOST}:${PORT}/
     ;;
   *)
     echo "unknown request type '$1'"
