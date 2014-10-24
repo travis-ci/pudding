@@ -66,6 +66,10 @@ deps:
 clean:
 	./bin/clean
 
+.PHONY: annotations
+annotations:
+	@git grep -E '(TODO|FIXME|XXX):' | grep -v Makefile
+
 .PHONY: save
 save:
 	$(DEPPY) save ./...

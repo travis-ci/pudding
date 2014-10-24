@@ -41,3 +41,7 @@ func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
 	sort.Strings(imgNames)
 	return imgMap[imgNames[len(imgNames)-1]], nil
 }
+
+func GetInstanceIPv4(conn *ec2.EC2, ID string) (string, error) {
+	return "127.0.0.1", nil
+}

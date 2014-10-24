@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"code.google.com/p/go.crypto/ssh"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/jrallison/go-workers"
-	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/common"
 )
@@ -26,7 +27,7 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 	}
 
 	err = newInstanceBuilderWorker(buildPayload.InstanceBuild(),
-		cfg.AWSAuth, cfg.AWSRegion, msg.Jid()).Build()
+		cfg, msg.Jid()).Build()
 	if err != nil {
 		log.WithField("err", err).Panic("instance build failed")
 	}
@@ -34,6 +35,7 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 
 type instanceBuilderWorker struct {
 	jid    string
+	cfg    *config
 	ec2    *ec2.EC2
 	sg     *ec2.SecurityGroup
 	sgName string
@@ -42,13 +44,14 @@ type instanceBuilderWorker struct {
 	i      []*ec2.Instance
 }
 
-func newInstanceBuilderWorker(b *common.InstanceBuild, auth aws.Auth, region aws.Region, jid string) *instanceBuilderWorker {
+func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string) *instanceBuilderWorker {
 	return &instanceBuilderWorker{
 		jid:    jid,
+		cfg:    cfg,
 		b:      b,
 		i:      []*ec2.Instance{},
 		sgName: fmt.Sprintf("docker-worker-%d", time.Now().UTC().Unix()),
-		ec2:    ec2.New(auth, region),
+		ec2:    ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
 }
 
@@ -192,6 +195,10 @@ func (ibw *instanceBuilderWorker) waitForInstances() error {
 		}
 
 		if resp == nil || len(resp.Reservations) == 0 || len(resp.Reservations[0].Instances) == 0 {
+			log.WithFields(logrus.Fields{
+				"err": err,
+				"jid": ibw.jid,
+			}).Warn("still waiting for instance")
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -208,6 +215,10 @@ func (ibw *instanceBuilderWorker) waitForInstances() error {
 			return nil
 		}
 
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Warn("still waiting for instance")
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -222,6 +233,31 @@ func (ibw *instanceBuilderWorker) notifyInstancesLaunched() {
 
 func (ibw *instanceBuilderWorker) setupInstances() error {
 	// TODO: setup instance
+	for _, inst := range ibw.i {
+		ipv4, err := common.GetInstanceIPv4(ibw.ec2, inst.InstanceId)
+		if err != nil {
+			return err
+		}
+
+		setupCfg := &instanceSetupConfig{
+			JID:             ibw.jid,
+			InstanceID:      inst.InstanceId,
+			InstanceIPv4:    ipv4,
+			SSHUser:         "moustache", // TODO: pass in ssh user?
+			SetupRSA:        ibw.cfg.SetupRSA,
+			DockerRSA:       ibw.cfg.DockerRSA,
+			WorkerConfigURL: "http://example.com", // TODO: implement worker config fetching, maybe etcd/consul?
+			PapertrailSite:  "TODO",               // TODO: papertrail site is wat?
+			MaxRetries:      10,                   // TODO: sane max retries?
+		}
+
+		isu := newInstanceSetterUpper(setupCfg)
+		err = isu.SetupInstance()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -231,4 +267,146 @@ func (ibw *instanceBuilderWorker) instanceIDs() []string {
 		out = append(out, inst.InstanceId)
 	}
 	return out
+}
+
+type instanceSetupConfig struct {
+	JID             string
+	InstanceID      string
+	InstanceIPv4    string
+	SSHUser         string
+	SetupRSA        string
+	DockerRSA       string
+	WorkerConfigURL string
+	PapertrailSite  string
+	MaxRetries      int
+}
+
+type instanceSetterUpper struct {
+	c   *instanceSetupConfig
+	ssh *ssh.Client
+}
+
+func newInstanceSetterUpper(c *instanceSetupConfig) *instanceSetterUpper {
+	if c.MaxRetries == 0 {
+		c.MaxRetries = 10
+	}
+	return &instanceSetterUpper{c: c}
+}
+
+func (isu *instanceSetterUpper) SetupInstance() error {
+	nRetries := 0
+
+	for {
+		err := isu.setupInstanceAttempt()
+		if err != nil {
+			if nRetries > isu.c.MaxRetries {
+				return err
+			}
+			nRetries++
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		return nil
+	}
+}
+
+func (isu *instanceSetterUpper) setupInstanceAttempt() error {
+	log.WithFields(logrus.Fields{
+		"jid":         isu.c.JID,
+		"instance_id": isu.c.InstanceID,
+	}).Info("getting ssh connection")
+
+	err := isu.getSSHConnection()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":         err,
+			"jid":         isu.c.JID,
+			"instance_id": isu.c.InstanceID,
+		}).Error("failed to get ssh connection")
+		return err
+	}
+
+	log.WithFields(logrus.Fields{
+		"jid":         isu.c.JID,
+		"instance_id": isu.c.InstanceID,
+	}).Info("uploading docker rsa")
+
+	err = isu.uploadDockerRSA()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":         err,
+			"jid":         isu.c.JID,
+			"instance_id": isu.c.InstanceID,
+		}).Error("failed to upload docker rsa")
+		return err
+	}
+
+	log.WithFields(logrus.Fields{
+		"jid":         isu.c.JID,
+		"instance_id": isu.c.InstanceID,
+	}).Info("uploading worker config")
+
+	err = isu.uploadWorkerConfig()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":         err,
+			"jid":         isu.c.JID,
+			"instance_id": isu.c.InstanceID,
+		}).Error("failed to upload worker config")
+		return err
+	}
+
+	log.WithFields(logrus.Fields{
+		"jid":         isu.c.JID,
+		"instance_id": isu.c.InstanceID,
+	}).Info("setting up papertrail")
+
+	err = isu.setupPapertrail()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":         err,
+			"jid":         isu.c.JID,
+			"instance_id": isu.c.InstanceID,
+		}).Error("failed to setup papertrail")
+		return err
+	}
+
+	return nil
+}
+
+func (isu *instanceSetterUpper) getSSHConnection() error {
+	signer, err := ssh.ParsePrivateKey([]byte(isu.c.SetupRSA))
+	if err != nil {
+		return err
+	}
+
+	sshConfig := &ssh.ClientConfig{
+		User: isu.c.SSHUser,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+	}
+
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:22", isu.c.InstanceIPv4), sshConfig)
+	if err != nil {
+		return err
+	}
+
+	isu.ssh = client
+	return nil
+}
+
+func (isu *instanceSetterUpper) uploadDockerRSA() error {
+	// TODO: upload docker RSA
+	return nil
+}
+
+func (isu *instanceSetterUpper) uploadWorkerConfig() error {
+	// TODO: upload worker config
+	return nil
+}
+
+func (isu *instanceSetterUpper) setupPapertrail() error {
+	// TODO: setup papertrail
+	return nil
 }
