@@ -233,10 +233,13 @@ func (ibw *instanceBuilderWorker) notifyInstancesLaunched() {
 
 func (ibw *instanceBuilderWorker) setupInstances() error {
 	// TODO: setup instance
+	errors := []error{}
+
 	for _, inst := range ibw.i {
 		ipv4, err := common.GetInstanceIPv4(ibw.ec2, inst.InstanceId)
 		if err != nil {
-			return err
+			errors = append(errors, err)
+			continue
 		}
 
 		setupCfg := &instanceSetupConfig{
@@ -254,8 +257,12 @@ func (ibw *instanceBuilderWorker) setupInstances() error {
 		isu := newInstanceSetterUpper(setupCfg)
 		err = isu.SetupInstance()
 		if err != nil {
-			return err
+			errors = append(errors, err)
 		}
+	}
+
+	if len(errors) > 0 {
+		return &common.MultiError{Errors: errors}
 	}
 
 	return nil
