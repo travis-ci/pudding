@@ -6,11 +6,6 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/go.crypto/ssh",
-			"Comment": "null-219",
-			"Rev": "00a7d3b31bbab5795b4a51933c04fc2768242970"
-		},
-		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.5.1-35-g2e36101",
 			"Rev": "2e36101a197f56f60ca6c37c3c256ed3713a9649"
