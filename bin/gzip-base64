@@ -1,0 +1,4 @@
+#!/bin/bash
+set -o pipefail
+
+cat $1 | gzip -9 | exec base64

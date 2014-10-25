@@ -8,6 +8,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/braintree/manners"
 	"github.com/codegangsta/negroni"
+	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/travis-pro/worker-manager-service/common"
@@ -98,20 +99,24 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 		jsonapi.Error(w, err, http.StatusBadRequest)
 		return
 	}
+
 	build := payload.InstanceBuilds
+	if build.ID == "" {
+		build.ID = feeds.NewUUID().String()
+	}
+
 	validationErrors := build.Validate()
 	if len(validationErrors) > 0 {
 		jsonapi.Errors(w, validationErrors, http.StatusBadRequest)
 		return
 	}
 
-	details, err := srv.builder.Build(build)
+	build, err = srv.builder.Build(build)
 	if err != nil {
 		jsonapi.Error(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	build.UpdateFromDetails(details)
 	jsonapi.Respond(w, &common.InstanceBuildsCollection{
 		InstanceBuilds: []*common.InstanceBuild{build},
 	}, http.StatusAccepted)

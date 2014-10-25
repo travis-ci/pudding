@@ -21,12 +21,20 @@ func init() {
 	log = logrus.New()
 }
 
-func Main(queues, redisPoolSize, redisURLString, processID, awsKey, awsSecret, awsRegion, dockerRSA, setupRSA string) {
+func Main(queues, redisPoolSize, redisURLString, processID,
+	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
+	papertrailSite, travisWorkerYML string) {
+
 	cfg := &config{
-		DockerRSA:          dockerRSA,
-		SetupRSA:           setupRSA,
-		ProcessID:          processID,
-		RedisPoolSize:      redisPoolSize,
+		RedisPoolSize: redisPoolSize,
+
+		WebHost:   webHost,
+		ProcessID: processID,
+
+		DockerRSA:       dockerRSA,
+		PapertrailSite:  papertrailSite,
+		TravisWorkerYML: travisWorkerYML,
+
 		Queues:             []string{},
 		QueueConcurrencies: map[string]int{},
 		QueueFuncs:         defaultQueueFuncs,
@@ -48,11 +56,6 @@ func Main(queues, redisPoolSize, redisURLString, processID, awsKey, awsSecret, a
 
 	if cfg.DockerRSA == "" {
 		log.Fatal("missing docker rsa key")
-		os.Exit(1)
-	}
-
-	if cfg.SetupRSA == "" {
-		log.Fatal("missing setup rsa key")
 		os.Exit(1)
 	}
 

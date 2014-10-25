@@ -4,40 +4,29 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 )
 
-func GetDefaultRSAKey() string {
-	allKeys, err := filepath.Glob(filepath.Join(os.Getenv("HOME"), ".ssh", "id_*"))
-	if err != nil || allKeys == nil {
-		return ""
+func GetDockerRSAKey() string {
+	value := getDockerRSAKeyFromEnv()
+	if value != "" {
+		return value
 	}
 
-	sort.Strings(allKeys)
+	return getDockerRSAKeyFromFile()
+}
 
-	for _, key := range allKeys {
-		if strings.HasSuffix(".pub", key) {
-			continue
+func getDockerRSAKeyFromEnv() string {
+	for _, key := range []string{"DOCKER_RSA", "WORKER_MANAGER_DOCKER_RSA"} {
+		value, err := GetCompressedEnvVar(key)
+		if err == nil {
+			return value
 		}
-
-		b, err := ioutil.ReadFile(key)
-		if err != nil {
-			return ""
-		}
-
-		return string(b)
 	}
 
 	return ""
 }
 
-func GetDockerRSAKey() string {
-	value := os.Getenv("DOCKER_RSA")
-	if value != "" {
-		return value
-	}
-
+func getDockerRSAKeyFromFile() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		return ""

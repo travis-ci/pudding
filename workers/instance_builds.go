@@ -1,13 +1,17 @@
 package workers
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
-	"code.google.com/p/go.crypto/ssh"
-
 	"github.com/Sirupsen/logrus"
+	"github.com/garyburd/redigo/redis"
+	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/common"
@@ -27,13 +31,14 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 	}
 
 	err = newInstanceBuilderWorker(buildPayload.InstanceBuild(),
-		cfg, msg.Jid()).Build()
+		cfg, msg.Jid(), workers.Config.Pool.Get()).Build()
 	if err != nil {
 		log.WithField("err", err).Panic("instance build failed")
 	}
 }
 
 type instanceBuilderWorker struct {
+	rc     redis.Conn
 	jid    string
 	cfg    *config
 	ec2    *ec2.EC2
@@ -44,8 +49,9 @@ type instanceBuilderWorker struct {
 	i      []*ec2.Instance
 }
 
-func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string) *instanceBuilderWorker {
+func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
 	return &instanceBuilderWorker{
+		rc:     redisConn,
 		jid:    jid,
 		cfg:    cfg,
 		b:      b,
@@ -90,7 +96,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Info("tagging instances instances")
+	log.WithField("jid", ibw.jid).Info("tagging instances")
 	err = ibw.tagInstances()
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -100,27 +106,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Info("waiting for instances")
-	err = ibw.waitForInstances()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-			"jid": ibw.jid,
-		}).Error("failed to wait for instance(s)")
-		return err
-	}
-
 	ibw.notifyInstancesLaunched()
-
-	log.WithField("jid", ibw.jid).Info("setting up instances")
-	err = ibw.setupInstances()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-			"jid": ibw.jid,
-		}).Error("failed to set up instance(s)")
-		return err
-	}
 
 	log.WithField("jid", ibw.jid).Info("all done")
 	return nil
@@ -153,8 +139,16 @@ func (ibw *instanceBuilderWorker) createInstances() error {
 		"count":         ibw.b.Count,
 	}).Info("booting instance")
 
+	userData, err := ibw.buildUserData()
+	if err != nil {
+		return err
+	}
+
 	resp, err := ibw.ec2.RunInstances(&ec2.RunInstances{
 		ImageId:        ibw.ami.Id,
+		MinCount:       ibw.b.Count,
+		MaxCount:       ibw.b.Count,
+		UserData:       userData,
 		InstanceType:   ibw.b.InstanceType,
 		SecurityGroups: []ec2.SecurityGroup{*ibw.sg},
 	})
@@ -181,46 +175,65 @@ func (ibw *instanceBuilderWorker) tagInstances() error {
 	return err
 }
 
-func (ibw *instanceBuilderWorker) waitForInstances() error {
-	for {
-		resp, err := ibw.ec2.Instances(ibw.instanceIDs(), ec2.NewFilter())
-
-		if err != nil {
-			log.WithFields(logrus.Fields{
-				"err": err,
-				"jid": ibw.jid,
-			}).Warn("failed to get status while waiting for instances")
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		if resp == nil || len(resp.Reservations) == 0 || len(resp.Reservations[0].Instances) == 0 {
-			log.WithFields(logrus.Fields{
-				"err": err,
-				"jid": ibw.jid,
-			}).Warn("still waiting for instance")
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		statuses := map[string]int{}
-
-		for _, res := range resp.Reservations {
-			for _, inst := range res.Instances {
-				statuses[inst.State.Name] = 1
-			}
-		}
-
-		if _, ok := statuses["pending"]; !ok {
-			return nil
-		}
-
-		log.WithFields(logrus.Fields{
-			"err": err,
-			"jid": ibw.jid,
-		}).Warn("still waiting for instance")
-		time.Sleep(5 * time.Second)
+func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
+	webURL, err := url.Parse(ibw.cfg.WebHost)
+	if err != nil {
+		return nil, err
 	}
+
+	tmpAuth := feeds.NewUUID().String()
+	webURL.User = url.UserPassword("x", tmpAuth)
+	webURL.Path = fmt.Sprintf("/init-scripts/%s", ibw.b.ID)
+
+	buf := &bytes.Buffer{}
+	w, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+
+	err = initScript.Execute(w, &initScriptContext{
+		WebHost:         ibw.cfg.WebHost,
+		DockerRSA:       ibw.cfg.DockerRSA,
+		PapertrailSite:  ibw.cfg.PapertrailSite,
+		TravisWorkerYML: ibw.cfg.TravisWorkerYML,
+		InstanceBuildID: ibw.b.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	initScriptB64 := base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	err = ibw.rc.Send("MULTI")
+	if err != nil {
+		return nil, err
+	}
+
+	scriptKey := common.InitScriptRedisKey(ibw.b.ID)
+	err = ibw.rc.Send("SETEX", scriptKey, 300, initScriptB64)
+	if err != nil {
+		ibw.rc.Send("DISCARD")
+		return nil, err
+	}
+
+	authKey := common.AuthRedisKey(ibw.b.ID)
+	err = ibw.rc.Send("SETEX", authKey, 300, tmpAuth)
+	if err != nil {
+		ibw.rc.Send("DISCARD")
+		return nil, err
+	}
+
+	_, err = ibw.rc.Do("EXEC")
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(fmt.Sprintf("#include %s\n", webURL.String())), nil
 }
 
 func (ibw *instanceBuilderWorker) notifyInstancesLaunched() {
@@ -231,189 +244,10 @@ func (ibw *instanceBuilderWorker) notifyInstancesLaunched() {
 	}).Info("launched instances")
 }
 
-func (ibw *instanceBuilderWorker) setupInstances() error {
-	// TODO: setup instance
-	errors := []error{}
-
-	for _, inst := range ibw.i {
-		ipv4, err := common.GetInstanceIPv4(ibw.ec2, inst.InstanceId)
-		if err != nil {
-			errors = append(errors, err)
-			continue
-		}
-
-		setupCfg := &instanceSetupConfig{
-			JID:             ibw.jid,
-			InstanceID:      inst.InstanceId,
-			InstanceIPv4:    ipv4,
-			SSHUser:         "moustache", // TODO: pass in ssh user?
-			SetupRSA:        ibw.cfg.SetupRSA,
-			DockerRSA:       ibw.cfg.DockerRSA,
-			WorkerConfigURL: "http://example.com", // TODO: implement worker config fetching, maybe etcd/consul?
-			PapertrailSite:  "TODO",               // TODO: papertrail site is wat?
-			MaxRetries:      10,                   // TODO: sane max retries?
-		}
-
-		isu := newInstanceSetterUpper(setupCfg)
-		err = isu.SetupInstance()
-		if err != nil {
-			errors = append(errors, err)
-		}
-	}
-
-	if len(errors) > 0 {
-		return &common.MultiError{Errors: errors}
-	}
-
-	return nil
-}
-
 func (ibw *instanceBuilderWorker) instanceIDs() []string {
 	out := []string{}
 	for _, inst := range ibw.i {
 		out = append(out, inst.InstanceId)
 	}
 	return out
-}
-
-type instanceSetupConfig struct {
-	JID             string
-	InstanceID      string
-	InstanceIPv4    string
-	SSHUser         string
-	SetupRSA        string
-	DockerRSA       string
-	WorkerConfigURL string
-	PapertrailSite  string
-	MaxRetries      int
-}
-
-type instanceSetterUpper struct {
-	c   *instanceSetupConfig
-	ssh *ssh.Client
-}
-
-func newInstanceSetterUpper(c *instanceSetupConfig) *instanceSetterUpper {
-	if c.MaxRetries == 0 {
-		c.MaxRetries = 10
-	}
-	return &instanceSetterUpper{c: c}
-}
-
-func (isu *instanceSetterUpper) SetupInstance() error {
-	nRetries := 0
-
-	for {
-		err := isu.setupInstanceAttempt()
-		if err != nil {
-			if nRetries > isu.c.MaxRetries {
-				return err
-			}
-			nRetries++
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		return nil
-	}
-}
-
-func (isu *instanceSetterUpper) setupInstanceAttempt() error {
-	log.WithFields(logrus.Fields{
-		"jid":         isu.c.JID,
-		"instance_id": isu.c.InstanceID,
-	}).Info("getting ssh connection")
-
-	err := isu.getSSHConnection()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err":         err,
-			"jid":         isu.c.JID,
-			"instance_id": isu.c.InstanceID,
-		}).Error("failed to get ssh connection")
-		return err
-	}
-
-	log.WithFields(logrus.Fields{
-		"jid":         isu.c.JID,
-		"instance_id": isu.c.InstanceID,
-	}).Info("uploading docker rsa")
-
-	err = isu.uploadDockerRSA()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err":         err,
-			"jid":         isu.c.JID,
-			"instance_id": isu.c.InstanceID,
-		}).Error("failed to upload docker rsa")
-		return err
-	}
-
-	log.WithFields(logrus.Fields{
-		"jid":         isu.c.JID,
-		"instance_id": isu.c.InstanceID,
-	}).Info("uploading worker config")
-
-	err = isu.uploadWorkerConfig()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err":         err,
-			"jid":         isu.c.JID,
-			"instance_id": isu.c.InstanceID,
-		}).Error("failed to upload worker config")
-		return err
-	}
-
-	log.WithFields(logrus.Fields{
-		"jid":         isu.c.JID,
-		"instance_id": isu.c.InstanceID,
-	}).Info("setting up papertrail")
-
-	err = isu.setupPapertrail()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err":         err,
-			"jid":         isu.c.JID,
-			"instance_id": isu.c.InstanceID,
-		}).Error("failed to setup papertrail")
-		return err
-	}
-
-	return nil
-}
-
-func (isu *instanceSetterUpper) getSSHConnection() error {
-	signer, err := ssh.ParsePrivateKey([]byte(isu.c.SetupRSA))
-	if err != nil {
-		return err
-	}
-
-	sshConfig := &ssh.ClientConfig{
-		User: isu.c.SSHUser,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-	}
-
-	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:22", isu.c.InstanceIPv4), sshConfig)
-	if err != nil {
-		return err
-	}
-
-	isu.ssh = client
-	return nil
-}
-
-func (isu *instanceSetterUpper) uploadDockerRSA() error {
-	// TODO: upload docker RSA
-	return nil
-}
-
-func (isu *instanceSetterUpper) uploadWorkerConfig() error {
-	// TODO: upload worker config
-	return nil
-}
-
-func (isu *instanceSetterUpper) setupPapertrail() error {
-	// TODO: setup papertrail
-	return nil
 }

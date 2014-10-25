@@ -11,8 +11,9 @@ case "$1" in
       -X POST \
       -d "{
           \"instance_builds\": {
+          \"count\": 1,
           \"site\": \"org\",
-          \"env\": \"staging\",
+          \"env\": \"test\",
           \"queue\": \"docker\",
           \"instance_type\": \"c3.4xlarge\"
         }

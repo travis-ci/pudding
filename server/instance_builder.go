@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/gorilla/feeds"
 	"github.com/travis-pro/worker-manager-service/common"
 )
 
@@ -64,7 +63,7 @@ func (ib *instanceBuilder) buildRedisPool() {
 	}
 }
 
-func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuildDetails, error) {
+func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild, error) {
 	conn := ib.r.Get()
 	defer conn.Close()
 
@@ -73,19 +72,11 @@ func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild
 		return nil, err
 	}
 
-	d := &common.InstanceBuildDetails{}
-	d.ID = feeds.NewUUID().String()
-
-	jid := feeds.NewUUID().String()
-	if err != nil {
-		return nil, err
-	}
-
 	buildPayload := &common.InstanceBuildPayload{
 		Class:      common.InstanceBuildClassname,
-		Args:       []interface{}{d.ID, b},
+		Args:       []*common.InstanceBuild{b},
 		Queue:      ib.QueueName,
-		JID:        jid,
+		JID:        b.ID,
 		Retry:      true,
 		EnqueuedAt: float64(time.Now().UTC().Unix()),
 	}
@@ -110,5 +101,5 @@ func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild
 	}
 
 	_, err = conn.Do("EXEC")
-	return d, err
+	return b, err
 }

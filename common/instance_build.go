@@ -1,14 +1,19 @@
 package common
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/gorilla/feeds"
+)
 
 var (
-	errEmptySite         = fmt.Errorf("empty \"site\" param")
-	errInvalidSite       = fmt.Errorf("site must be either org or com")
-	errEmptyEnv          = fmt.Errorf("empty \"env\" param")
-	errInvalidEnv        = fmt.Errorf("env must be prod, staging, or test")
-	errEmptyQueue        = fmt.Errorf("empty \"queue\" param")
-	errEmptyInstanceType = fmt.Errorf("empty \"instance_type\" param")
+	errEmptySite            = fmt.Errorf("empty \"site\" param")
+	errInvalidSite          = fmt.Errorf("site must be either org or com")
+	errEmptyEnv             = fmt.Errorf("empty \"env\" param")
+	errInvalidEnv           = fmt.Errorf("env must be prod, staging, or test")
+	errInvalidInstanceCount = fmt.Errorf("count must be more than 0")
+	errEmptyQueue           = fmt.Errorf("empty \"queue\" param")
+	errEmptyInstanceType    = fmt.Errorf("empty \"instance_type\" param")
 )
 
 type InstanceBuildsCollectionSingular struct {
@@ -28,6 +33,12 @@ type InstanceBuild struct {
 	Queue        string `json:"queue"`
 	HREF         string `json:"href,omitempty"`
 	ID           string `json:"id,omitempty"`
+}
+
+func NewInstanceBuild() *InstanceBuild {
+	return &InstanceBuild{
+		ID: feeds.NewUUID().String(),
+	}
 }
 
 func (b *InstanceBuild) Validate() []error {
@@ -50,14 +61,9 @@ func (b *InstanceBuild) Validate() []error {
 	if b.InstanceType == "" {
 		errors = append(errors, errEmptyInstanceType)
 	}
-
-	return errors
-}
-
-func (b *InstanceBuild) UpdateFromDetails(d *InstanceBuildDetails) {
-	if d.ID != "" {
-		b.ID = d.ID
+	if b.Count < 1 {
+		errors = append(errors, errInvalidInstanceCount)
 	}
 
-	return
+	return errors
 }

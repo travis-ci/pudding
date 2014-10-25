@@ -60,14 +60,24 @@ func main() {
 			EnvVar: "AWS_DEFAULT_REGION",
 		},
 		cli.StringFlag{
-			Name:   "docker-rsa",
-			Value:  common.GetDockerRSAKey(),
-			EnvVar: "WORKER_MANAGER_DOCKER_RSA",
+			Name:  "docker-rsa",
+			Value: common.GetDockerRSAKey(),
 		},
 		cli.StringFlag{
-			Name:   "setup-rsa",
-			Value:  common.GetDefaultRSAKey(),
-			EnvVar: "WORKER_MANAGER_SETUP_RSA",
+			Name:   "H, web-hostname",
+			Usage:  "publicly-accessible hostname with protocol",
+			Value:  "http://localhost:42151",
+			EnvVar: "WORKER_MANAGER_WEB_HOSTNAME",
+		},
+		cli.StringFlag{
+			Name:   "papertrail-site",
+			Usage:  "papertrail syslog upstream",
+			Value:  "logs.papertrailapp.com:9999",
+			EnvVar: "WORKER_MANAGER_PAPERTRAIL_SITE",
+		},
+		cli.StringFlag{
+			Name:  "Y, travis-worker-yml",
+			Value: common.GetTravisWorkerYML(),
 		},
 	}
 	app.Action = runWorkers
@@ -78,5 +88,6 @@ func runWorkers(c *cli.Context) {
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),
 		c.String("redis-url"), c.String("process-id"),
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
-		c.String("docker-rsa"), c.String("setup-rsa"))
+		c.String("docker-rsa"), c.String("web-hostname"),
+		c.String("papertrail-site"), c.String("travis-worker-yml"))
 }

@@ -14,9 +14,12 @@ type config struct {
 	RedisURL      *url.URL
 	RedisPoolSize string
 
-	DockerRSA string
+	WebHost   string
 	ProcessID string
-	SetupRSA  string
+
+	DockerRSA       string
+	PapertrailSite  string
+	TravisWorkerYML string
 
 	Queues             []string
 	QueueFuncs         map[string]func(*config, *workers.Msg)

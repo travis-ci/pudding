@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -o errexit
+
+exec aws ec2 describe-instances | \
+  jq -r '.Reservations | .[] |
+    .Instances | .[] |
+    select(.Tags != null) |
+    select(.Tags | .[] | .Value == "worker") |
+    [(.Tags | .[] | select(.Key == "Name") | .Value), .InstanceId, .LaunchTime] |
+    join(" ")
+  ' | \
+  grep '\-docker' | \
+  sort -k3 | \
+  grep org-test | \
+  awk '{ print $2 }' | \
+  xargs aws ec2 terminate-instances --instance-ids
