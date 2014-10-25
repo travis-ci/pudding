@@ -58,8 +58,14 @@ func (srv *server) Run() {
 }
 
 func (srv *server) setupRoutes() {
-	srv.r.HandleFunc(`/`, srv.handleRoot).Methods("GET", "DELETE").Name("root")
-	srv.r.HandleFunc(`/instance-builds`, srv.handleInstanceBuilds).Methods("GET", "POST").Name("instance-builds")
+	srv.r.HandleFunc(`/`,
+		srv.handleRoot).Methods("GET", "DELETE").Name("root")
+	srv.r.HandleFunc(`/instance-builds`,
+		srv.handleInstanceBuilds).Methods("GET", "POST").Name("instance-builds")
+	srv.r.HandleFunc(`/instances/{instance_id}/links/metadata`,
+		srv.handleInstanceMetadata).Methods("GET", "PATCH", "PUT").Name("instance-links-metadata")
+	srv.r.HandleFunc(`/instance-builds/{instance_build_id}/links/cloud-inits`,
+		srv.handleInstanceBuildsCloudInits).Methods("POST", "GET").Name("instance-builds-links-cloud-inits")
 }
 
 func (srv *server) setupMiddleware() {
@@ -126,4 +132,25 @@ func (srv *server) handleInstanceBuildsList(w http.ResponseWriter, req *http.Req
 	jsonapi.Respond(w,
 		&common.InstanceBuildsCollection{InstanceBuilds: []*common.InstanceBuild{}},
 		http.StatusOK)
+}
+
+func (srv *server) handleInstanceMetadata(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case "GET":
+		srv.handleInstanceMetadataGet(w, req)
+	case "PATCH", "PUT":
+		srv.handleInstanceMetadataUpdate(w, req)
+	}
+}
+
+func (srv *server) handleInstanceMetadataGet(w http.ResponseWriter, req *http.Request) {
+	http.Error(w, "not yet", http.StatusNotImplemented)
+}
+
+func (srv *server) handleInstanceMetadataUpdate(w http.ResponseWriter, req *http.Request) {
+	http.Error(w, "not yet", http.StatusNotImplemented)
+}
+
+func (srv *server) handleInstanceBuildsCloudInits(w http.ResponseWriter, req *http.Request) {
+	http.Error(w, "not yet", http.StatusNotImplemented)
 }
