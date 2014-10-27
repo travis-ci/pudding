@@ -67,6 +67,10 @@
 			"Rev": "0f046dbd40a3a0f00c7d26d94bc441ae2a4429a0"
 		},
 		{
+			"ImportPath": "github.com/phyber/negroni-gzip/gzip",
+			"Rev": "0b2752a07f05079c716e4409134b1f4c385f63ea"
+		},
+		{
 			"ImportPath": "github.com/vaughan0/go-ini",
 			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		}
