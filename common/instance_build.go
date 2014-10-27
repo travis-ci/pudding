@@ -12,6 +12,7 @@ var (
 	errEmptyEnv             = fmt.Errorf("empty \"env\" param")
 	errInvalidEnv           = fmt.Errorf("env must be prod, staging, or test")
 	errInvalidInstanceCount = fmt.Errorf("count must be more than 0")
+	errInvalidState         = fmt.Errorf("state must be pending, started, or finished")
 	errEmptyQueue           = fmt.Errorf("empty \"queue\" param")
 	errEmptyInstanceType    = fmt.Errorf("empty \"instance_type\" param")
 )
@@ -32,12 +33,14 @@ type InstanceBuild struct {
 	Count        int    `json:"count"`
 	Queue        string `json:"queue"`
 	HREF         string `json:"href,omitempty"`
+	State        string `json:"state,omitempty"`
 	ID           string `json:"id,omitempty"`
 }
 
 func NewInstanceBuild() *InstanceBuild {
 	return &InstanceBuild{
-		ID: feeds.NewUUID().String(),
+		ID:    feeds.NewUUID().String(),
+		State: "pending",
 	}
 }
 
@@ -60,6 +63,9 @@ func (b *InstanceBuild) Validate() []error {
 	}
 	if b.InstanceType == "" {
 		errors = append(errors, errEmptyInstanceType)
+	}
+	if b.State != "pending" && b.State != "started" && b.State != "finished" {
+		errors = append(errors, errInvalidState)
 	}
 	if b.Count < 1 {
 		errors = append(errors, errInvalidInstanceCount)

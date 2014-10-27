@@ -41,6 +41,7 @@ func Errors(w http.ResponseWriter, errors []error, st int) {
 	}
 
 	setContentType(w)
+	w.WriteHeader(st)
 	fmt.Fprintf(w, string(b)+"\n")
 }
 
@@ -53,5 +54,6 @@ func Respond(w http.ResponseWriter, thing interface{}, st int) {
 	}
 
 	setContentType(w)
+	w.WriteHeader(st)
 	fmt.Fprintf(w, string(b)+"\n")
 }

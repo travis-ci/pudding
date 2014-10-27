@@ -11,8 +11,13 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
+	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/travis-pro/worker-manager-service/common"
 	"github.com/travis-pro/worker-manager-service/server/jsonapi"
+)
+
+var (
+	errMissingInstanceBuildID = fmt.Errorf("missing instance build id")
 )
 
 type server struct {
@@ -21,6 +26,8 @@ type server struct {
 
 	log     *logrus.Logger
 	builder *instanceBuilder
+	auther  *serverAuther
+	is      *common.InitScripts
 
 	n *negroni.Negroni
 	r *mux.Router
@@ -32,12 +39,25 @@ func newServer(addr, authToken, redisURL string, queueNames map[string]string) (
 	if err != nil {
 		return nil, err
 	}
+
+	is, err := common.NewInitScripts(redisURL)
+	if err != nil {
+		return nil, err
+	}
+
+	auther, err := newServerAuther(authToken, redisURL)
+	if err != nil {
+		return nil, err
+	}
+
 	srv := &server{
 		addr:      addr,
 		authToken: authToken,
+		auther:    auther,
 
 		log:     logrus.New(),
 		builder: builder,
+		is:      is,
 
 		n: negroni.New(),
 		r: mux.NewRouter(),
@@ -62,16 +82,19 @@ func (srv *server) setupRoutes() {
 		srv.handleRoot).Methods("GET", "DELETE").Name("root")
 	srv.r.HandleFunc(`/instance-builds`,
 		srv.handleInstanceBuilds).Methods("GET", "POST").Name("instance-builds")
+	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`,
+		srv.handleInstanceBuildsByID).Methods("PATCH").Name("instance-builds-by-id")
+	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`,
+		srv.handleInitScripts).Methods("GET").Name("init-scripts")
 	srv.r.HandleFunc(`/instances/{instance_id}/links/metadata`,
 		srv.handleInstanceMetadata).Methods("GET", "PATCH", "PUT").Name("instance-links-metadata")
-	srv.r.HandleFunc(`/instance-builds/{instance_build_id}/links/cloud-inits`,
-		srv.handleInstanceBuildsCloudInits).Methods("POST", "GET").Name("instance-builds-links-cloud-inits")
 }
 
 func (srv *server) setupMiddleware() {
-	srv.n.Use(newTokenAuthMiddleware(srv.authToken))
+	srv.n.Use(srv.auther)
 	srv.n.Use(negroni.NewRecovery())
 	srv.n.Use(negronilogrus.NewMiddleware())
+	srv.n.Use(gzip.Gzip(gzip.DefaultCompression))
 	// TODO: implement the raven middleware, eh
 	// srv.n.Use(negroniraven.NewMiddleware(sentryDSN))
 	srv.n.UseHandler(srv.r)
@@ -93,9 +116,13 @@ func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request
 	switch req.Method {
 	case "POST":
 		srv.handleInstanceBuildsCreate(w, req)
+		return
 	case "GET":
 		srv.handleInstanceBuildsList(w, req)
+		return
 	}
+
+	http.Error(w, "NO", http.StatusMethodNotAllowed)
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
@@ -109,6 +136,10 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 	build := payload.InstanceBuilds
 	if build.ID == "" {
 		build.ID = feeds.NewUUID().String()
+	}
+
+	if build.State == "" {
+		build.State = "pending"
 	}
 
 	validationErrors := build.Validate()
@@ -134,6 +165,72 @@ func (srv *server) handleInstanceBuildsList(w http.ResponseWriter, req *http.Req
 		http.StatusOK)
 }
 
+func (srv *server) handleInstanceBuildsByID(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case "PATCH":
+		srv.handleInstanceBuildUpdateByID(w, req)
+		return
+	}
+
+	http.Error(w, "NO", http.StatusMethodNotAllowed)
+}
+
+func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	instanceBuildID, ok := vars["instance_build_id"]
+	if !ok {
+		jsonapi.Error(w, errMissingInstanceBuildID, http.StatusBadRequest)
+		return
+	}
+
+	state := req.FormValue("state")
+	if state == "finished" {
+		err := srv.builder.Wipe(instanceBuildID)
+		if err != nil {
+			jsonapi.Error(w, err, http.StatusInternalServerError)
+
+			return
+		}
+
+		jsonapi.Respond(w, map[string]string{"sure": "why not"}, http.StatusOK)
+		return
+	}
+
+	jsonapi.Respond(w, map[string]string{"no": "op"}, http.StatusOK)
+}
+
+func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	instanceBuildID, ok := vars["instance_build_id"]
+	if !ok {
+		jsonapi.Error(w, errMissingInstanceBuildID, http.StatusBadRequest)
+		return
+	}
+
+	if srv.auther.IsAuthorized(req) {
+		srv.sendInitScript(w, instanceBuildID)
+		return
+	}
+
+	http.Error(w, "NO", http.StatusForbidden)
+}
+
+func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {
+	script, err := srv.is.Get(ID)
+	if err != nil {
+		srv.log.WithFields(logrus.Fields{
+			"err": err,
+			"id":  ID,
+		}).Error("failed to get init script")
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, script)
+}
+
 func (srv *server) handleInstanceMetadata(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
@@ -144,13 +241,11 @@ func (srv *server) handleInstanceMetadata(w http.ResponseWriter, req *http.Reque
 }
 
 func (srv *server) handleInstanceMetadataGet(w http.ResponseWriter, req *http.Request) {
-	http.Error(w, "not yet", http.StatusNotImplemented)
+	jsonapi.Respond(w, map[string]string{"whatever": "sure"}, http.StatusOK)
+	// http.Error(w, "not yet", http.StatusNotImplemented)
 }
 
 func (srv *server) handleInstanceMetadataUpdate(w http.ResponseWriter, req *http.Request) {
-	http.Error(w, "not yet", http.StatusNotImplemented)
-}
-
-func (srv *server) handleInstanceBuildsCloudInits(w http.ResponseWriter, req *http.Request) {
-	http.Error(w, "not yet", http.StatusNotImplemented)
+	jsonapi.Respond(w, map[string]string{"whatever": "sure"}, http.StatusOK)
+	// http.Error(w, "not yet", http.StatusNotImplemented)
 }

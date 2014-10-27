@@ -56,7 +56,7 @@ end
 echo -en "instance-id=$INSTANCE_ID" >> metadata
 
 curl -f -d @metadata -X PATCH {{.WebHost}}/instances/${INSTANCE_ID}/links/metadata
-curl -f -X POST {{.WebHost}}/instance-builds/{{.InstanceBuildID}}/links/cloud-inits
+curl -f -d 'state=finished' -X PATCH {{.WebHost}}/instance-builds/{{.InstanceBuildID}}
 `))
 )
 

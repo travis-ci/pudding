@@ -192,7 +192,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	}
 
 	err = initScript.Execute(w, &initScriptContext{
-		WebHost:         ibw.cfg.WebHost,
+		WebHost:         webURL.String(),
 		DockerRSA:       ibw.cfg.DockerRSA,
 		PapertrailSite:  ibw.cfg.PapertrailSite,
 		TravisWorkerYML: ibw.cfg.TravisWorkerYML,
