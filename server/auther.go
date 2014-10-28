@@ -14,6 +14,7 @@ import (
 
 var (
 	basicAuthValueRegexp = regexp.MustCompile("(?i:^basic[= ])")
+	instanceBuildRegexp  = regexp.MustCompile("instance-builds/(.*)")
 )
 
 type serverAuther struct {
@@ -49,7 +50,7 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
-		instanceBuildID = ""
+		instanceBuildID = instanceBuildRegexp.FindString(req.URL.Path)
 	}
 
 	authHeader := req.Header.Get("Authorization")
