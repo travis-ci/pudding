@@ -83,6 +83,7 @@ func main() {
 			Usage:  "interval in seconds for the mini worker loop",
 			EnvVar: "WORKER_MANAGER_MINI_WORKER_INTERVAL",
 		},
+		common.InstanceExpiryFlag,
 	}
 	app.Action = runWorkers
 	app.Run(os.Args)
@@ -104,5 +105,5 @@ func runWorkers(c *cli.Context) {
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
 		dockerRSA, c.String("web-hostname"),
 		c.String("papertrail-site"), workerYML,
-		c.Int("mini-worker-interval"))
+		c.Int("mini-worker-interval"), c.Int("instance-expiry"))
 }

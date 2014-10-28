@@ -20,6 +20,11 @@ case "$1" in
       }" \
       ${HOST}:${PORT}/instance-builds
     ;;
+  list-instances)
+    exec curl \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      ${HOST}:${PORT}/instances
+    ;;
   bogus-instance-build)
     exec curl \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \

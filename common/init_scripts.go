@@ -15,6 +15,11 @@ type InstanceBuildAuther interface {
 	HasValidAuth(string, string) bool
 }
 
+type InitScriptGetterAuther interface {
+	InstanceBuildAuther
+	Get(string) (string, error)
+}
+
 type InitScripts struct {
 	RedisNamespace string
 	redisURLString string

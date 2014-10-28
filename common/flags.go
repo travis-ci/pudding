@@ -32,4 +32,10 @@ var (
 		}(),
 		EnvVar: "WORKER_MANAGER_REDIS_URL",
 	}
+	InstanceExpiryFlag = cli.IntFlag{
+		Name:   "E, instance-expiry",
+		Value:  90,
+		Usage:  "expiry in seconds for instance attributes",
+		EnvVar: "WORKER_MANAGER_INSTANCE_EXPIRY",
+	}
 )

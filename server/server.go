@@ -27,14 +27,17 @@ type server struct {
 	log     *logrus.Logger
 	builder *instanceBuilder
 	auther  *serverAuther
-	is      *common.InitScripts
+	is      common.InitScriptGetterAuther
+	i       common.InstanceFetcherStorer
 
 	n *negroni.Negroni
 	r *mux.Router
 	s *manners.GracefulServer
 }
 
-func newServer(addr, authToken, redisURL, slackToken, slackURL string, queueNames map[string]string) (*server, error) {
+func newServer(addr, authToken, redisURL, slackToken, slackURL string,
+	instanceExpiry int, queueNames map[string]string) (*server, error) {
+
 	log := logrus.New()
 	// FIXME: move this elsewhere
 	if os.Getenv("DEBUG") != "" {
@@ -42,6 +45,11 @@ func newServer(addr, authToken, redisURL, slackToken, slackURL string, queueName
 	}
 
 	builder, err := newInstanceBuilder(redisURL, queueNames["instance-builds"])
+	if err != nil {
+		return nil, err
+	}
+
+	i, err := common.NewInstances(redisURL, log, instanceExpiry)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +74,7 @@ func newServer(addr, authToken, redisURL, slackToken, slackURL string, queueName
 
 		builder: builder,
 		is:      is,
+		i:       i,
 		log:     log,
 
 		n: negroni.New(),
@@ -89,6 +98,8 @@ func (srv *server) Run() {
 func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/`,
 		srv.handleRoot).Methods("GET", "DELETE").Name("root")
+	srv.r.HandleFunc(`/instances`,
+		srv.handleInstances).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instance-builds`,
 		srv.handleInstanceBuilds).Methods("GET", "POST").Name("instance-builds")
 	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`,
@@ -110,6 +121,10 @@ func (srv *server) setupMiddleware() {
 func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "DELETE":
+		if !srv.auther.IsAuthorized(req) {
+			http.Error(w, "NO", http.StatusForbidden)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 		srv.s.Shutdown <- true
 	case "GET":
@@ -117,6 +132,22 @@ func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "ohai\n")
 	}
+}
+
+func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case "GET":
+		instances, err := srv.i.Fetch()
+		if err != nil {
+			jsonapi.Error(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		jsonapi.Respond(w, map[string][]*common.Instance{"instances": instances}, http.StatusOK)
+		return
+	}
+
+	http.Error(w, "NO", http.StatusMethodNotAllowed)
 }
 
 func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request) {
@@ -133,6 +164,11 @@ func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.IsAuthorized(req) {
+		http.Error(w, "NO", http.StatusForbidden)
+		return
+	}
+
 	payload := &common.InstanceBuildsCollectionSingular{}
 	err := json.NewDecoder(req.Body).Decode(payload)
 	if err != nil {
@@ -183,6 +219,11 @@ func (srv *server) handleInstanceBuildsByID(w http.ResponseWriter, req *http.Req
 }
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.IsAuthorized(req) {
+		http.Error(w, "NO", http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
@@ -222,6 +263,11 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 }
 
 func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.IsAuthorized(req) {
+		http.Error(w, "NO", http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {

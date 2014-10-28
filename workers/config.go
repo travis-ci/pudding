@@ -25,5 +25,6 @@ type config struct {
 	QueueFuncs         map[string]func(*config, *workers.Msg)
 	QueueConcurrencies map[string]int
 
-	MiniWorkerInterval int
+	MiniWorkerInterval  int
+	InstanceStoreExpiry int
 }

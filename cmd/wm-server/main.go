@@ -44,6 +44,7 @@ func main() {
 			Name:   "slack-url",
 			EnvVar: "WORKER_MANAGER_SLACK_URL",
 		},
+		common.InstanceExpiryFlag,
 	}
 	app.Action = runServer
 
@@ -52,7 +53,7 @@ func main() {
 
 func runServer(c *cli.Context) {
 	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
-		c.String("slack-token"), c.String("slack-url"),
+		c.String("slack-token"), c.String("slack-url"), c.Int("instance-expiry"),
 		map[string]string{
 			"instance-builds": c.String("instance-builds-queue-name"),
 		})

@@ -28,7 +28,7 @@ func init() {
 
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	papertrailSite, travisWorkerYML string, miniWorkerInterval int) {
+	papertrailSite, travisWorkerYML string, miniWorkerInterval, instanceExpiry int) {
 
 	cfg := &config{
 		RedisPoolSize: redisPoolSize,
@@ -40,10 +40,11 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 		PapertrailSite:  papertrailSite,
 		TravisWorkerYML: travisWorkerYML,
 
-		Queues:             []string{},
-		QueueConcurrencies: map[string]int{},
-		QueueFuncs:         defaultQueueFuncs,
-		MiniWorkerInterval: miniWorkerInterval,
+		Queues:              []string{},
+		QueueConcurrencies:  map[string]int{},
+		QueueFuncs:          defaultQueueFuncs,
+		MiniWorkerInterval:  miniWorkerInterval,
+		InstanceStoreExpiry: instanceExpiry,
 	}
 
 	auth, err := aws.GetAuth(awsKey, awsSecret)
