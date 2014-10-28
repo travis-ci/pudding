@@ -50,7 +50,10 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
-		instanceBuildID = instanceBuildRegexp.FindString(req.URL.Path)
+		matches := instanceBuildRegexp.FindStringSubmatch(req.URL.Path)
+		if len(matches) > 1 {
+			instanceBuildID = matches[1]
+		}
 	}
 
 	authHeader := req.Header.Get("Authorization")
