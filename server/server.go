@@ -22,8 +22,7 @@ var (
 )
 
 type server struct {
-	addr      string
-	authToken string
+	addr, authToken, slackToken, slackURL string
 
 	log     *logrus.Logger
 	builder *instanceBuilder
@@ -35,7 +34,7 @@ type server struct {
 	s *manners.GracefulServer
 }
 
-func newServer(addr, authToken, redisURL string, queueNames map[string]string) (*server, error) {
+func newServer(addr, authToken, redisURL, slackToken, slackURL string, queueNames map[string]string) (*server, error) {
 	log := logrus.New()
 	// FIXME: move this elsewhere
 	if os.Getenv("DEBUG") != "" {
@@ -61,6 +60,9 @@ func newServer(addr, authToken, redisURL string, queueNames map[string]string) (
 		addr:      addr,
 		authToken: authToken,
 		auther:    auther,
+
+		slackToken: slackToken,
+		slackURL:   slackURL,
 
 		builder: builder,
 		is:      is,
@@ -192,6 +194,10 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 
 	state := req.FormValue("state")
 	if state == "finished" {
+		// FIXME: parameterize more-er
+		notifier := common.NewSlackNotifier(srv.slackURL, srv.slackToken)
+		notifier.Notify("#blue", fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
+
 		err := srv.builder.Wipe(instanceBuildID)
 		if err != nil {
 			jsonapi.Error(w, err, http.StatusInternalServerError)

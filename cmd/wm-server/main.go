@@ -36,6 +36,14 @@ func main() {
 			Value:  "swordfish",
 			EnvVar: "WORKER_MANAGER_AUTH_TOKEN",
 		},
+		cli.StringFlag{
+			Name:   "slack-token",
+			EnvVar: "WORKER_MANAGER_SLACK_TOKEN",
+		},
+		cli.StringFlag{
+			Name:   "slack-url",
+			EnvVar: "WORKER_MANAGER_SLACK_URL",
+		},
 	}
 	app.Action = runServer
 
@@ -44,6 +52,7 @@ func main() {
 
 func runServer(c *cli.Context) {
 	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
+		c.String("slack-token"), c.String("slack-url"),
 		map[string]string{
 			"instance-builds": c.String("instance-builds-queue-name"),
 		})
