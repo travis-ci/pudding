@@ -1,0 +1,16 @@
+#!/bin/bash
+set -o pipefail
+
+aws ec2 describe-instances \
+  --filters Name=tag-value,Values=worker \
+            Name=instance-state-name,Values=running | \
+  jq -r '.Reservations | .[] |
+    .Instances | .[] |
+    select(.Tags != null) |
+    select(.Tags | .[] | .Value == "worker") |
+    [(.Tags | .[] | select(.Key == "Name") | .Value), .InstanceId, .LaunchTime] |
+    join(" ")
+  ' | \
+  grep '\-docker' | \
+  sort -k3 | \
+  exec grep org-test

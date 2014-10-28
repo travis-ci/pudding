@@ -1,19 +1,6 @@
 #!/bin/bash
+set -o pipefail
 
-set -o errexit
-
-exec aws ec2 describe-instances \
-  --filters Name=tag-value,Values=worker \
-            Name=instance-state-name,Values=running | \
-  jq -r '.Reservations | .[] |
-    .Instances | .[] |
-    select(.Tags != null) |
-    select(.Tags | .[] | .Value == "worker") |
-    [(.Tags | .[] | select(.Key == "Name") | .Value), .InstanceId, .LaunchTime] |
-    join(" ")
-  ' | \
-  grep '\-docker' | \
-  sort -k3 | \
-  grep org-test | \
+$(dirname ${BASH_SOURCE[0]})/list-test-instances | \
   awk '{ print $2 }' | \
-  xargs aws ec2 terminate-instances --instance-ids
+  exec xargs aws ec2 terminate-instances --instance-ids
