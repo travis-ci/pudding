@@ -6,6 +6,8 @@ var (
 	initScript = template.Must(template.New("init-script").Parse(`#!/bin/bash
 set -o errexit
 
+curl -f -d 'state=started' -X PATCH {{.InstanceBuildURL}}
+
 cd /tmp
 
 cat > docker_rsa <<EOF
