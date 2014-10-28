@@ -119,6 +119,12 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 		Name:        ibw.sgName,
 		Description: "custom docker worker security group",
 	}
+
+	log.WithFields(logrus.Fields{
+		"jid":  ibw.jid,
+		"name": ibw.sgName,
+	}).Debug("creating security group")
+
 	resp, err := ibw.ec2.CreateSecurityGroup(newSg)
 	if err != nil {
 		log.WithFields(logrus.Fields{
