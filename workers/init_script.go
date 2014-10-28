@@ -6,7 +6,7 @@ var (
 	initScript = template.Must(template.New("init-script").Parse(`#!/bin/bash
 set -o errexit
 
-curl -f -d 'state=started' -X PATCH {{.InstanceBuildURL}}
+curl -f -d 'state=started' -X PATCH {{.InstanceBuildURL}}?debug=cloud-init-$LINENO
 
 cd /tmp
 
@@ -37,6 +37,8 @@ cat > watch-files.conf <<EOF
 \$InputFilePollInterval 10
 EOF
 
+curl -f -d 'state=started' -X PATCH {{.InstanceBuildURL}}?debug=cloud-init-$LINENO
+
 mkdir /home/deploy/.ssh
 chown travis:travis /home/deploy/.ssh
 chmod 0700 /home/deploy/.ssh
@@ -50,6 +52,8 @@ mv watch-files.conf /etc/rsyslog.d/60-watch-files.conf
 mv papertrail.conf /etc/rsyslog.d/65-papertrail.conf
 service rsyslog restart
 
+curl -f -d 'state=started' -X PATCH {{.InstanceBuildURL}}?debug=cloud-init-$LINENO
+
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 echo > metadata
 for attr in hostname instance-type public-hostname public-ipv4 ; do
@@ -57,8 +61,9 @@ for attr in hostname instance-type public-hostname public-ipv4 ; do
 end
 echo -en "instance-id=$INSTANCE_ID" >> metadata
 
-curl -f -d @metadata -X PATCH {{.InstanceMetadataURL}}
-curl -f -d 'state=finished' -X PATCH {{.InstanceBuildURL}}
+curl -f -d @metadata -X PATCH {{.InstanceMetadataURL}}?debug=cloud-init-$LINENO
+
+curl -f -d 'state=finished' -X PATCH {{.InstanceBuildURL}}?debug=cloud-init-$LINENO
 `))
 )
 
