@@ -135,6 +135,11 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 
 	ibw.sg = &resp.SecurityGroup
 
+	log.WithFields(logrus.Fields{
+		"jid": ibw.jid,
+		"security_group_name": ibw.sgName,
+	}).Debug("authorizing port 22 on security group")
+
 	_, err = ibw.ec2.AuthorizeSecurityGroup(*ibw.sg, []ec2.IPPerm{
 		ec2.IPPerm{
 			Protocol:  "tcp",
