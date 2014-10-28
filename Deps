@@ -51,6 +51,10 @@
 			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
 		},
 		{
+			"ImportPath": "github.com/hamfist/yaml",
+			"Rev": "eca94c41d994ae2215d455ce578ae6e2dc6ee516"
+		},
+		{
 			"ImportPath": "github.com/jrallison/go-workers",
 			"Rev": "00f954fb9278b9ceed81fccba4cd30bd14f6a012"
 		},
@@ -73,10 +77,6 @@
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",
 			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
-		},
-		{
-			"ImportPath": "gopkg.in/yaml.v2",
-			"Rev": "eca94c41d994ae2215d455ce578ae6e2dc6ee516"
 		}
 	]
 }

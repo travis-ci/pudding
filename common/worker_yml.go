@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v2"
+	"github.com/hamfist/yaml"
 )
 
 var (
