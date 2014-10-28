@@ -48,6 +48,12 @@ func (sa *serverAuther) IsAuthorized(req *http.Request) bool {
 
 func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	vars := mux.Vars(req)
+
+	sa.log.WithFields(logrus.Fields{
+		"path": req.URL.Path,
+		"vars": vars,
+	}).Info("extracting instance build id if present")
+
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
 		matches := instanceBuildRegexp.FindStringSubmatch(req.URL.Path)
