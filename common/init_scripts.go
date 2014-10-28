@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -80,6 +81,13 @@ func (is *InitScripts) HasValidAuth(ID, auth string) bool {
 	if err != nil {
 		return false
 	}
+
+	log := logrus.New()
+	log.WithFields(logrus.Fields{
+		"instance_build_id": ID,
+		"auth":              auth,
+		"db_auth":           dbAuth,
+	}).Info("comparing auths")
 
 	return strings.TrimSpace(dbAuth) == strings.TrimSpace(auth)
 }

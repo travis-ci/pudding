@@ -105,5 +105,9 @@ func (sa *serverAuther) hasValidInstanceBuildBasicAuth(authHeader, instanceBuild
 		return false
 	}
 
+	sa.log.WithFields(logrus.Fields{
+		"basic_auth":        authParts[1],
+		"instance_build_id": instanceBuildID,
+	}).Info("checking basic auth against database")
 	return sa.is.HasValidAuth(instanceBuildID, authParts[1])
 }

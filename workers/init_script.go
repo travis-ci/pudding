@@ -55,15 +55,16 @@ for attr in hostname instance-type public-hostname public-ipv4 ; do
 end
 echo -en "instance-id=$INSTANCE_ID" >> metadata
 
-curl -f -d @metadata -X PATCH {{.WebHost}}/instances/${INSTANCE_ID}/links/metadata
-curl -f -d 'state=finished' -X PATCH {{.WebHost}}/instance-builds/{{.InstanceBuildID}}
+curl -f -d @metadata -X PATCH {{.InstanceMetadataURL}}
+curl -f -d 'state=finished' -X PATCH {{.InstanceBuildURL}}
 `))
 )
 
 type initScriptContext struct {
-	WebHost         string
-	DockerRSA       string
-	PapertrailSite  string
-	TravisWorkerYML string
-	InstanceBuildID string
+	InstanceMetadataURL string
+	DockerRSA           string
+	PapertrailSite      string
+	TravisWorkerYML     string
+	InstanceBuildID     string
+	InstanceBuildURL    string
 }
