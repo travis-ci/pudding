@@ -28,7 +28,7 @@ func init() {
 
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	papertrailSite, travisWorkerYML string) {
+	papertrailSite, travisWorkerYML string, miniWorkerInterval int) {
 
 	cfg := &config{
 		RedisPoolSize: redisPoolSize,
@@ -43,6 +43,7 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 		Queues:             []string{},
 		QueueConcurrencies: map[string]int{},
 		QueueFuncs:         defaultQueueFuncs,
+		MiniWorkerInterval: miniWorkerInterval,
 	}
 
 	auth, err := aws.GetAuth(awsKey, awsSecret)
@@ -93,10 +94,10 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 
 	cfg.RedisURL = redisURL
 
-	runWorkers(cfg)
+	runWorkers(cfg, log)
 }
 
-func runWorkers(cfg *config) {
+func runWorkers(cfg *config, log *logrus.Logger) {
 	// TODO: implement the raven middleware
 	// workers.Middleware.Prepend(NewRavenMiddleware(sentryDSN))
 	workers.Configure(optsFromConfig(cfg))
@@ -112,7 +113,24 @@ func runWorkers(cfg *config) {
 			registered(cfg, msg)
 		}, cfg.QueueConcurrencies[queue])
 	}
+
+	go setupMiniWorkers(cfg, log).Run()
 	workers.Run()
+}
+
+func setupMiniWorkers(cfg *config, log *logrus.Logger) *miniWorkers {
+	mw := newMiniWorkers(cfg, log)
+	mw.Register("ec2-sync", func() error {
+		syncer, err := newEC2Syncer(cfg, log)
+		if err != nil {
+			log.WithField("err", err).Error("failed to build syncer")
+			return err
+		}
+
+		return syncer.Sync()
+	})
+
+	return mw
 }
 
 func optsFromConfig(cfg *config) map[string]string {

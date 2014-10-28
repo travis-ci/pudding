@@ -8,7 +8,7 @@ import (
 
 func ResolveAMI(conn *ec2.EC2, ID string) (*ec2.Image, error) {
 	if ID != "" {
-		resp, err := conn.Images([]string{ID}, &ec2.Filter{})
+		resp, err := conn.Images([]string{ID}, ec2.NewFilter())
 		if err != nil {
 			return nil, err
 		}
@@ -41,8 +41,4 @@ func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
 	sort.Strings(imgNames)
 	img := imgMap[imgNames[len(imgNames)-1]]
 	return &img, nil
-}
-
-func GetInstanceIPv4(conn *ec2.EC2, ID string) (string, error) {
-	return "127.0.0.1", nil
 }

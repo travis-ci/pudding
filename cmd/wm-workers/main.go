@@ -60,8 +60,7 @@ func main() {
 			EnvVar: "AWS_DEFAULT_REGION",
 		},
 		cli.StringFlag{
-			Name:  "docker-rsa",
-			Value: common.GetDockerRSAKey(),
+			Name: "docker-rsa",
 		},
 		cli.StringFlag{
 			Name:   "H, web-hostname",
@@ -76,8 +75,13 @@ func main() {
 			EnvVar: "WORKER_MANAGER_PAPERTRAIL_SITE",
 		},
 		cli.StringFlag{
-			Name:  "Y, travis-worker-yml",
-			Value: common.GetTravisWorkerYML(),
+			Name: "Y, travis-worker-yml",
+		},
+		cli.IntFlag{
+			Name:   "I, mini-worker-interval",
+			Value:  30,
+			Usage:  "interval in seconds for the mini worker loop",
+			EnvVar: "WORKER_MANAGER_MINI_WORKER_INTERVAL",
 		},
 	}
 	app.Action = runWorkers
@@ -85,9 +89,20 @@ func main() {
 }
 
 func runWorkers(c *cli.Context) {
+	dockerRSA := c.String("docker-rsa")
+	if dockerRSA == "" {
+		dockerRSA = common.GetDockerRSAKey()
+	}
+
+	workerYML := c.String("travis-worker-yml")
+	if workerYML == "" {
+		workerYML = common.GetTravisWorkerYML()
+	}
+
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),
 		c.String("redis-url"), c.String("process-id"),
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
-		c.String("docker-rsa"), c.String("web-hostname"),
-		c.String("papertrail-site"), c.String("travis-worker-yml"))
+		dockerRSA, c.String("web-hostname"),
+		c.String("papertrail-site"), workerYML,
+		c.Int("mini-worker-interval"))
 }

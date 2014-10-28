@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hamfist/yaml"
 )
@@ -169,4 +170,15 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 
 	out, err := yaml.Marshal(wc)
 	return string(out), err
+}
+
+func GetTravisWorkerYML() string {
+	for _, key := range []string{"TRAVIS_WORKER_YML", "WORKER_MANAGER_TRAVIS_WORKER_YML"} {
+		value, err := GetCompressedEnvVar(key)
+		if err == nil {
+			return value
+		}
+	}
+
+	return os.Getenv("travis_config")
 }
