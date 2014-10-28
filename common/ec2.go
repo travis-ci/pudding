@@ -31,15 +31,16 @@ func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
 	}
 
 	imgNames := []string{}
-	imgMap := map[string]*ec2.Image{}
+	imgMap := map[string]ec2.Image{}
 
 	for _, img := range allImages.Images {
 		imgNames = append(imgNames, img.Name)
-		imgMap[img.Name] = &img
+		imgMap[img.Name] = img
 	}
 
 	sort.Strings(imgNames)
-	return imgMap[imgNames[len(imgNames)-1]], nil
+	img := imgMap[imgNames[len(imgNames)-1]]
+	return &img, nil
 }
 
 func GetInstanceIPv4(conn *ec2.EC2, ID string) (string, error) {
