@@ -79,9 +79,13 @@ func (is *InitScripts) HasValidAuth(ID, auth string) bool {
 
 	log := logrus.New()
 
-	dbAuth, err := redis.String(conn.Do("GET", AuthRedisKey(ID)))
+	redisKey := AuthRedisKey(ID)
+	dbAuth, err := redis.String(conn.Do("GET", redisKey))
 	if err != nil {
-		log.WithField("err", err).Error("failed to fetch auth from database")
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"key": redisKey,
+		}).Error("failed to fetch auth from database")
 		return false
 	}
 

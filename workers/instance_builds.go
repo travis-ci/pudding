@@ -224,14 +224,14 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	}
 
 	scriptKey := common.InitScriptRedisKey(ibw.b.ID)
-	err = ibw.rc.Send("SETEX", scriptKey, 300, initScriptB64)
+	err = ibw.rc.Send("SETEX", scriptKey, 600, initScriptB64)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err
 	}
 
 	authKey := common.AuthRedisKey(ibw.b.ID)
-	err = ibw.rc.Send("SETEX", authKey, 300, tmpAuth)
+	err = ibw.rc.Send("SETEX", authKey, 600, tmpAuth)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err
