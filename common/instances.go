@@ -7,7 +7,7 @@ import (
 )
 
 type InstanceFetcherStorer interface {
-	Fetch() ([]*Instance, error)
+	Fetch(map[string]string) ([]*Instance, error)
 	Store(map[string]ec2.Instance) error
 }
 
@@ -30,11 +30,11 @@ func NewInstances(redisURL string, log *logrus.Logger, expiry int) (*Instances, 
 	}, nil
 }
 
-func (i *Instances) Fetch() ([]*Instance, error) {
+func (i *Instances) Fetch(f map[string]string) ([]*Instance, error) {
 	conn := i.r.Get()
 	defer conn.Close()
 
-	return FetchInstances(conn)
+	return FetchInstances(conn, f)
 }
 
 func (i *Instances) Store(instances map[string]ec2.Instance) error {

@@ -50,7 +50,7 @@ func BuildRedisPool(redisURL string) (*redis.Pool, error) {
 	return pool, nil
 }
 
-func FetchInstances(conn redis.Conn) ([]*Instance, error) {
+func FetchInstances(conn redis.Conn, f map[string]string) ([]*Instance, error) {
 	keys, err := redis.Strings(conn.Do("SMEMBERS", fmt.Sprintf("%s:instances", RedisNamespace)))
 	if err != nil {
 		return nil, err
@@ -70,8 +70,23 @@ func FetchInstances(conn redis.Conn) ([]*Instance, error) {
 			return nil, err
 		}
 
-		// inst.ID = inst.InstanceID
-		instances = append(instances, inst)
+		failedChecks := 0
+		for key, value := range f {
+			switch key {
+			case "env":
+				if inst.Env != value {
+					failedChecks++
+				}
+			case "site":
+				if inst.Site != value {
+					failedChecks++
+				}
+			}
+		}
+
+		if failedChecks == 0 {
+			instances = append(instances, inst)
+		}
 	}
 
 	return instances, nil

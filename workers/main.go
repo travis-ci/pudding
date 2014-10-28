@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -129,6 +130,16 @@ func setupMiniWorkers(cfg *config, log *logrus.Logger) *miniWorkers {
 		}
 
 		return syncer.Sync()
+	})
+
+	mw.Register("keepalive", func() error {
+		_, err := http.Get(cfg.WebHost)
+		if err != nil {
+			log.WithField("err", err).Error("failed to hit web host")
+			return err
+		}
+
+		return nil
 	})
 
 	return mw

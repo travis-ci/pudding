@@ -12,6 +12,10 @@ import (
 	"github.com/travis-pro/worker-manager-service/common"
 )
 
+const (
+	internalAuthHeader = "Worker-Manager-Internal-Is-Authorized"
+)
+
 var (
 	basicAuthValueRegexp = regexp.MustCompile("(?i:^basic[= ])")
 	instanceBuildRegexp  = regexp.MustCompile("(?:instance-builds|init-scripts)/(.*)")
@@ -42,11 +46,7 @@ func newServerAuther(token, redisURL string, log *logrus.Logger) (*serverAuther,
 	return sa, nil
 }
 
-func (sa *serverAuther) IsAuthorized(req *http.Request) bool {
-	return req.Header.Get("Worker-Manager-Internal-Is-Authorized") == sa.rt
-}
-
-func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (sa *serverAuther) Authenticate(w http.ResponseWriter, req *http.Request) bool {
 	vars := mux.Vars(req)
 
 	sa.log.WithFields(logrus.Fields{
@@ -66,13 +66,12 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 	sa.log.WithField("authorization", authHeader).Debug("raw authorization header")
 
 	if authHeader != "" && (sa.hasValidTokenAuth(authHeader) || sa.hasValidInstanceBuildBasicAuth(authHeader, instanceBuildID)) {
-		req.Header.Set("Worker-Manager-Internal-Is-Authorized", sa.rt)
+		req.Header.Set(internalAuthHeader, sa.rt)
 		sa.log.WithFields(logrus.Fields{
 			"request_id":        req.Header.Get("X-Request-ID"),
 			"instance_build_id": instanceBuildID,
 		}).Debug("allowing authorized request yey")
-		next(w, req)
-		return
+		return true
 	}
 
 	if authHeader == "" {
@@ -81,10 +80,11 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 			"request_id": req.Header.Get("X-Request-ID"),
 		}).Debug("responding 401 due to empty Authorization header")
 		http.Error(w, "NO", http.StatusUnauthorized)
-		return
+		return false
 	}
 
 	http.Error(w, "NO", http.StatusForbidden)
+	return false
 }
 
 func (sa *serverAuther) hasValidTokenAuth(authHeader string) bool {

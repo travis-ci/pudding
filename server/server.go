@@ -109,7 +109,6 @@ func (srv *server) setupRoutes() {
 }
 
 func (srv *server) setupMiddleware() {
-	srv.n.Use(srv.auther)
 	srv.n.Use(negroni.NewRecovery())
 	srv.n.Use(negronilogrus.NewMiddleware())
 	srv.n.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -121,8 +120,7 @@ func (srv *server) setupMiddleware() {
 func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "DELETE":
-		if !srv.auther.IsAuthorized(req) {
-			http.Error(w, "NO", http.StatusForbidden)
+		if !srv.auther.Authenticate(w, req) {
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -137,7 +135,15 @@ func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
 func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
-		instances, err := srv.i.Fetch()
+		f := map[string]string{}
+		for _, qv := range []string{"env", "site"} {
+			v := req.FormValue(qv)
+			if v != "" {
+				f[qv] = v
+			}
+		}
+
+		instances, err := srv.i.Fetch(f)
 		if err != nil {
 			jsonapi.Error(w, err, http.StatusInternalServerError)
 			return
@@ -164,8 +170,7 @@ func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.IsAuthorized(req) {
-		http.Error(w, "NO", http.StatusForbidden)
+	if !srv.auther.Authenticate(w, req) {
 		return
 	}
 
@@ -219,8 +224,7 @@ func (srv *server) handleInstanceBuildsByID(w http.ResponseWriter, req *http.Req
 }
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.IsAuthorized(req) {
-		http.Error(w, "NO", http.StatusForbidden)
+	if !srv.auther.Authenticate(w, req) {
 		return
 	}
 
@@ -263,8 +267,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 }
 
 func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.IsAuthorized(req) {
-		http.Error(w, "NO", http.StatusForbidden)
+	if !srv.auther.Authenticate(w, req) {
 		return
 	}
 
@@ -275,12 +278,7 @@ func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if srv.auther.IsAuthorized(req) {
-		srv.sendInitScript(w, instanceBuildID)
-		return
-	}
-
-	http.Error(w, "NO", http.StatusForbidden)
+	srv.sendInitScript(w, instanceBuildID)
 }
 
 func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {

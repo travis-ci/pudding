@@ -1,8 +1,7 @@
 package common
 
 type Instance struct {
-	Name string `json:"name" redis:"name"`
-	// ID           string `json:"id" redis:"-"`
+	Name         string `json:"name" redis:"name"`
 	InstanceID   string `json:"id" redis:"instance_id"`
 	InstanceType string `json:"instance_type" redis:"instance_type"`
 	ImageID      string `json:"image_id" redis:"image_id"`
