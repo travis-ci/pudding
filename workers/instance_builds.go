@@ -215,9 +215,6 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	webURL.Path = fmt.Sprintf("/instance-builds/%s", ibw.b.ID)
 	instanceBuildURL := webURL.String()
 
-	webURL.Path = "/instances/$INSTANCE_ID/links/metadata"
-	instanceMetadataURL := webURL.String()
-
 	buf := &bytes.Buffer{}
 	w, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
 	if err != nil {
@@ -230,14 +227,13 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	}
 
 	err = initScript.Execute(w, &initScriptContext{
-		Env:                 ibw.b.Env,
-		Site:                ibw.b.Site,
-		DockerRSA:           ibw.cfg.DockerRSA,
-		PapertrailSite:      ibw.cfg.PapertrailSite,
-		TravisWorkerYML:     yml,
-		InstanceBuildID:     ibw.b.ID,
-		InstanceBuildURL:    instanceBuildURL,
-		InstanceMetadataURL: instanceMetadataURL,
+		Env:              ibw.b.Env,
+		Site:             ibw.b.Site,
+		DockerRSA:        ibw.cfg.DockerRSA,
+		PapertrailSite:   ibw.cfg.PapertrailSite,
+		TravisWorkerYML:  yml,
+		InstanceBuildID:  ibw.b.ID,
+		InstanceBuildURL: instanceBuildURL,
 	})
 	if err != nil {
 		return nil, err

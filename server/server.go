@@ -95,8 +95,6 @@ func (srv *server) setupRoutes() {
 		srv.handleInstanceBuildsByID).Methods("PATCH").Name("instance-builds-by-id")
 	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`,
 		srv.handleInitScripts).Methods("GET").Name("init-scripts")
-	srv.r.HandleFunc(`/instances/{instance_id}/links/metadata`,
-		srv.handleInstanceMetadata).Methods("GET", "PATCH", "PUT").Name("instance-links-metadata")
 }
 
 func (srv *server) setupMiddleware() {
@@ -253,23 +251,4 @@ func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {
 	w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, script)
-}
-
-func (srv *server) handleInstanceMetadata(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case "GET":
-		srv.handleInstanceMetadataGet(w, req)
-	case "PATCH", "PUT":
-		srv.handleInstanceMetadataUpdate(w, req)
-	}
-}
-
-func (srv *server) handleInstanceMetadataGet(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Respond(w, map[string]string{"whatever": "sure"}, http.StatusOK)
-	// http.Error(w, "not yet", http.StatusNotImplemented)
-}
-
-func (srv *server) handleInstanceMetadataUpdate(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Respond(w, map[string]string{"whatever": "sure"}, http.StatusOK)
-	// http.Error(w, "not yet", http.StatusNotImplemented)
 }
