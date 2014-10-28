@@ -210,8 +210,6 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Printf("%s\n", yml)
-
 	err = initScript.Execute(w, &initScriptContext{
 		DockerRSA:           ibw.cfg.DockerRSA,
 		PapertrailSite:      ibw.cfg.PapertrailSite,
