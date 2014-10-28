@@ -138,10 +138,7 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 	wc := &WorkerYML{
 		Env: "linux",
 		LinuxConfig: &workerEnvConfig{
-			// FIXME: the instance id is not known at cloud init script
-			// render time.  How fix?
-			// Host: fmt.Sprintf("worker-linux-docker-%s.%s.travis-ci.%s",
-			// strings.Replace(instanceID, "i-", "", -1), env, site),
+			Host:     "$TRAVIS_WORKER_HOST_NAME",
 			LogLevel: "info",
 			Queue:    fmt.Sprintf("builds.%s", queue),
 			AMQP:     amqp,

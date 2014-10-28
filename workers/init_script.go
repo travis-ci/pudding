@@ -6,9 +6,12 @@ var (
 	initScript = template.Must(template.New("init-script").Parse(`#!/bin/bash
 set -o errexit
 
-curl -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=started"
+curl -s -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=started"
 
 cd /tmp
+
+export INSTANCE_ID=$(curl -s 'http://169.254.169.254/latest/meta-data/instance-id')
+export TRAVIS_WORKER_HOST_NAME="worker-linux-docker-${INSTANCE_ID/i-/}.{{.Env}}.travis-ci.{{.Site}}"
 
 cat > docker_rsa <<EOF
 {{.DockerRSA}}
@@ -37,7 +40,7 @@ cat > watch-files.conf <<EOF
 \$InputFilePollInterval 10
 EOF
 
-curl -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
+curl -s -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
 
 mkdir /home/deploy/.ssh
 chown travis:travis /home/deploy/.ssh
@@ -52,22 +55,24 @@ mv watch-files.conf /etc/rsyslog.d/60-watch-files.conf
 mv papertrail.conf /etc/rsyslog.d/65-papertrail.conf
 service rsyslog restart
 
-# curl -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-metadata"
-#
-# INSTANCE_ID=$(curl -s 'http://169.254.169.254/latest/meta-data/instance-id')
+curl -s -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-metadata"
+
 # echo > metadata
 # for attr in hostname instance-type public-hostname public-ipv4 ; do
 #   echo -en "$attr=$(curl -s 'http://169.254.169.254/latest/meta-data/$attr')&" >> metadata
 # end
 # echo -en "instance-id=$INSTANCE_ID" >> metadata
-#
-# curl -f -d @metadata -X PATCH "{{.InstanceMetadataURL}}?l=cloud-init-$LINENO&m=post-metadata"
 
-curl -f -d 'state=finished' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=finished"
+curl -s -f -d @metadata -X PATCH "{{.InstanceMetadataURL}}?l=cloud-init-$LINENO&m=post-metadata"
+
+rm -rf /var/lib/cloud/instances/*
+curl -s -f -d 'state=finished' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=finished"
 `))
 )
 
 type initScriptContext struct {
+	Env                 string
+	Site                string
 	InstanceMetadataURL string
 	DockerRSA           string
 	PapertrailSite      string
