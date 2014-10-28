@@ -120,8 +120,8 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 	}
 
 	log.WithFields(logrus.Fields{
-		"jid":  ibw.jid,
-		"name": ibw.sgName,
+		"jid": ibw.jid,
+		"security_group_name": ibw.sgName,
 	}).Debug("creating security group")
 
 	resp, err := ibw.ec2.CreateSecurityGroup(newSg)
@@ -134,6 +134,24 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 	}
 
 	ibw.sg = &resp.SecurityGroup
+
+	_, err = ibw.ec2.AuthorizeSecurityGroup(*ibw.sg, []ec2.IPPerm{
+		ec2.IPPerm{
+			Protocol:  "tcp",
+			FromPort:  22,
+			ToPort:    22,
+			SourceIPs: []string{"0.0.0.0/0"},
+		},
+	})
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+			"security_group_name": ibw.sgName,
+		}).Error("failed to authorize port 22")
+		return err
+	}
+
 	return nil
 }
 
