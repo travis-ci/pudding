@@ -46,7 +46,7 @@ type instanceBuilderWorker struct {
 	sgName string
 	ami    *ec2.Image
 	b      *common.InstanceBuild
-	i      []*ec2.Instance
+	i      *ec2.Instance
 }
 
 func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
@@ -55,7 +55,6 @@ func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, 
 		jid: jid,
 		cfg: cfg,
 		b:   b,
-		i:   []*ec2.Instance{},
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
 
@@ -88,8 +87,8 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Debug("creating instances")
-	err = ibw.createInstances()
+	log.WithField("jid", ibw.jid).Debug("creating instance")
+	err = ibw.createInstance()
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
@@ -98,8 +97,8 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Debug("tagging instances")
-	err = ibw.tagInstances()
+	log.WithField("jid", ibw.jid).Debug("tagging instance")
+	err = ibw.tagInstance()
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
@@ -108,7 +107,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	ibw.notifyInstancesLaunched()
+	ibw.notifyInstanceLaunched()
 
 	log.WithField("jid", ibw.jid).Debug("all done")
 	return nil
@@ -138,7 +137,7 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 	return nil
 }
 
-func (ibw *instanceBuilderWorker) createInstances() error {
+func (ibw *instanceBuilderWorker) createInstance() error {
 	log.WithFields(logrus.Fields{
 		"jid":           ibw.jid,
 		"instance_type": ibw.b.InstanceType,
@@ -162,15 +161,12 @@ func (ibw *instanceBuilderWorker) createInstances() error {
 		return err
 	}
 
-	for _, inst := range resp.Instances {
-		ibw.i = append(ibw.i, &inst)
-	}
-
+	ibw.i = &resp.Instances[0]
 	return nil
 }
 
-func (ibw *instanceBuilderWorker) tagInstances() error {
-	_, err := ibw.ec2.CreateTags(ibw.instanceIDs(), []ec2.Tag{
+func (ibw *instanceBuilderWorker) tagInstance() error {
+	_, err := ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, []ec2.Tag{
 		ec2.Tag{Key: "role", Value: "worker"},
 		ec2.Tag{Key: "Name", Value: fmt.Sprintf("travis-%s-%s-%s", ibw.b.Site, ibw.b.Env, ibw.b.Queue)},
 		ec2.Tag{Key: "site", Value: ibw.b.Site},
@@ -256,18 +252,10 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	return []byte(fmt.Sprintf("#include %s\n", initScriptURL)), nil
 }
 
-func (ibw *instanceBuilderWorker) notifyInstancesLaunched() {
+func (ibw *instanceBuilderWorker) notifyInstanceLaunched() {
 	// TODO: notify instance launched in Slack or some such
 	log.WithFields(logrus.Fields{
-		"jid":          ibw.jid,
-		"instance_ids": ibw.instanceIDs(),
-	}).Info("launched instances")
-}
-
-func (ibw *instanceBuilderWorker) instanceIDs() []string {
-	out := []string{}
-	for _, inst := range ibw.i {
-		out = append(out, inst.InstanceId)
-	}
-	return out
+		"jid":         ibw.jid,
+		"instance_id": ibw.i.InstanceId,
+	}).Info("launched instance")
 }
