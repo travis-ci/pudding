@@ -50,15 +50,17 @@ type instanceBuilderWorker struct {
 }
 
 func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
-	return &instanceBuilderWorker{
-		rc:     redisConn,
-		jid:    jid,
-		cfg:    cfg,
-		b:      b,
-		i:      []*ec2.Instance{},
-		sgName: fmt.Sprintf("docker-worker-%d", time.Now().UTC().Unix()),
-		ec2:    ec2.New(cfg.AWSAuth, cfg.AWSRegion),
+	ibw := &instanceBuilderWorker{
+		rc:  redisConn,
+		jid: jid,
+		cfg: cfg,
+		b:   b,
+		i:   []*ec2.Instance{},
+		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
+
+	ibw.sgName = fmt.Sprintf("docker-worker-%d-%p", time.Now().UTC().Unix(), ibw)
+	return ibw
 }
 
 func (ibw *instanceBuilderWorker) Build() error {
@@ -146,8 +148,6 @@ func (ibw *instanceBuilderWorker) createInstances() error {
 
 	resp, err := ibw.ec2.RunInstances(&ec2.RunInstances{
 		ImageId:        ibw.ami.Id,
-		MinCount:       ibw.b.Count,
-		MaxCount:       ibw.b.Count,
 		UserData:       userData,
 		InstanceType:   ibw.b.InstanceType,
 		SecurityGroups: []ec2.SecurityGroup{*ibw.sg},
@@ -199,10 +199,17 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
+	yml, err := common.BuildTravisWorkerYML(ibw.b.Site, ibw.b.Env, ibw.cfg.TravisWorkerYML, ibw.b.Queue, ibw.b.Count)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("%s\n", yml)
+
 	err = initScript.Execute(w, &initScriptContext{
 		DockerRSA:           ibw.cfg.DockerRSA,
 		PapertrailSite:      ibw.cfg.PapertrailSite,
-		TravisWorkerYML:     ibw.cfg.TravisWorkerYML,
+		TravisWorkerYML:     yml,
 		InstanceBuildID:     ibw.b.ID,
 		InstanceBuildURL:    instanceBuildURL,
 		InstanceMetadataURL: instanceMetadataURL,
