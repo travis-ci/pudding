@@ -8,7 +8,7 @@ aws ec2 describe-instances \
     .Instances | .[] |
     select(.Tags != null) |
     select(.Tags | .[] | .Value == "worker") |
-    [(.Tags | .[] | select(.Key == "Name") | .Value), .InstanceId, .LaunchTime] |
+    [(.Tags | .[] | select(.Key == "Name") | .Value), .InstanceId, .PublicIpAddress, .LaunchTime] |
     join(" ")
   ' | \
   grep '\-docker' | \
