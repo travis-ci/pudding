@@ -2,7 +2,9 @@
 
 set -o errexit
 
-exec aws ec2 describe-instances | \
+exec aws ec2 describe-instances \
+  --filters Name=tag-value,Values=worker \
+            Name=instance-state-name,Values=running | \
   jq -r '.Reservations | .[] |
     .Instances | .[] |
     select(.Tags != null) |

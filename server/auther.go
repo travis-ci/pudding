@@ -56,11 +56,18 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 
 	if req.Header.Get("Authorization") == "" {
 		w.Header().Set("WWW-Authenticate", "token")
+		sa.log.WithFields(logrus.Fields{
+			"request_id": req.Header.Get("X-Request-ID"),
+		}).Info("responding 401 due to empty Authorization header")
 		http.Error(w, "NO", http.StatusUnauthorized)
 		return
 	}
 
 	if isAuthd {
+		sa.log.WithFields(logrus.Fields{
+			"request_id":        req.Header.Get("X-Request-ID"),
+			"instance_build_id": instanceBuildID,
+		}).Info("allowing authorized request yey")
 		next(w, req)
 		return
 	}
