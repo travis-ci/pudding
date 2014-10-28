@@ -3,12 +3,17 @@ package server
 import (
 	"encoding/base64"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"github.com/travis-pro/worker-manager-service/common"
+)
+
+var (
+	basicAuthValueRegexp = regexp.MustCompile("(?i:^basic[= ])")
 )
 
 type serverAuther struct {
@@ -41,29 +46,17 @@ func (sa *serverAuther) IsAuthorized(req *http.Request) bool {
 }
 
 func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	isAuthd := false
-
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
 		instanceBuildID = ""
 	}
+
 	authHeader := req.Header.Get("Authorization")
-	if sa.hasValidTokenAuth(authHeader) || sa.hasValidInstanceBuildBasicAuth(authHeader, instanceBuildID) {
+	sa.log.WithField("authorization", authHeader).Info("raw authorization header")
+
+	if authHeader != "" && (sa.hasValidTokenAuth(authHeader) || sa.hasValidInstanceBuildBasicAuth(authHeader, instanceBuildID)) {
 		req.Header.Set("Worker-Manager-Internal-Is-Authorized", sa.rt)
-		isAuthd = true
-	}
-
-	if req.Header.Get("Authorization") == "" {
-		w.Header().Set("WWW-Authenticate", "token")
-		sa.log.WithFields(logrus.Fields{
-			"request_id": req.Header.Get("X-Request-ID"),
-		}).Info("responding 401 due to empty Authorization header")
-		http.Error(w, "NO", http.StatusUnauthorized)
-		return
-	}
-
-	if isAuthd {
 		sa.log.WithFields(logrus.Fields{
 			"request_id":        req.Header.Get("X-Request-ID"),
 			"instance_build_id": instanceBuildID,
@@ -72,19 +65,34 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 		return
 	}
 
+	if authHeader == "" {
+		w.Header().Set("WWW-Authenticate", "token")
+		sa.log.WithFields(logrus.Fields{
+			"request_id": req.Header.Get("X-Request-ID"),
+		}).Info("responding 401 due to empty Authorization header")
+		http.Error(w, "NO", http.StatusUnauthorized)
+		return
+	}
+
 	http.Error(w, "NO", http.StatusForbidden)
 }
 
 func (sa *serverAuther) hasValidTokenAuth(authHeader string) bool {
-	return authHeader == ("token "+sa.Token) || authHeader == ("token="+sa.Token)
+	if authHeader == ("token "+sa.Token) || authHeader == ("token="+sa.Token) {
+		sa.log.Info("taken auth matches yey")
+		return true
+	}
+
+	sa.log.Info("token auth does not match")
+	return false
 }
 
 func (sa *serverAuther) hasValidInstanceBuildBasicAuth(authHeader, instanceBuildID string) bool {
-	if authHeader == "" {
+	if !basicAuthValueRegexp.MatchString(authHeader) {
 		return false
 	}
 
-	b64Auth := strings.Replace(authHeader, "Basic ", "", -1)
+	b64Auth := basicAuthValueRegexp.ReplaceAllString(authHeader, "")
 	decoded, err := base64.StdEncoding.DecodeString(b64Auth)
 	if err != nil {
 		sa.log.WithField("err", err).Error("failed to base64 decade basic auth header")
