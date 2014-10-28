@@ -14,7 +14,7 @@ import (
 
 var (
 	basicAuthValueRegexp = regexp.MustCompile("(?i:^basic[= ])")
-	instanceBuildRegexp  = regexp.MustCompile("instance-builds/(.*)")
+	instanceBuildRegexp  = regexp.MustCompile("(?:instance-builds|init-scripts)/(.*)")
 )
 
 type serverAuther struct {
