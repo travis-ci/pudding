@@ -193,34 +193,34 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	}
 
 	state := req.FormValue("state")
-	if state == "finished" {
-		// FIXME: parameterize more-er
-		if srv.slackURL != "" && srv.slackToken != "" {
-			srv.log.Debug("sending slack notification!")
-			notifier := common.NewSlackNotifier(srv.slackURL, srv.slackToken)
-			err := notifier.Notify("#blue", fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
-			if err != nil {
-				srv.log.WithField("err", err).Error("failed to send slack notification")
-			}
-		} else {
-			srv.log.WithFields(logrus.Fields{
-				"slack_url":   srv.slackURL,
-				"slack_token": srv.slackToken,
-			}).Debug("slack fields empty?")
-		}
-
-		err := srv.builder.Wipe(instanceBuildID)
-		if err != nil {
-			jsonapi.Error(w, err, http.StatusInternalServerError)
-
-			return
-		}
-
-		jsonapi.Respond(w, map[string]string{"sure": "why not"}, http.StatusOK)
+	if state != "finished" {
+		srv.log.WithField("state", state).Debug("no-op state")
+		jsonapi.Respond(w, map[string]string{"no": "op"}, http.StatusOK)
 		return
 	}
 
-	jsonapi.Respond(w, map[string]string{"no": "op"}, http.StatusOK)
+	// FIXME: parameterize more-er
+	if srv.slackURL != "" && srv.slackToken != "" {
+		srv.log.Debug("sending slack notification!")
+		notifier := common.NewSlackNotifier(srv.slackURL, srv.slackToken)
+		err := notifier.Notify("#blue", fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
+		if err != nil {
+			srv.log.WithField("err", err).Error("failed to send slack notification")
+		}
+	} else {
+		srv.log.WithFields(logrus.Fields{
+			"slack_url":   srv.slackURL,
+			"slack_token": srv.slackToken,
+		}).Debug("slack fields empty?")
+	}
+
+	err := srv.builder.Wipe(instanceBuildID)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string]string{"sure": "why not"}, http.StatusOK)
 }
 
 func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
