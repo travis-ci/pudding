@@ -25,15 +25,15 @@ type serverAuther struct {
 	rt       string
 }
 
-func newServerAuther(token, redisURL string) (*serverAuther, error) {
+func newServerAuther(token, redisURL string, log *logrus.Logger) (*serverAuther, error) {
 	sa := &serverAuther{
 		Token:    token,
 		redisURL: redisURL,
-		log:      logrus.New(),
+		log:      log,
 		rt:       feeds.NewUUID().String(),
 	}
 
-	is, err := common.NewInitScripts(redisURL)
+	is, err := common.NewInitScripts(redisURL, log)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 	sa.log.WithFields(logrus.Fields{
 		"path": req.URL.Path,
 		"vars": vars,
-	}).Info("extracting instance build id if present")
+	}).Debug("extracting instance build id if present")
 
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
@@ -63,14 +63,14 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 	}
 
 	authHeader := req.Header.Get("Authorization")
-	sa.log.WithField("authorization", authHeader).Info("raw authorization header")
+	sa.log.WithField("authorization", authHeader).Debug("raw authorization header")
 
 	if authHeader != "" && (sa.hasValidTokenAuth(authHeader) || sa.hasValidInstanceBuildBasicAuth(authHeader, instanceBuildID)) {
 		req.Header.Set("Worker-Manager-Internal-Is-Authorized", sa.rt)
 		sa.log.WithFields(logrus.Fields{
 			"request_id":        req.Header.Get("X-Request-ID"),
 			"instance_build_id": instanceBuildID,
-		}).Info("allowing authorized request yey")
+		}).Debug("allowing authorized request yey")
 		next(w, req)
 		return
 	}
@@ -79,7 +79,7 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 		w.Header().Set("WWW-Authenticate", "token")
 		sa.log.WithFields(logrus.Fields{
 			"request_id": req.Header.Get("X-Request-ID"),
-		}).Info("responding 401 due to empty Authorization header")
+		}).Debug("responding 401 due to empty Authorization header")
 		http.Error(w, "NO", http.StatusUnauthorized)
 		return
 	}
@@ -89,11 +89,11 @@ func (sa *serverAuther) ServeHTTP(w http.ResponseWriter, req *http.Request, next
 
 func (sa *serverAuther) hasValidTokenAuth(authHeader string) bool {
 	if authHeader == ("token "+sa.Token) || authHeader == ("token="+sa.Token) {
-		sa.log.Info("taken auth matches yey")
+		sa.log.Debug("taken auth matches yey")
 		return true
 	}
 
-	sa.log.Info("token auth does not match")
+	sa.log.Debug("token auth does not match")
 	return false
 }
 
@@ -118,6 +118,6 @@ func (sa *serverAuther) hasValidInstanceBuildBasicAuth(authHeader, instanceBuild
 	sa.log.WithFields(logrus.Fields{
 		"basic_auth":        authParts[1],
 		"instance_build_id": instanceBuildID,
-	}).Info("checking basic auth against database")
+	}).Debug("checking basic auth against database")
 	return sa.is.HasValidAuth(instanceBuildID, authParts[1])
 }

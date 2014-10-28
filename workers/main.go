@@ -19,6 +19,11 @@ var (
 
 func init() {
 	log = logrus.New()
+
+	// FIXME: move this elsewhere
+	if os.Getenv("DEBUG") != "" {
+		log.Level = logrus.DebugLevel
+	}
 }
 
 func Main(queues, redisPoolSize, redisURLString, processID,

@@ -18,13 +18,17 @@ type InstanceBuildAuther interface {
 type InitScripts struct {
 	RedisNamespace string
 	redisURLString string
-	r              *redis.Pool
+
+	r   *redis.Pool
+	log *logrus.Logger
 }
 
-func NewInitScripts(redisURL string) (*InitScripts, error) {
+func NewInitScripts(redisURL string, log *logrus.Logger) (*InitScripts, error) {
 	is := &InitScripts{
 		redisURLString: redisURL,
 		RedisNamespace: RedisNamespace,
+
+		log: log,
 	}
 
 	err := is.Setup()
@@ -77,23 +81,21 @@ func (is *InitScripts) HasValidAuth(ID, auth string) bool {
 	conn := is.r.Get()
 	defer conn.Close()
 
-	log := logrus.New()
-
 	redisKey := AuthRedisKey(ID)
 	dbAuth, err := redis.String(conn.Do("GET", redisKey))
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		is.log.WithFields(logrus.Fields{
 			"err": err,
 			"key": redisKey,
 		}).Error("failed to fetch auth from database")
 		return false
 	}
 
-	log.WithFields(logrus.Fields{
+	is.log.WithFields(logrus.Fields{
 		"instance_build_id": ID,
 		"auth":              auth,
 		"db_auth":           dbAuth,
-	}).Info("comparing auths")
+	}).Debug("comparing auths")
 
 	return strings.TrimSpace(dbAuth) == strings.TrimSpace(auth)
 }

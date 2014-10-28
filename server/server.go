@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/braintree/manners"
@@ -35,17 +36,23 @@ type server struct {
 }
 
 func newServer(addr, authToken, redisURL string, queueNames map[string]string) (*server, error) {
+	log := logrus.New()
+	// FIXME: move this elsewhere
+	if os.Getenv("DEBUG") != "" {
+		log.Level = logrus.DebugLevel
+	}
+
 	builder, err := newInstanceBuilder(redisURL, queueNames["instance-builds"])
 	if err != nil {
 		return nil, err
 	}
 
-	is, err := common.NewInitScripts(redisURL)
+	is, err := common.NewInitScripts(redisURL, log)
 	if err != nil {
 		return nil, err
 	}
 
-	auther, err := newServerAuther(authToken, redisURL)
+	auther, err := newServerAuther(authToken, redisURL, log)
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +62,9 @@ func newServer(addr, authToken, redisURL string, queueNames map[string]string) (
 		authToken: authToken,
 		auther:    auther,
 
-		log:     logrus.New(),
 		builder: builder,
 		is:      is,
+		log:     log,
 
 		n: negroni.New(),
 		r: mux.NewRouter(),

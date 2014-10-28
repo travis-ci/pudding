@@ -64,7 +64,7 @@ func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, 
 func (ibw *instanceBuilderWorker) Build() error {
 	var err error
 
-	log.WithField("jid", ibw.jid).Info("resolving ami by id")
+	log.WithField("jid", ibw.jid).Debug("resolving ami by id")
 	ibw.ami, err = common.ResolveAMI(ibw.ec2, ibw.b.AMI)
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -75,7 +75,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Info("creating security group")
+	log.WithField("jid", ibw.jid).Debug("creating security group")
 	err = ibw.createSecurityGroup()
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -86,7 +86,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Info("creating instances")
+	log.WithField("jid", ibw.jid).Debug("creating instances")
 	err = ibw.createInstances()
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -96,7 +96,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Info("tagging instances")
+	log.WithField("jid", ibw.jid).Debug("tagging instances")
 	err = ibw.tagInstances()
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -108,7 +108,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 
 	ibw.notifyInstancesLaunched()
 
-	log.WithField("jid", ibw.jid).Info("all done")
+	log.WithField("jid", ibw.jid).Debug("all done")
 	return nil
 }
 
