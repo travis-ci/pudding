@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/travis-pro/worker-manager-service/common"
-	"github.com/travis-pro/worker-manager-service/workers"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/workers"
 )
 
 var (
@@ -24,7 +24,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
-		common.RedisURLFlag,
+		lib.RedisURLFlag,
 		cli.StringFlag{
 			Name:   "redis-pool-size",
 			Value:  "30",
@@ -83,9 +83,9 @@ func main() {
 			Usage:  "interval in seconds for the mini worker loop",
 			EnvVar: "WORKER_MANAGER_MINI_WORKER_INTERVAL",
 		},
-		common.SlackTeamFlag,
-		common.SlackTokenFlag,
-		common.InstanceExpiryFlag,
+		lib.SlackTeamFlag,
+		lib.SlackTokenFlag,
+		lib.InstanceExpiryFlag,
 	}
 	app.Action = runWorkers
 	app.Run(os.Args)
@@ -94,12 +94,12 @@ func main() {
 func runWorkers(c *cli.Context) {
 	dockerRSA := c.String("docker-rsa")
 	if dockerRSA == "" {
-		dockerRSA = common.GetDockerRSAKey()
+		dockerRSA = lib.GetDockerRSAKey()
 	}
 
 	workerYML := c.String("travis-worker-yml")
 	if workerYML == "" {
-		workerYML = common.GetTravisWorkerYML()
+		workerYML = lib.GetTravisWorkerYML()
 	}
 
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),

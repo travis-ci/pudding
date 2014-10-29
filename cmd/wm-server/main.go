@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/travis-pro/worker-manager-service/common"
-	"github.com/travis-pro/worker-manager-service/server"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/server"
 )
 
 var (
@@ -24,8 +24,8 @@ func main() {
 
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
-		common.AddrFlag,
-		common.RedisURLFlag,
+		lib.AddrFlag,
+		lib.RedisURLFlag,
 		cli.StringFlag{
 			Name:   "instance-builds-queue-name",
 			Value:  "instance-builds",
@@ -41,10 +41,10 @@ func main() {
 			Value:  "swordfish",
 			EnvVar: "WORKER_MANAGER_AUTH_TOKEN",
 		},
-		common.SlackTeamFlag,
-		common.SlackTokenFlag,
-		common.SlackChannelFlag,
-		common.InstanceExpiryFlag,
+		lib.SlackTeamFlag,
+		lib.SlackTokenFlag,
+		lib.SlackChannelFlag,
+		lib.InstanceExpiryFlag,
 	}
 	app.Action = runServer
 

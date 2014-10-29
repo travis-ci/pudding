@@ -2,9 +2,11 @@ PACKAGE := github.com/travis-pro/worker-manager-service
 SUBPACKAGES := \
 	$(PACKAGE)/cmd/wm-server \
 	$(PACKAGE)/cmd/wm-workers \
-	$(PACKAGE)/server \
-	$(PACKAGE)/server/jsonapi \
-	$(PACKAGE)/common
+	$(PACKAGE)/lib \
+	$(PACKAGE)/lib/db \
+	$(PACKAGE)/lib/server \
+	$(PACKAGE)/lib/server/jsonapi \
+	$(PACKAGE)/lib/workers
 
 VERSION_VAR := main.VersionString
 VERSION_VALUE := $(shell git describe --always --dirty --tags)

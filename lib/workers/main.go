@@ -27,6 +27,7 @@ func init() {
 	}
 }
 
+// Main is the whole shebang
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
 	papertrailSite, travisWorkerYML, slackTeam, slackToken string, miniWorkerInterval, instanceExpiry int) {

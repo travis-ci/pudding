@@ -1,4 +1,4 @@
-package common
+package lib
 
 import (
 	"bytes"
@@ -12,11 +12,14 @@ var (
 	errBadSlackResponse = fmt.Errorf("received a response status > 299 from slack")
 )
 
+// SlackNotifier notifies on slack omgeeeee! ☃
 type SlackNotifier struct {
 	team  string
 	token string
 }
 
+// NewSlackNotifier creates a new *SlackNotifier given a team and
+// token
 func NewSlackNotifier(team, token string) *SlackNotifier {
 	return &SlackNotifier{
 		team:  team,
@@ -24,6 +27,8 @@ func NewSlackNotifier(team, token string) *SlackNotifier {
 	}
 }
 
+// Notify sends a notification message (msg) to the given channel,
+// which may or may not begin with `#`
 func (sn *SlackNotifier) Notify(channel, msg string) error {
 	if !strings.HasPrefix("#", channel) {
 		channel = fmt.Sprintf("#%s", channel)

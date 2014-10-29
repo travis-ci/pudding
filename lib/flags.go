@@ -1,4 +1,4 @@
-package common
+package lib
 
 import (
 	"os"
@@ -7,6 +7,8 @@ import (
 )
 
 var (
+	// AddrFlag is the flag used for the server address, checking
+	// also for the presence of the PORT env var
 	AddrFlag = cli.StringFlag{
 		Name: "a, addr",
 		Value: func() string {
@@ -18,6 +20,9 @@ var (
 		}(),
 		EnvVar: "WORKER_MANAGER_ADDR",
 	}
+	// RedisURLFlag is the flag used to specify the redis URL, and
+	// checks for REDISGREEN_URL and REDIS_URL before defaulting to a
+	// local redis addr
 	RedisURLFlag = cli.StringFlag{
 		Name: "r, redis-url",
 		Value: func() string {
@@ -32,20 +37,26 @@ var (
 		}(),
 		EnvVar: "WORKER_MANAGER_REDIS_URL",
 	}
+	// InstanceExpiryFlag is the flag used to for defining the expiry
+	// used in redis when storing instance metadat
 	InstanceExpiryFlag = cli.IntFlag{
 		Name:   "E, instance-expiry",
 		Value:  90,
 		Usage:  "expiry in seconds for instance attributes",
 		EnvVar: "WORKER_MANAGER_INSTANCE_EXPIRY",
 	}
+	// SlackTokenFlag is the hubot token for slack integration
 	SlackTokenFlag = cli.StringFlag{
 		Name:   "slack-token",
 		EnvVar: "WORKER_MANAGER_SLACK_TOKEN",
 	}
+	// SlackTeamFlag is the team name for slack integration
 	SlackTeamFlag = cli.StringFlag{
 		Name:   "slack-team",
 		EnvVar: "WORKER_MANAGER_SLACK_TEAM",
 	}
+	// SlackChannelFlag is the default channel used when no channel
+	// is provided in a web request
 	SlackChannelFlag = cli.StringFlag{
 		Name:   "default-slack-channel",
 		Usage:  "default slack channel to use if none provided with request",

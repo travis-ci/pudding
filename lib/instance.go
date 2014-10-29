@@ -1,5 +1,6 @@
-package common
+package lib
 
+// Instance is the internal representation of an EC2 instance
 type Instance struct {
 	Name         string `json:"name" redis:"name"`
 	InstanceID   string `json:"id" redis:"instance_id"`

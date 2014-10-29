@@ -3,18 +3,19 @@ package workers
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/common"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/db"
 )
 
 type ec2Syncer struct {
 	cfg *config
 	ec2 *ec2.EC2
 	log *logrus.Logger
-	i   common.InstanceFetcherStorer
+	i   db.InstanceFetcherStorer
 }
 
 func newEC2Syncer(cfg *config, log *logrus.Logger) (*ec2Syncer, error) {
-	i, err := common.NewInstances(cfg.RedisURL.String(), log, cfg.InstanceStoreExpiry)
+	i, err := db.NewInstances(cfg.RedisURL.String(), log, cfg.InstanceStoreExpiry)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +30,7 @@ func newEC2Syncer(cfg *config, log *logrus.Logger) (*ec2Syncer, error) {
 
 func (es *ec2Syncer) Sync() error {
 	es.log.Debug("ec2 syncer fetching worker instances")
-	instances, err := common.GetWorkerInstances(es.ec2)
+	instances, err := lib.GetWorkerInstances(es.ec2)
 	if err != nil {
 		return err
 	}

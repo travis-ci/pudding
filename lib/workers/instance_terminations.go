@@ -8,7 +8,8 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/common"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/db"
 )
 
 func init() {
@@ -21,7 +22,7 @@ func instanceTerminationsMain(cfg *config, msg *workers.Msg) {
 	}).Debug("starting processing of termination job")
 
 	buildPayloadJSON := []byte(msg.OriginalJson())
-	buildPayload := &common.InstanceTerminationPayload{}
+	buildPayload := &lib.InstanceTerminationPayload{}
 
 	err := json.Unmarshal(buildPayloadJSON, buildPayload)
 	if err != nil {
@@ -39,7 +40,7 @@ type instanceTerminatorWorker struct {
 	rc  redis.Conn
 	jid string
 	sc  string
-	sn  *common.SlackNotifier
+	sn  *lib.SlackNotifier
 	iid string
 	cfg *config
 	ec2 *ec2.EC2
@@ -51,7 +52,7 @@ func newInstanceTerminatorWorker(instanceID, slackChannel string, cfg *config, j
 		jid: jid,
 		cfg: cfg,
 		sc:  slackChannel,
-		sn:  common.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
+		sn:  lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
 		iid: instanceID,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
@@ -63,7 +64,7 @@ func (itw *instanceTerminatorWorker) Terminate() error {
 		return err
 	}
 
-	err = common.RemoveInstances(itw.rc, []string{itw.iid})
+	err = db.RemoveInstances(itw.rc, []string{itw.iid})
 	if err != nil {
 		itw.sn.Notify(itw.sc, fmt.Sprintf("Failed to terminate *%s* :scream_cat: _(%s)_", itw.iid, err))
 		return err

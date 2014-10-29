@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/travis-pro/worker-manager-service/common"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/db"
 )
 
 type instanceBuilder struct {
@@ -14,7 +15,7 @@ type instanceBuilder struct {
 }
 
 func newInstanceBuilder(redisURL, queueName string) (*instanceBuilder, error) {
-	r, err := common.BuildRedisPool(redisURL)
+	r, err := db.BuildRedisPool(redisURL)
 	if err != nil {
 		return nil, err
 	}
@@ -26,13 +27,12 @@ func newInstanceBuilder(redisURL, queueName string) (*instanceBuilder, error) {
 	}, nil
 }
 
-func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild, error) {
+func (ib *instanceBuilder) Build(b *lib.InstanceBuild) (*lib.InstanceBuild, error) {
 	conn := ib.r.Get()
 	defer conn.Close()
 
-	buildPayload := &common.InstanceBuildPayload{
-		Class:      common.InstanceBuildClassname,
-		Args:       []*common.InstanceBuild{b},
+	buildPayload := &lib.InstanceBuildPayload{
+		Args:       []*lib.InstanceBuild{b},
 		Queue:      ib.QueueName,
 		JID:        b.ID,
 		Retry:      true,
@@ -44,7 +44,7 @@ func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild
 		return nil, err
 	}
 
-	err = common.EnqueueJob(conn, ib.QueueName, string(buildPayloadJSON))
+	err = db.EnqueueJob(conn, ib.QueueName, string(buildPayloadJSON))
 	return b, err
 }
 
@@ -58,13 +58,13 @@ func (ib *instanceBuilder) Wipe(ID string) error {
 		return err
 	}
 
-	err = conn.Send("DEL", common.InitScriptRedisKey(ID))
+	err = conn.Send("DEL", db.InitScriptRedisKey(ID))
 	if err != nil {
 		conn.Send("DISCARD")
 		return err
 	}
 
-	err = conn.Send("DEL", common.AuthRedisKey(ID))
+	err = conn.Send("DEL", db.AuthRedisKey(ID))
 	if err != nil {
 		conn.Send("DISCARD")
 		return err

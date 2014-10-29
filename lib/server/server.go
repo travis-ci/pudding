@@ -13,8 +13,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/phyber/negroni-gzip/gzip"
-	"github.com/travis-pro/worker-manager-service/common"
-	"github.com/travis-pro/worker-manager-service/server/jsonapi"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/db"
+	"github.com/travis-pro/worker-manager-service/lib/server/jsonapi"
 )
 
 var (
@@ -29,8 +30,8 @@ type server struct {
 	builder    *instanceBuilder
 	terminator *instanceTerminator
 	auther     *serverAuther
-	is         common.InitScriptGetterAuther
-	i          common.InstanceFetcherStorer
+	is         db.InitScriptGetterAuther
+	i          db.InstanceFetcherStorer
 
 	n *negroni.Negroni
 	r *mux.Router
@@ -56,12 +57,12 @@ func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel st
 		return nil, err
 	}
 
-	i, err := common.NewInstances(redisURL, log, instanceExpiry)
+	i, err := db.NewInstances(redisURL, log, instanceExpiry)
 	if err != nil {
 		return nil, err
 	}
 
-	is, err := common.NewInitScripts(redisURL, log)
+	is, err := db.NewInitScripts(redisURL, log)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +165,7 @@ func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		jsonapi.Respond(w, map[string][]*common.Instance{
+		jsonapi.Respond(w, map[string][]*lib.Instance{
 			"instances": instances,
 		}, http.StatusOK)
 		return
@@ -198,7 +199,7 @@ func (srv *server) handleInstanceByIDFetch(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	jsonapi.Respond(w, map[string][]*common.Instance{
+	jsonapi.Respond(w, map[string][]*lib.Instance{
 		"instances": instances,
 	}, http.StatusOK)
 }
@@ -235,7 +236,7 @@ func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
-	payload := &common.InstanceBuildsCollectionSingular{}
+	payload := &lib.InstanceBuildsCollectionSingular{}
 	err := json.NewDecoder(req.Body).Decode(payload)
 	if err != nil {
 		jsonapi.Error(w, err, http.StatusBadRequest)
@@ -271,8 +272,8 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 		return
 	}
 
-	jsonapi.Respond(w, &common.InstanceBuildsCollection{
-		InstanceBuilds: []*common.InstanceBuild{build},
+	jsonapi.Respond(w, &lib.InstanceBuildsCollection{
+		InstanceBuilds: []*lib.InstanceBuild{build},
 	}, http.StatusAccepted)
 }
 
@@ -317,7 +318,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 
 	if srv.slackTeam != "" && srv.slackToken != "" {
 		srv.log.Debug("sending slack notification!")
-		notifier := common.NewSlackNotifier(srv.slackTeam, srv.slackToken)
+		notifier := lib.NewSlackNotifier(srv.slackTeam, srv.slackToken)
 		err := notifier.Notify(slackChannel,
 			fmt.Sprintf("Finished starting instance `%s` for instance build *%s*", instanceID, instanceBuildID))
 		if err != nil {

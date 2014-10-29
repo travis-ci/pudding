@@ -14,7 +14,8 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/common"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/db"
 )
 
 func init() {
@@ -23,7 +24,7 @@ func init() {
 
 func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 	buildPayloadJSON := []byte(msg.OriginalJson())
-	buildPayload := &common.InstanceBuildPayload{}
+	buildPayload := &lib.InstanceBuildPayload{}
 
 	err := json.Unmarshal(buildPayloadJSON, buildPayload)
 	if err != nil {
@@ -39,23 +40,23 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 
 type instanceBuilderWorker struct {
 	rc     redis.Conn
-	sn     *common.SlackNotifier
+	sn     *lib.SlackNotifier
 	jid    string
 	cfg    *config
 	ec2    *ec2.EC2
 	sg     *ec2.SecurityGroup
 	sgName string
 	ami    *ec2.Image
-	b      *common.InstanceBuild
+	b      *lib.InstanceBuild
 	i      *ec2.Instance
 }
 
-func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
+func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
 	ibw := &instanceBuilderWorker{
 		rc:  redisConn,
 		jid: jid,
 		cfg: cfg,
-		sn:  common.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
+		sn:  lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
 		b:   b,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
@@ -68,7 +69,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 	var err error
 
 	log.WithField("jid", ibw.jid).Debug("resolving ami by id")
-	ibw.ami, err = common.ResolveAMI(ibw.ec2, ibw.b.AMI)
+	ibw.ami, err = lib.ResolveAMI(ibw.ec2, ibw.b.AMI)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"jid":    ibw.jid,
@@ -223,7 +224,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	yml, err := common.BuildTravisWorkerYML(ibw.b.Site, ibw.b.Env, ibw.cfg.TravisWorkerYML, ibw.b.Queue, ibw.b.Count)
+	yml, err := lib.BuildTravisWorkerYML(ibw.b.Site, ibw.b.Env, ibw.cfg.TravisWorkerYML, ibw.b.Queue, ibw.b.Count)
 	if err != nil {
 		return nil, err
 	}
@@ -254,14 +255,14 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	scriptKey := common.InitScriptRedisKey(ibw.b.ID)
+	scriptKey := db.InitScriptRedisKey(ibw.b.ID)
 	err = ibw.rc.Send("SETEX", scriptKey, 600, initScriptB64)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err
 	}
 
-	authKey := common.AuthRedisKey(ibw.b.ID)
+	authKey := db.AuthRedisKey(ibw.b.ID)
 	err = ibw.rc.Send("SETEX", authKey, 600, tmpAuth)
 	if err != nil {
 		ibw.rc.Send("DISCARD")

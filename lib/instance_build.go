@@ -1,4 +1,4 @@
-package common
+package lib
 
 import (
 	"fmt"
@@ -17,14 +17,20 @@ var (
 	errEmptyInstanceType    = fmt.Errorf("empty \"instance_type\" param")
 )
 
+// InstanceBuildsCollectionSingular is the singular representation
+// used in jsonapi bodies
 type InstanceBuildsCollectionSingular struct {
 	InstanceBuilds *InstanceBuild `json:"instance_builds"`
 }
 
+// InstanceBuildsCollection is the collection representation used
+// in jsonapi bodies
 type InstanceBuildsCollection struct {
 	InstanceBuilds []*InstanceBuild `json:"instance_builds"`
 }
 
+// InstanceBuild contains everything needed by a background worker
+// to build the instance
 type InstanceBuild struct {
 	Site         string `json:"site"`
 	Env          string `json:"env"`
@@ -38,6 +44,8 @@ type InstanceBuild struct {
 	ID           string `json:"id,omitempty"`
 }
 
+// NewInstanceBuild creates a new *InstanceBuild, along with
+// generating a unique ID and setting the State to "pending"
 func NewInstanceBuild() *InstanceBuild {
 	return &InstanceBuild{
 		ID:    feeds.NewUUID().String(),
@@ -45,6 +53,8 @@ func NewInstanceBuild() *InstanceBuild {
 	}
 }
 
+// Validate performs multiple validity checks and returns a slice
+// of all errors found
 func (b *InstanceBuild) Validate() []error {
 	errors := []error{}
 	if b.Site == "" {

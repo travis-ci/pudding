@@ -9,7 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	"github.com/travis-pro/worker-manager-service/common"
+	"github.com/travis-pro/worker-manager-service/lib/db"
 )
 
 const (
@@ -24,7 +24,7 @@ var (
 type serverAuther struct {
 	Token    string
 	redisURL string
-	is       common.InstanceBuildAuther
+	is       db.InstanceBuildAuther
 	log      *logrus.Logger
 	rt       string
 }
@@ -37,7 +37,7 @@ func newServerAuther(token, redisURL string, log *logrus.Logger) (*serverAuther,
 		rt:       feeds.NewUUID().String(),
 	}
 
-	is, err := common.NewInitScripts(redisURL, log)
+	is, err := db.NewInitScripts(redisURL, log)
 	if err != nil {
 		return nil, err
 	}

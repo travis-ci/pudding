@@ -1,4 +1,4 @@
-package common
+package db
 
 import (
 	"fmt"
@@ -7,16 +7,21 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/mitchellh/goamz/ec2"
+	"github.com/travis-pro/worker-manager-service/lib"
 )
 
+// InitScriptRedisKey provides the key for an init script given the
+// instance build id
 func InitScriptRedisKey(instanceBuildID string) string {
-	return fmt.Sprintf("worker-manager:init-script:%s", instanceBuildID)
+	return fmt.Sprintf("%s:init-script:%s", lib.RedisNamespace, instanceBuildID)
 }
 
+// AuthRedisKey provides the auth key given an instance build id
 func AuthRedisKey(instanceBuildID string) string {
-	return fmt.Sprintf("worker-manager:auth:%s", instanceBuildID)
+	return fmt.Sprintf("%s:auth:%s", lib.RedisNamespace, instanceBuildID)
 }
 
+// BuildRedisPool builds a *redis.Pool given a redis URL yey ☃
 func BuildRedisPool(redisURL string) (*redis.Pool, error) {
 	u, err := url.Parse(redisURL)
 	if err != nil {
@@ -50,28 +55,30 @@ func BuildRedisPool(redisURL string) (*redis.Pool, error) {
 	return pool, nil
 }
 
-func FetchInstances(conn redis.Conn, f map[string]string) ([]*Instance, error) {
+// FetchInstances gets a slice of instances given a redis conn and
+// optional filter map
+func FetchInstances(conn redis.Conn, f map[string]string) ([]*lib.Instance, error) {
 	var err error
 	keys := []string{}
 
 	if key, ok := f["instance_id"]; ok {
 		keys = append(keys, key)
 	} else {
-		keys, err = redis.Strings(conn.Do("SMEMBERS", fmt.Sprintf("%s:instances", RedisNamespace)))
+		keys, err = redis.Strings(conn.Do("SMEMBERS", fmt.Sprintf("%s:instances", lib.RedisNamespace)))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	instances := []*Instance{}
+	instances := []*lib.Instance{}
 
 	for _, key := range keys {
-		reply, err := redis.Values(conn.Do("HGETALL", fmt.Sprintf("%s:instance:%s", RedisNamespace, key)))
+		reply, err := redis.Values(conn.Do("HGETALL", fmt.Sprintf("%s:instance:%s", lib.RedisNamespace, key)))
 		if err != nil {
 			return nil, err
 		}
 
-		inst := &Instance{}
+		inst := &lib.Instance{}
 		err = redis.ScanStruct(reply, inst)
 		if err != nil {
 			return nil, err
@@ -99,13 +106,17 @@ func FetchInstances(conn redis.Conn, f map[string]string) ([]*Instance, error) {
 	return instances, nil
 }
 
+// StoreInstances stores the ec2 representation of an instance
+// given a redis conn and slice of ec2 instances, as well as an
+// expiry integer that is used to to run EXPIRE on all sets and
+// hashes involved
 func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry int) error {
 	err := conn.Send("MULTI")
 	if err != nil {
 		return err
 	}
 
-	instanceSetKey := fmt.Sprintf("%s:instances", RedisNamespace)
+	instanceSetKey := fmt.Sprintf("%s:instances", lib.RedisNamespace)
 
 	err = conn.Send("DEL", instanceSetKey)
 	if err != nil {
@@ -114,7 +125,7 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 	}
 
 	for ID, inst := range instances {
-		instanceAttrsKey := fmt.Sprintf("%s:instance:%s", RedisNamespace, ID)
+		instanceAttrsKey := fmt.Sprintf("%s:instance:%s", lib.RedisNamespace, ID)
 
 		err = conn.Send("SADD", instanceSetKey, ID)
 		if err != nil {
@@ -164,13 +175,15 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 	return err
 }
 
+// RemoveInstances removes the given instances from the instance
+// set
 func RemoveInstances(conn redis.Conn, IDs []string) error {
 	err := conn.Send("MULTI")
 	if err != nil {
 		return err
 	}
 
-	instanceSetKey := fmt.Sprintf("%s:instances", RedisNamespace)
+	instanceSetKey := fmt.Sprintf("%s:instances", lib.RedisNamespace)
 
 	for _, ID := range IDs {
 		err = conn.Send("SREM", instanceSetKey, ID)
@@ -178,27 +191,6 @@ func RemoveInstances(conn redis.Conn, IDs []string) error {
 			conn.Do("DISCARD")
 			return err
 		}
-	}
-
-	_, err = conn.Do("EXEC")
-	return err
-}
-
-func EnqueueJob(conn redis.Conn, queueName, payload string) error {
-	err := conn.Send("MULTI")
-	if err != nil {
-		return err
-	}
-	err = conn.Send("SADD", fmt.Sprintf("%s:queues", RedisNamespace), queueName)
-	if err != nil {
-		conn.Send("DISCARD")
-		return err
-	}
-
-	err = conn.Send("LPUSH", fmt.Sprintf("%s:queue:%s", RedisNamespace, queueName), payload)
-	if err != nil {
-		conn.Send("DISCARD")
-		return err
 	}
 
 	_, err = conn.Do("EXEC")

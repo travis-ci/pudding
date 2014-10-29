@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/travis-pro/worker-manager-service/common"
+	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/worker-manager-service/lib/db"
 )
 
 type instanceTerminator struct {
@@ -13,7 +14,7 @@ type instanceTerminator struct {
 }
 
 func newInstanceTerminator(redisURL, queueName string) (*instanceTerminator, error) {
-	r, err := common.BuildRedisPool(redisURL)
+	r, err := db.BuildRedisPool(redisURL)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +30,7 @@ func (it *instanceTerminator) Terminate(instanceID, slackChannel string) error {
 	conn := it.r.Get()
 	defer conn.Close()
 
-	buildPayload := &common.InstanceTerminationPayload{
+	buildPayload := &lib.InstanceTerminationPayload{
 		InstanceID:   instanceID,
 		SlackChannel: slackChannel,
 	}
@@ -39,5 +40,5 @@ func (it *instanceTerminator) Terminate(instanceID, slackChannel string) error {
 		return err
 	}
 
-	return common.EnqueueJob(conn, it.QueueName, string(buildPayloadJSON))
+	return db.EnqueueJob(conn, it.QueueName, string(buildPayloadJSON))
 }

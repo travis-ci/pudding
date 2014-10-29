@@ -1,4 +1,4 @@
-package common
+package lib
 
 import (
 	"fmt"
@@ -12,7 +12,10 @@ var (
 	errMissingEnvConfig  = fmt.Errorf("missing \"env\" sub-config")
 )
 
-type MultiConfigYML struct {
+// MultiEnvSiteTravisYML represents a travis config yml structure
+// that generally has two levels of nesting below the
+// concern-specific keys, one for site and another for env.
+type MultiEnvSiteTravisYML struct {
 	AMQP       map[string]map[string]*amqpConfig  `yaml:"amqp"`
 	Build      map[string]map[string]*buildConfig `yaml:"build"`
 	Librato    map[string]*libratoConfig          `yaml:"librato"`
@@ -52,7 +55,9 @@ type s3config struct {
 	Bucket          string `yaml:"bucket"`
 }
 
-type WorkerYML struct {
+// WorkerTravisYML is the worker-specific configuration generated
+// from a MultiEnvSiteTravisYML
+type WorkerTravisYML struct {
 	Env         string           `yaml:"env"`
 	LinuxConfig *workerEnvConfig `yaml:"linux,omitempty"`
 }
@@ -87,8 +92,11 @@ type timeoutsConfig struct {
 	HardLimit int `yaml:"hard_limit"`
 }
 
+// BuildTravisWorkerYML accepts a string form of
+// MultiEnvSiteTravisYML, site, env, queue, and count, and
+// constructs a worker-specific configuration
 func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, error) {
-	multiCfg := &MultiConfigYML{
+	multiYML := &MultiEnvSiteTravisYML{
 		AMQP:       map[string]map[string]*amqpConfig{},
 		Build:      map[string]map[string]*buildConfig{},
 		Librato:    map[string]*libratoConfig{},
@@ -96,12 +104,12 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 		Papertrail: map[string]string{},
 	}
 
-	err := yaml.Unmarshal([]byte(rawYML), multiCfg)
+	err := yaml.Unmarshal([]byte(rawYML), multiYML)
 	if err != nil {
 		return "", err
 	}
 
-	amqpSite, ok := multiCfg.AMQP[site]
+	amqpSite, ok := multiYML.AMQP[site]
 	if !ok {
 		return "", errMissingSiteConfig
 	}
@@ -111,7 +119,7 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 		return "", errMissingEnvConfig
 	}
 
-	buildSite, ok := multiCfg.Build[site]
+	buildSite, ok := multiYML.Build[site]
 	if !ok {
 		return "", errMissingSiteConfig
 	}
@@ -121,12 +129,12 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 		return "", errMissingEnvConfig
 	}
 
-	librato, ok := multiCfg.Librato[site]
+	librato, ok := multiYML.Librato[site]
 	if !ok {
 		return "", errMissingSiteConfig
 	}
 
-	cacheSite, ok := multiCfg.Cache[site]
+	cacheSite, ok := multiYML.Cache[site]
 	if !ok {
 		return "", errMissingSiteConfig
 	}
@@ -136,7 +144,7 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 		return "", errMissingEnvConfig
 	}
 
-	wc := &WorkerYML{
+	wc := &WorkerTravisYML{
 		Env: "linux",
 		LinuxConfig: &workerEnvConfig{
 			Host:     "$TRAVIS_WORKER_HOST_NAME",
@@ -172,6 +180,10 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 	return string(out), err
 }
 
+// GetTravisWorkerYML attempts to look up the MultiEnvSiteTravisYML
+// string as a compressed env var at both TRAVIS_WORKER_YML and
+// WORKER_MANAGER_TRAVIS_WORKER_YML, then falls back to a lookup
+// of an uncompressed travis_config var.
 func GetTravisWorkerYML() string {
 	for _, key := range []string{"TRAVIS_WORKER_YML", "WORKER_MANAGER_TRAVIS_WORKER_YML"} {
 		value, err := GetCompressedEnvVar(key)

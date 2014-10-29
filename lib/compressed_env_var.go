@@ -1,4 +1,4 @@
-package common
+package lib
 
 import (
 	"bytes"
@@ -13,6 +13,8 @@ var (
 	errMissingEnvVar = fmt.Errorf("missing env var")
 )
 
+// GetCompressedEnvVar looks up an env var and base64-decodes and
+// gunzips it if present
 func GetCompressedEnvVar(key string) (string, error) {
 	value := os.Getenv(key)
 	if value == "" {
