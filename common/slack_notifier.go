@@ -7,6 +7,10 @@ import (
 	"net/http"
 )
 
+var (
+	errBadSlackResponse = fmt.Errorf("received a response status > 299 from slack")
+)
+
 type SlackNotifier struct {
 	team  string
 	token string
@@ -21,6 +25,7 @@ func NewSlackNotifier(team, token string) *SlackNotifier {
 
 func (sn *SlackNotifier) Notify(channel, msg string) error {
 	bodyMap := map[string]string{
+		"text":       msg,
 		"channel":    channel,
 		"username":   "travisbot",
 		"icon_emoji": ":travis:",
@@ -32,6 +37,9 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 	}
 
 	u := fmt.Sprintf("https://%s.slack.com/services/hooks/hubot?token=%s", sn.team, sn.token)
-	_, err = http.Post(u, "application/x-www-form-urlencoded", bytes.NewReader(b))
+	resp, err := http.Post(u, "application/x-www-form-urlencoded", bytes.NewReader(b))
+	if resp.StatusCode > 299 {
+		return errBadSlackResponse
+	}
 	return err
 }
