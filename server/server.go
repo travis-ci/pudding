@@ -242,7 +242,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	if srv.slackTeam != "" && srv.slackToken != "" {
 		srv.log.Debug("sending slack notification!")
 		notifier := common.NewSlackNotifier(srv.slackTeam, srv.slackToken)
-		err := notifier.Notify(srv.slackChannel, fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
+		err := notifier.Notify(srv.slackChannel, fmt.Sprintf("Instance build(s) complete! _(id=%s)_", instanceBuildID))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}
