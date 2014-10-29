@@ -6,11 +6,15 @@ var (
 	initScript = template.Must(template.New("init-script").Parse(`#!/bin/bash
 set -o errexit
 
-curl -s -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=started"
+export INSTANCE_ID=$(curl -s 'http://169.254.169.254/latest/meta-data/instance-id')
+
+curl -s -f \
+  -d "state=started&instance-id=$INSTANCE_ID&slack-channel={{.SlackChannel}}" \
+  -X PATCH \
+  "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=started"
 
 cd /tmp
 
-export INSTANCE_ID=$(curl -s 'http://169.254.169.254/latest/meta-data/instance-id')
 export TRAVIS_WORKER_HOST_NAME="worker-linux-docker-${INSTANCE_ID/i-/}.{{.Env}}.travis-ci.{{.Site}}"
 
 cat > docker_rsa <<EOF
@@ -40,7 +44,10 @@ cat > watch-files.conf <<EOF
 \$InputFilePollInterval 10
 EOF
 
-curl -s -f -d 'state=started' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
+curl -s -f \
+  -d "state=started&instance-id=$INSTANCE_ID&slack-channel={{.SlackChannel}}" \
+  -X PATCH \
+  "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
 
 mkdir /home/deploy/.ssh
 chown travis:travis /home/deploy/.ssh
@@ -56,7 +63,10 @@ mv papertrail.conf /etc/rsyslog.d/65-papertrail.conf
 service rsyslog restart
 
 rm -rf /var/lib/cloud/instances/*
-curl -s -f -d 'state=finished' -X PATCH "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=finished"
+curl -s -f \
+  -d "state=finished&instance-id=$INSTANCE_ID&slack-channel={{.SlackChannel}}" \
+  -X PATCH \
+  "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=finished"
 `))
 )
 
@@ -64,6 +74,7 @@ type initScriptContext struct {
 	Env              string
 	Site             string
 	DockerRSA        string
+	SlackChannel     string
 	PapertrailSite   string
 	TravisWorkerYML  string
 	InstanceBuildID  string

@@ -30,6 +30,7 @@ type InstanceBuild struct {
 	Env          string `json:"env"`
 	AMI          string `json:"ami"`
 	InstanceType string `json:"instance_type"`
+	SlackChannel string `json:"slack_channel"`
 	Count        int    `json:"count"`
 	Queue        string `json:"queue"`
 	HREF         string `json:"href,omitempty"`

@@ -39,6 +39,7 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 
 type instanceBuilderWorker struct {
 	rc     redis.Conn
+	sn     *common.SlackNotifier
 	jid    string
 	cfg    *config
 	ec2    *ec2.EC2
@@ -54,6 +55,7 @@ func newInstanceBuilderWorker(b *common.InstanceBuild, cfg *config, jid string, 
 		rc:  redisConn,
 		jid: jid,
 		cfg: cfg,
+		sn:  common.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
 		b:   b,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
@@ -230,6 +232,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		Env:              ibw.b.Env,
 		Site:             ibw.b.Site,
 		DockerRSA:        ibw.cfg.DockerRSA,
+		SlackChannel:     ibw.b.SlackChannel,
 		PapertrailSite:   ibw.cfg.PapertrailSite,
 		TravisWorkerYML:  yml,
 		InstanceBuildID:  ibw.b.ID,
@@ -274,9 +277,6 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 }
 
 func (ibw *instanceBuilderWorker) notifyInstanceLaunched() {
-	// TODO: notify instance launched in Slack or some such
-	log.WithFields(logrus.Fields{
-		"jid":         ibw.jid,
-		"instance_id": ibw.i.InstanceId,
-	}).Info("launched instance")
+	ibw.sn.Notify(ibw.b.SlackChannel,
+		fmt.Sprintf("Started instance `%s` for instance build *%s*", ibw.i.InstanceId, ibw.b.ID))
 }

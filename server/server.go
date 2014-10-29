@@ -251,6 +251,14 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 		build.State = "pending"
 	}
 
+	if v := req.FormValue("slack-channel"); v != "" {
+		build.SlackChannel = v
+	}
+
+	if build.SlackChannel == "" {
+		build.SlackChannel = srv.slackChannel
+	}
+
 	validationErrors := build.Validate()
 	if len(validationErrors) > 0 {
 		jsonapi.Errors(w, validationErrors, http.StatusBadRequest)
@@ -297,6 +305,11 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		return
 	}
 
+	instanceID := req.FormValue("instance-id")
+	if instanceID == "" {
+		instanceID = "?wat?"
+	}
+
 	slackChannel := req.FormValue("slack-channel")
 	if slackChannel == "" {
 		slackChannel = srv.slackChannel
@@ -305,7 +318,8 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	if srv.slackTeam != "" && srv.slackToken != "" {
 		srv.log.Debug("sending slack notification!")
 		notifier := common.NewSlackNotifier(srv.slackTeam, srv.slackToken)
-		err := notifier.Notify(slackChannel, fmt.Sprintf("Finished instance build *%s*", instanceBuildID))
+		err := notifier.Notify(slackChannel,
+			fmt.Sprintf("Finished starting instance `%s` for instance build *%s*", instanceID, instanceBuildID))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}
