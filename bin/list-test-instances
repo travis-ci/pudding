@@ -11,6 +11,6 @@ aws ec2 describe-instances \
     [(.Tags | .[] | select(.Key == \"Name\") | .Value), .InstanceId, .PublicIpAddress, .LaunchTime] |
     join(\" \")
   " | \
-  grep '\-docker' | \
+  grep -E '\-(docker|testing)' | \
   sort -k3 | \
   exec grep org-${1:-test}
