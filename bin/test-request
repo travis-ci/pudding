@@ -25,6 +25,16 @@ case "$1" in
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       ${HOST}:${PORT}/instances
     ;;
+  terminate-instance)
+    if [[ ! $2 ]] ; then
+      echo "missing instance id"
+      exit 1
+    fi
+    exec curl \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -X DELETE \
+      ${HOST}:${PORT}/instances/$2
+    ;;
   bogus-instance-build)
     exec curl \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
@@ -40,5 +50,6 @@ case "$1" in
     ;;
   *)
     echo "unknown request type '$1'"
+    exit 1
     ;;
 esac

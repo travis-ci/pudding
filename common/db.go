@@ -51,9 +51,16 @@ func BuildRedisPool(redisURL string) (*redis.Pool, error) {
 }
 
 func FetchInstances(conn redis.Conn, f map[string]string) ([]*Instance, error) {
-	keys, err := redis.Strings(conn.Do("SMEMBERS", fmt.Sprintf("%s:instances", RedisNamespace)))
-	if err != nil {
-		return nil, err
+	var err error
+	keys := []string{}
+
+	if key, ok := f["instance_id"]; ok {
+		keys = append(keys, key)
+	} else {
+		keys, err = redis.Strings(conn.Do("SMEMBERS", fmt.Sprintf("%s:instances", RedisNamespace)))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	instances := []*Instance{}
@@ -150,6 +157,47 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 	err = conn.Send("EXPIRE", instanceSetKey, expiry)
 	if err != nil {
 		conn.Do("DISCARD")
+		return err
+	}
+
+	_, err = conn.Do("EXEC")
+	return err
+}
+
+func RemoveInstances(conn redis.Conn, IDs []string) error {
+	err := conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
+
+	instanceSetKey := fmt.Sprintf("%s:instances", RedisNamespace)
+
+	for _, ID := range IDs {
+		err = conn.Send("SREM", instanceSetKey, ID)
+		if err != nil {
+			conn.Do("DISCARD")
+			return err
+		}
+	}
+
+	_, err = conn.Do("EXEC")
+	return err
+}
+
+func EnqueueJob(conn redis.Conn, queueName, payload string) error {
+	err := conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
+	err = conn.Send("SADD", fmt.Sprintf("%s:queues", RedisNamespace), queueName)
+	if err != nil {
+		conn.Send("DISCARD")
+		return err
+	}
+
+	err = conn.Send("LPUSH", fmt.Sprintf("%s:queue:%s", RedisNamespace, queueName), payload)
+	if err != nil {
+		conn.Send("DISCARD")
 		return err
 	}
 

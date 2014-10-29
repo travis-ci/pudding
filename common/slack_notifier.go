@@ -38,8 +38,13 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 
 	u := fmt.Sprintf("https://%s.slack.com/services/hooks/hubot?token=%s", sn.team, sn.token)
 	resp, err := http.Post(u, "application/x-www-form-urlencoded", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+
 	if resp.StatusCode > 299 {
 		return errBadSlackResponse
 	}
-	return err
+
+	return nil
 }

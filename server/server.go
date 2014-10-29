@@ -19,16 +19,18 @@ import (
 
 var (
 	errMissingInstanceBuildID = fmt.Errorf("missing instance build id")
+	errMissingInstanceID      = fmt.Errorf("missing instance id")
 )
 
 type server struct {
 	addr, authToken, slackToken, slackTeam, slackChannel string
 
-	log     *logrus.Logger
-	builder *instanceBuilder
-	auther  *serverAuther
-	is      common.InitScriptGetterAuther
-	i       common.InstanceFetcherStorer
+	log        *logrus.Logger
+	builder    *instanceBuilder
+	terminator *instanceTerminator
+	auther     *serverAuther
+	is         common.InitScriptGetterAuther
+	i          common.InstanceFetcherStorer
 
 	n *negroni.Negroni
 	r *mux.Router
@@ -45,6 +47,11 @@ func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel st
 	}
 
 	builder, err := newInstanceBuilder(redisURL, queueNames["instance-builds"])
+	if err != nil {
+		return nil, err
+	}
+
+	terminator, err := newInstanceTerminator(redisURL, queueNames["instance-terminations"])
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +80,11 @@ func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel st
 		slackTeam:    slackTeam,
 		slackChannel: slackChannel,
 
-		builder: builder,
-		is:      is,
-		i:       i,
-		log:     log,
+		builder:    builder,
+		terminator: terminator,
+		is:         is,
+		i:          i,
+		log:        log,
 
 		n: negroni.New(),
 		r: mux.NewRouter(),
@@ -101,6 +109,8 @@ func (srv *server) setupRoutes() {
 		srv.handleRoot).Methods("GET", "DELETE").Name("root")
 	srv.r.HandleFunc(`/instances`,
 		srv.handleInstances).Methods("GET").Name("instances")
+	srv.r.HandleFunc(`/instances/{instance_id}`,
+		srv.handleInstanceByID).Methods("GET", "DELETE").Name("instances-by-id")
 	srv.r.HandleFunc(`/instance-builds`,
 		srv.handleInstanceBuilds).Methods("POST").Name("instance-builds")
 	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`,
@@ -154,11 +164,60 @@ func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		jsonapi.Respond(w, map[string][]*common.Instance{"instances": instances}, http.StatusOK)
+		jsonapi.Respond(w, map[string][]*common.Instance{
+			"instances": instances,
+		}, http.StatusOK)
 		return
 	}
 
 	http.Error(w, "NO", http.StatusMethodNotAllowed)
+}
+
+func (srv *server) handleInstanceByID(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.Authenticate(w, req) {
+		return
+	}
+
+	switch req.Method {
+	case "GET":
+		srv.handleInstanceByIDFetch(w, req)
+		return
+	case "DELETE":
+		srv.handleInstanceByIDTerminate(w, req)
+		return
+	}
+
+	http.Error(w, "NO", http.StatusMethodNotAllowed)
+}
+
+func (srv *server) handleInstanceByIDFetch(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	instances, err := srv.i.Fetch(map[string]string{"instance_id": vars["instance_id"]})
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string][]*common.Instance{
+		"instances": instances,
+	}, http.StatusOK)
+}
+
+func (srv *server) handleInstanceByIDTerminate(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	instanceID, ok := vars["instance_id"]
+	if !ok {
+		jsonapi.Error(w, errMissingInstanceID, http.StatusBadRequest)
+		return
+	}
+
+	err := srv.terminator.Terminate(instanceID, req.FormValue("slack-channel"))
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string]string{"ok": "working on that"}, http.StatusAccepted)
 }
 
 func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request) {
@@ -238,11 +297,15 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		return
 	}
 
-	// FIXME: parameterize more-er
+	slackChannel := req.FormValue("slack-channel")
+	if slackChannel == "" {
+		slackChannel = srv.slackChannel
+	}
+
 	if srv.slackTeam != "" && srv.slackToken != "" {
 		srv.log.Debug("sending slack notification!")
 		notifier := common.NewSlackNotifier(srv.slackTeam, srv.slackToken)
-		err := notifier.Notify(srv.slackChannel, fmt.Sprintf("Finished instance build *%s*", instanceBuildID))
+		err := notifier.Notify(slackChannel, fmt.Sprintf("Finished instance build *%s*", instanceBuildID))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}

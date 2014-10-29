@@ -27,7 +27,7 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 
 	err := json.Unmarshal(buildPayloadJSON, buildPayload)
 	if err != nil {
-		log.WithField("err", err).Error("failed to deserialize message")
+		log.WithField("err", err).Panic("failed to deserialize message")
 	}
 
 	err = newInstanceBuilderWorker(buildPayload.InstanceBuild(),

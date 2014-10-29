@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -10,34 +9,21 @@ import (
 )
 
 type instanceBuilder struct {
-	redisURLString string
-	QueueName      string
-	RedisNamespace string
-	r              *redis.Pool
+	QueueName string
+	r         *redis.Pool
 }
 
 func newInstanceBuilder(redisURL, queueName string) (*instanceBuilder, error) {
-	ib := &instanceBuilder{
-		redisURLString: redisURL,
-		QueueName:      queueName,
-		RedisNamespace: common.RedisNamespace,
-	}
-	err := ib.Setup()
+	r, err := common.BuildRedisPool(redisURL)
 	if err != nil {
 		return nil, err
 	}
 
-	return ib, nil
-}
+	return &instanceBuilder{
+		QueueName: queueName,
 
-func (ib *instanceBuilder) Setup() error {
-	pool, err := common.BuildRedisPool(ib.redisURLString)
-	if err != nil {
-		return err
-	}
-
-	ib.r = pool
-	return nil
+		r: r,
+	}, nil
 }
 
 func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild, error) {
@@ -58,23 +44,7 @@ func (ib *instanceBuilder) Build(b *common.InstanceBuild) (*common.InstanceBuild
 		return nil, err
 	}
 
-	err = conn.Send("MULTI")
-	if err != nil {
-		return nil, err
-	}
-	err = conn.Send("SADD", fmt.Sprintf("%s:queues", ib.RedisNamespace), ib.QueueName)
-	if err != nil {
-		conn.Send("DISCARD")
-		return nil, err
-	}
-
-	err = conn.Send("LPUSH", fmt.Sprintf("%s:queue:%s", ib.RedisNamespace, ib.QueueName), buildPayloadJSON)
-	if err != nil {
-		conn.Send("DISCARD")
-		return nil, err
-	}
-
-	_, err = conn.Do("EXEC")
+	err = common.EnqueueJob(conn, ib.QueueName, string(buildPayloadJSON))
 	return b, err
 }
 

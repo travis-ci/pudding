@@ -38,4 +38,18 @@ var (
 		Usage:  "expiry in seconds for instance attributes",
 		EnvVar: "WORKER_MANAGER_INSTANCE_EXPIRY",
 	}
+	SlackTokenFlag = cli.StringFlag{
+		Name:   "slack-token",
+		EnvVar: "WORKER_MANAGER_SLACK_TOKEN",
+	}
+	SlackTeamFlag = cli.StringFlag{
+		Name:   "slack-team",
+		EnvVar: "WORKER_MANAGER_SLACK_TEAM",
+	}
+	SlackChannelFlag = cli.StringFlag{
+		Name:   "default-slack-channel",
+		Usage:  "default slack channel to use if none provided with request",
+		Value:  "#general",
+		EnvVar: "WORKER_MANAGER_DEFAULT_SLACK_CHANNEL",
+	}
 )

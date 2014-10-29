@@ -14,6 +14,9 @@ type config struct {
 	RedisURL      *url.URL
 	RedisPoolSize string
 
+	SlackTeam  string
+	SlackToken string
+
 	WebHost   string
 	ProcessID string
 

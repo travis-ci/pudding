@@ -29,13 +29,16 @@ func init() {
 
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	papertrailSite, travisWorkerYML string, miniWorkerInterval, instanceExpiry int) {
+	papertrailSite, travisWorkerYML, slackTeam, slackToken string, miniWorkerInterval, instanceExpiry int) {
 
 	cfg := &config{
 		RedisPoolSize: redisPoolSize,
 
 		WebHost:   webHost,
 		ProcessID: processID,
+
+		SlackTeam:  slackTeam,
+		SlackToken: slackToken,
 
 		DockerRSA:       dockerRSA,
 		PapertrailSite:  papertrailSite,

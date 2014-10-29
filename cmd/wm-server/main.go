@@ -32,24 +32,18 @@ func main() {
 			EnvVar: "WORKER_MANAGER_INSTANCE_BUILDS_QUEUE_NAME",
 		},
 		cli.StringFlag{
+			Name:   "instance-terminations-queue-name",
+			Value:  "instance-terminations",
+			EnvVar: "WORKER_MANAGER_INSTANCE_TERMINATIONS_QUEUE_NAME",
+		},
+		cli.StringFlag{
 			Name:   "A, auth-token",
 			Value:  "swordfish",
 			EnvVar: "WORKER_MANAGER_AUTH_TOKEN",
 		},
-		cli.StringFlag{
-			Name:   "slack-token",
-			EnvVar: "WORKER_MANAGER_SLACK_TOKEN",
-		},
-		cli.StringFlag{
-			Name:   "slack-team",
-			EnvVar: "WORKER_MANAGER_SLACK_TEAM",
-		},
-		// FIXME: make this the originating channel
-		cli.StringFlag{
-			Name:   "slack-channel",
-			Value:  "#general",
-			EnvVar: "WORKER_MANAGER_SLACK_CHANNEL",
-		},
+		common.SlackTeamFlag,
+		common.SlackTokenFlag,
+		common.SlackChannelFlag,
 		common.InstanceExpiryFlag,
 	}
 	app.Action = runServer
@@ -59,9 +53,10 @@ func main() {
 
 func runServer(c *cli.Context) {
 	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
-		c.String("slack-token"), c.String("slack-team"), c.String("slack-channel"),
+		c.String("slack-token"), c.String("slack-team"), c.String("default-slack-channel"),
 		c.Int("instance-expiry"),
 		map[string]string{
-			"instance-builds": c.String("instance-builds-queue-name"),
+			"instance-builds":       c.String("instance-builds-queue-name"),
+			"instance-terminations": c.String("instance-terminations-queue-name"),
 		})
 }
