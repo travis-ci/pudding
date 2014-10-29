@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -24,6 +25,10 @@ func NewSlackNotifier(team, token string) *SlackNotifier {
 }
 
 func (sn *SlackNotifier) Notify(channel, msg string) error {
+	if !strings.HasPrefix("#", channel) {
+		channel = fmt.Sprintf("#%s", channel)
+	}
+
 	bodyMap := map[string]string{
 		"text":       msg,
 		"channel":    channel,
