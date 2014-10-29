@@ -25,3 +25,6 @@ _testmain.go
 
 gin-bin
 *.log
+
+*.coverprofile
+coverage.html

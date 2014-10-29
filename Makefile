@@ -6,6 +6,7 @@ SUBPACKAGES := \
 	$(PACKAGE)/lib/db \
 	$(PACKAGE)/lib/server \
 	$(PACKAGE)/lib/server/jsonapi \
+	$(PACKAGE)/lib/server/negroniraven \
 	$(PACKAGE)/lib/workers
 
 VERSION_VAR := main.VersionString
@@ -29,17 +30,23 @@ GOBUILD_FLAGS ?= -x
 PORT ?= 9839
 export PORT
 
-COVERPROFILES :=
+COVERPROFILES := \
+	lib-coverage.coverprofile \
+	lib-db-coverage.coverprofile \
+	lib-server-coverage.coverprofile \
+	lib-server-jsonapi-coverage.coverprofile \
+	lib-server-negroniraven-coverage.coverprofile \
+	lib-workers-coverage.coverprofile
 
 %-coverage.coverprofile:
 	$(GO) test -covermode=count -coverprofile=$@ \
-		$(GOBUILD_LDFLAGS) $(PACKAGE)/$(subst -coverage.coverprofile,,$@)
+		$(GOBUILD_LDFLAGS) $(PACKAGE)/$(subst -,/,$(subst -coverage.coverprofile,,$@))
 
 .PHONY: all
 all: clean deps test lintall
 
 .PHONY: test
-test: build fmtpolice test-deps
+test: build fmtpolice test-deps coverage.html
 
 .PHONY: test-deps
 test-deps:
@@ -49,12 +56,12 @@ test-deps:
 # test-race:
 # 	$(GO) test -race $(GOBUILD_LDFLAGS) $(PACKAGE) $(SUBPACKAGES)
 
-# coverage.html: coverage.coverprofile
-# 	$(GO) tool cover -html=$^ -o $@
+coverage.html: coverage.coverprofile
+	$(GO) tool cover -html=$^ -o $@
 
-# coverage.coverprofile: $(COVERPROFILES)
-# 	./bin/fold-coverprofiles $^ > $@
-# 	$(GO) tool cover -func=$@
+coverage.coverprofile: $(COVERPROFILES)
+	./bin/fold-coverprofiles $^ > $@
+	$(GO) tool cover -func=$@
 
 .PHONY: build
 build:

@@ -11,6 +11,8 @@ GO=${GO:-deppy go}
 OUT_TMP=$(mktemp worker-manager-service.XXXXX)
 PACKAGE=${PACKAGE:-github.com/travis-pro/worker-manager-service}
 
+trap "rm -f $OUT_TMP" EXIT TERM QUIT
+
 ${GO} test \
   -covermode=count \
   -coverprofile=${OUT_TMP} \
@@ -18,6 +20,5 @@ ${GO} test \
   ${PACKAGE} 1>&2
 
 echo 'mode: count'
-grep -h -v 'mode: count' "${OUT_TMP}"
-rm -f "${OUT_TMP}"
+grep -h -v 'mode: count' "${OUT_TMP}" || true
 grep -h -v 'mode: count' $*
