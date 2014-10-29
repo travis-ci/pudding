@@ -121,6 +121,7 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 			"instance_type", inst.InstanceType,
 			"image_id", inst.ImageId,
 			"ip", inst.PublicIpAddress,
+			"private_ip", inst.PrivateIpAddress,
 			"launch_time", inst.LaunchTime.Format(time.RFC3339),
 		}
 
