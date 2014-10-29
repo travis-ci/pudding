@@ -1,30 +1,37 @@
 package common
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 type SlackNotifier struct {
-	url   string
+	team  string
 	token string
 }
 
-func NewSlackNotifier(url, token string) *SlackNotifier {
+func NewSlackNotifier(team, token string) *SlackNotifier {
 	return &SlackNotifier{
-		url:   url,
+		team:  team,
 		token: token,
 	}
 }
 
 func (sn *SlackNotifier) Notify(channel, msg string) error {
-	v := &url.Values{}
-	v.Add("token", sn.token)
-	v.Add("channel", channel)
-	v.Add("username", "worker manager")
-	v.Add("icon_emoji", ":see_no_evil:")
-	_, err := http.Post(fmt.Sprintf("%s/api/chat.postMessage?%s", sn.url, v.Encode()),
-		"application/x-www-form-urlencoded", nil)
+	bodyMap := map[string]string{
+		"channel":    channel,
+		"username":   "travisbot",
+		"icon_emoji": ":travis:",
+	}
+
+	b, err := json.Marshal(bodyMap)
+	if err != nil {
+		return err
+	}
+
+	u := fmt.Sprintf("https://%s.slack.com/services/hooks/hubot?token=%s", sn.team, sn.token)
+	_, err = http.Post(u, "application/x-www-form-urlencoded", bytes.NewReader(b))
 	return err
 }

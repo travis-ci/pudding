@@ -22,7 +22,7 @@ var (
 )
 
 type server struct {
-	addr, authToken, slackToken, slackURL string
+	addr, authToken, slackToken, slackTeam string
 
 	log     *logrus.Logger
 	builder *instanceBuilder
@@ -35,7 +35,7 @@ type server struct {
 	s *manners.GracefulServer
 }
 
-func newServer(addr, authToken, redisURL, slackToken, slackURL string,
+func newServer(addr, authToken, redisURL, slackToken, slackTeam string,
 	instanceExpiry int, queueNames map[string]string) (*server, error) {
 
 	log := logrus.New()
@@ -70,7 +70,7 @@ func newServer(addr, authToken, redisURL, slackToken, slackURL string,
 		auther:    auther,
 
 		slackToken: slackToken,
-		slackURL:   slackURL,
+		slackTeam:  slackTeam,
 
 		builder: builder,
 		is:      is,
@@ -101,7 +101,7 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/instances`,
 		srv.handleInstances).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instance-builds`,
-		srv.handleInstanceBuilds).Methods("GET", "POST").Name("instance-builds")
+		srv.handleInstanceBuilds).Methods("POST").Name("instance-builds")
 	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`,
 		srv.handleInstanceBuildsByID).Methods("PATCH").Name("instance-builds-by-id")
 	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`,
@@ -133,6 +133,10 @@ func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
 }
 
 func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.Authenticate(w, req) {
+		return
+	}
+
 	switch req.Method {
 	case "GET":
 		f := map[string]string{}
@@ -157,12 +161,13 @@ func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
 }
 
 func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.Authenticate(w, req) {
+		return
+	}
+
 	switch req.Method {
 	case "POST":
 		srv.handleInstanceBuildsCreate(w, req)
-		return
-	case "GET":
-		srv.handleInstanceBuildsList(w, req)
 		return
 	}
 
@@ -170,10 +175,6 @@ func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
 	payload := &common.InstanceBuildsCollectionSingular{}
 	err := json.NewDecoder(req.Body).Decode(payload)
 	if err != nil {
@@ -207,13 +208,11 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 	}, http.StatusAccepted)
 }
 
-func (srv *server) handleInstanceBuildsList(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Respond(w,
-		&common.InstanceBuildsCollection{InstanceBuilds: []*common.InstanceBuild{}},
-		http.StatusOK)
-}
-
 func (srv *server) handleInstanceBuildsByID(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.Authenticate(w, req) {
+		return
+	}
+
 	switch req.Method {
 	case "PATCH":
 		srv.handleInstanceBuildUpdateByID(w, req)
@@ -224,10 +223,6 @@ func (srv *server) handleInstanceBuildsByID(w http.ResponseWriter, req *http.Req
 }
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
@@ -243,16 +238,16 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	}
 
 	// FIXME: parameterize more-er
-	if srv.slackURL != "" && srv.slackToken != "" {
+	if srv.slackTeam != "" && srv.slackToken != "" {
 		srv.log.Debug("sending slack notification!")
-		notifier := common.NewSlackNotifier(srv.slackURL, srv.slackToken)
+		notifier := common.NewSlackNotifier(srv.slackTeam, srv.slackToken)
 		err := notifier.Notify("#blue", fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}
 	} else {
 		srv.log.WithFields(logrus.Fields{
-			"slack_url":   srv.slackURL,
+			"slack_team":  srv.slackTeam,
 			"slack_token": srv.slackToken,
 		}).Debug("slack fields empty?")
 	}
