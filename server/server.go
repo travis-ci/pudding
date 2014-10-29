@@ -22,7 +22,7 @@ var (
 )
 
 type server struct {
-	addr, authToken, slackToken, slackTeam string
+	addr, authToken, slackToken, slackTeam, slackChannel string
 
 	log     *logrus.Logger
 	builder *instanceBuilder
@@ -35,7 +35,7 @@ type server struct {
 	s *manners.GracefulServer
 }
 
-func newServer(addr, authToken, redisURL, slackToken, slackTeam string,
+func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel string,
 	instanceExpiry int, queueNames map[string]string) (*server, error) {
 
 	log := logrus.New()
@@ -69,8 +69,9 @@ func newServer(addr, authToken, redisURL, slackToken, slackTeam string,
 		authToken: authToken,
 		auther:    auther,
 
-		slackToken: slackToken,
-		slackTeam:  slackTeam,
+		slackToken:   slackToken,
+		slackTeam:    slackTeam,
+		slackChannel: slackChannel,
 
 		builder: builder,
 		is:      is,
@@ -241,7 +242,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	if srv.slackTeam != "" && srv.slackToken != "" {
 		srv.log.Debug("sending slack notification!")
 		notifier := common.NewSlackNotifier(srv.slackTeam, srv.slackToken)
-		err := notifier.Notify("#blue", fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
+		err := notifier.Notify(srv.slackChannel, fmt.Sprintf("instance build(s) complete (id=%s)", instanceBuildID))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}

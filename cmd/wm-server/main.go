@@ -44,6 +44,12 @@ func main() {
 			Name:   "slack-team",
 			EnvVar: "WORKER_MANAGER_SLACK_TEAM",
 		},
+		// FIXME: make this the originating channel
+		cli.StringFlag{
+			Name:   "slack-channel",
+			Value:  "#general",
+			EnvVar: "WORKER_MANAGER_SLACK_CHANNEL",
+		},
 		common.InstanceExpiryFlag,
 	}
 	app.Action = runServer
@@ -53,7 +59,8 @@ func main() {
 
 func runServer(c *cli.Context) {
 	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
-		c.String("slack-token"), c.String("slack-team"), c.Int("instance-expiry"),
+		c.String("slack-token"), c.String("slack-team"), c.String("slack-channel"),
+		c.Int("instance-expiry"),
 		map[string]string{
 			"instance-builds": c.String("instance-builds-queue-name"),
 		})
