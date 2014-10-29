@@ -46,6 +46,7 @@ func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
 func GetWorkerInstances(conn *ec2.EC2) (map[string]ec2.Instance, error) {
 	filter := ec2.NewFilter()
 	filter.Add("tag:role", "worker")
+	filter.Add("instance-state-name", "running")
 	resp, err := conn.Instances([]string{}, filter)
 
 	if err != nil {
