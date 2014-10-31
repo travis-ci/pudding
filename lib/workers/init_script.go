@@ -49,6 +49,8 @@ curl -s -f \
   -X PATCH \
   "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
 
+IPV4=$(curl -s 'http://169.254.169.254/latest/meta-data/local-ipv4')
+echo "$IPV4 $TRAVIS_WORKER_HOST_NAME worker-linux-docker-${INSTANCE_ID#i-}" >> /etc/hosts
 sed -i -e "s/^Hostname.*$/Hostname \"$TRAVIS_WORKER_HOST_NAME\"/" /etc/collectd/collectd.conf
 mkdir /home/deploy/.ssh
 chown travis:travis /home/deploy/.ssh
