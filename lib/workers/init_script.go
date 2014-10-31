@@ -15,7 +15,7 @@ curl -s -f \
 
 cd /tmp
 
-export TRAVIS_WORKER_HOST_NAME="worker-linux-docker-${INSTANCE_ID/i-/}.{{.Env}}.travis-ci.{{.Site}}"
+export TRAVIS_WORKER_HOST_NAME="worker-linux-docker-${INSTANCE_ID#i-}.{{.Env}}.travis-ci.{{.Site}}"
 
 cat > docker_rsa <<EOF
 {{.DockerRSA}}
@@ -49,6 +49,7 @@ curl -s -f \
   -X PATCH \
   "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
 
+sed -i -e "s/^Hostname.*$/Hostname \"$TRAVIS_WORKER_HOST_NAME\"/" /etc/collectd/collectd.conf
 mkdir /home/deploy/.ssh
 chown travis:travis /home/deploy/.ssh
 chmod 0700 /home/deploy/.ssh
