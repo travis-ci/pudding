@@ -30,7 +30,7 @@ func init() {
 // Main is the whole shebang
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	papertrailSite, travisWorkerYML, slackTeam, slackToken string, miniWorkerInterval, instanceExpiry int) {
+	travisWorkerYML, slackTeam, slackToken string, miniWorkerInterval, instanceExpiry int) {
 
 	cfg := &config{
 		RedisPoolSize: redisPoolSize,
@@ -42,7 +42,6 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 		SlackToken: slackToken,
 
 		DockerRSA:       dockerRSA,
-		PapertrailSite:  papertrailSite,
 		TravisWorkerYML: travisWorkerYML,
 
 		Queues:              []string{},

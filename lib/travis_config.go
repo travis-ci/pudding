@@ -58,8 +58,17 @@ type s3config struct {
 // WorkerTravisYML is the worker-specific configuration generated
 // from a MultiEnvSiteTravisYML
 type WorkerTravisYML struct {
-	Env         string           `yaml:"env"`
-	LinuxConfig *workerEnvConfig `yaml:"linux,omitempty"`
+	Env            string           `yaml:"env"`
+	LinuxConfig    *workerEnvConfig `yaml:"linux,omitempty"`
+	PapertrailSite string           `yaml:"papertrail_site,omitempty"`
+}
+
+func (wty *WorkerTravisYML) String() (string, error) {
+	out, err := yaml.Marshal(wty)
+	if out == nil {
+		out = []byte{}
+	}
+	return string(out), err
 }
 
 type workerEnvConfig struct {
@@ -95,7 +104,7 @@ type timeoutsConfig struct {
 // BuildTravisWorkerYML accepts a string form of
 // MultiEnvSiteTravisYML, site, env, queue, and count, and
 // constructs a worker-specific configuration
-func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, error) {
+func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (*WorkerTravisYML, error) {
 	multiYML := &MultiEnvSiteTravisYML{
 		AMQP:       map[string]map[string]*amqpConfig{},
 		Build:      map[string]map[string]*buildConfig{},
@@ -106,45 +115,50 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 
 	err := yaml.Unmarshal([]byte(rawYML), multiYML)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	amqpSite, ok := multiYML.AMQP[site]
 	if !ok {
-		return "", errMissingSiteConfig
+		return nil, errMissingSiteConfig
 	}
 
 	amqp, ok := amqpSite[env]
 	if !ok {
-		return "", errMissingEnvConfig
+		return nil, errMissingEnvConfig
 	}
 
 	buildSite, ok := multiYML.Build[site]
 	if !ok {
-		return "", errMissingSiteConfig
+		return nil, errMissingSiteConfig
 	}
 
 	build, ok := buildSite[env]
 	if !ok {
-		return "", errMissingEnvConfig
+		return nil, errMissingEnvConfig
 	}
 
 	librato, ok := multiYML.Librato[site]
 	if !ok {
-		return "", errMissingSiteConfig
+		return nil, errMissingSiteConfig
 	}
 
 	cacheSite, ok := multiYML.Cache[site]
 	if !ok {
-		return "", errMissingSiteConfig
+		return nil, errMissingSiteConfig
 	}
 
 	cache, ok := cacheSite[env]
 	if !ok {
-		return "", errMissingEnvConfig
+		return nil, errMissingEnvConfig
 	}
 
-	wc := &WorkerTravisYML{
+	ps, ok := multiYML.Papertrail[site]
+	if !ok {
+		return nil, errMissingSiteConfig
+	}
+
+	wty := &WorkerTravisYML{
 		Env: "linux",
 		LinuxConfig: &workerEnvConfig{
 			Host:     "$TRAVIS_WORKER_HOST_NAME",
@@ -174,10 +188,10 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (string, e
 				HardLimit: 7200,
 			},
 		},
+		PapertrailSite: ps,
 	}
 
-	out, err := yaml.Marshal(wc)
-	return string(out), err
+	return wty, err
 }
 
 // GetTravisWorkerYML attempts to look up the MultiEnvSiteTravisYML

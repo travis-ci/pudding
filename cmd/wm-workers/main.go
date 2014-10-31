@@ -69,12 +69,6 @@ func main() {
 			EnvVar: "WORKER_MANAGER_WEB_HOSTNAME",
 		},
 		cli.StringFlag{
-			Name:   "papertrail-site",
-			Usage:  "papertrail syslog upstream",
-			Value:  "logs.papertrailapp.com:9999",
-			EnvVar: "WORKER_MANAGER_PAPERTRAIL_SITE",
-		},
-		cli.StringFlag{
 			Name: "Y, travis-worker-yml",
 		},
 		cli.IntFlag{
@@ -105,8 +99,7 @@ func runWorkers(c *cli.Context) {
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),
 		c.String("redis-url"), c.String("process-id"),
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
-		dockerRSA, c.String("web-hostname"),
-		c.String("papertrail-site"), workerYML,
+		dockerRSA, c.String("web-hostname"), workerYML,
 		c.String("slack-team"), c.String("slack-token"),
 		c.Int("mini-worker-interval"), c.Int("instance-expiry"))
 }

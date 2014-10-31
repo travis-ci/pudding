@@ -229,13 +229,18 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
+	ymlString, err := yml.String()
+	if err != nil {
+		return nil, err
+	}
+
 	err = initScript.Execute(w, &initScriptContext{
 		Env:              ibw.b.Env,
 		Site:             ibw.b.Site,
 		DockerRSA:        ibw.cfg.DockerRSA,
 		SlackChannel:     ibw.b.SlackChannel,
-		PapertrailSite:   ibw.cfg.PapertrailSite,
-		TravisWorkerYML:  yml,
+		PapertrailSite:   yml.PapertrailSite,
+		TravisWorkerYML:  ymlString,
 		InstanceBuildID:  ibw.b.ID,
 		InstanceBuildURL: instanceBuildURL,
 	})

@@ -21,7 +21,6 @@ type config struct {
 	ProcessID string
 
 	DockerRSA       string
-	PapertrailSite  string
 	TravisWorkerYML string
 
 	Queues             []string
