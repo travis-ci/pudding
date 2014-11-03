@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -194,7 +195,7 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 func (ibw *instanceBuilderWorker) tagInstance() error {
 	_, err := ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, []ec2.Tag{
 		ec2.Tag{Key: "role", Value: "worker"},
-		ec2.Tag{Key: "Name", Value: fmt.Sprintf("travis-%s-%s-%s", ibw.b.Site, ibw.b.Env, ibw.b.Queue)},
+		ec2.Tag{Key: "Name", Value: fmt.Sprintf("travis-%s-%s-%s-%s", ibw.b.Site, ibw.b.Env, ibw.b.Queue, strings.TrimPrefix(ibw.i.InstanceId, "i-"))},
 		ec2.Tag{Key: "site", Value: ibw.b.Site},
 		ec2.Tag{Key: "env", Value: ibw.b.Env},
 		ec2.Tag{Key: "queue", Value: ibw.b.Queue},
