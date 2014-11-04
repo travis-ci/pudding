@@ -110,20 +110,15 @@ func (srv *server) Run() {
 }
 
 func (srv *server) setupRoutes() {
-	srv.r.HandleFunc(`/`,
-		srv.handleRoot).Methods("GET", "DELETE").Name("root")
-	srv.r.HandleFunc(`/kaboom`,
-		srv.handleKaboom).Methods("POST").Name("kaboom")
-	srv.r.HandleFunc(`/instances`,
-		srv.handleInstances).Methods("GET").Name("instances")
-	srv.r.HandleFunc(`/instances/{instance_id}`,
-		srv.handleInstanceByID).Methods("GET", "DELETE").Name("instances-by-id")
-	srv.r.HandleFunc(`/instance-builds`,
-		srv.handleInstanceBuilds).Methods("POST").Name("instance-builds")
-	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`,
-		srv.handleInstanceBuildsByID).Methods("PATCH").Name("instance-builds-by-id")
-	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`,
-		srv.handleInitScripts).Methods("GET").Name("init-scripts")
+	srv.r.HandleFunc(`/`, srv.handleGetRoot).Methods("GET").Name("ohai")
+	srv.r.HandleFunc(`/`, srv.ifAuth(srv.handleDeleteRoot)).Methods("DELETE").Name("shutdown")
+	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
+	srv.r.HandleFunc(`/instances`, srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
+	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
+	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDTerminate)).Methods("DELETE").Name("delete-instances-by-id")
+	srv.r.HandleFunc(`/instance-builds`, srv.ifAuth(srv.handleInstanceBuildsCreate)).Methods("POST").Name("instance-builds-create")
+	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`, srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
+	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
 }
 
 func (srv *server) setupMiddleware() {
@@ -138,74 +133,49 @@ func (srv *server) setupMiddleware() {
 	srv.n.UseHandler(srv.r)
 }
 
-func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case "DELETE":
+func (srv *server) handleGetRoot(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text-plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "ohai\n")
+}
+
+func (srv *server) ifAuth(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		if !srv.auther.Authenticate(w, req) {
 			return
 		}
-		w.WriteHeader(http.StatusNoContent)
-		srv.s.Shutdown <- true
-	case "GET":
-		w.Header().Set("Content-Type", "text-plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "ohai\n")
+
+		f(w, req)
 	}
 }
 
-func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
+func (srv *server) handleDeleteRoot(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+	srv.s.Shutdown <- true
+}
 
+func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {
 	panic(errKaboom)
 }
 
 func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
-	switch req.Method {
-	case "GET":
-		f := map[string]string{}
-		for _, qv := range []string{"env", "site"} {
-			v := req.FormValue(qv)
-			if v != "" {
-				f[qv] = v
-			}
+	f := map[string]string{}
+	for _, qv := range []string{"env", "site"} {
+		v := req.FormValue(qv)
+		if v != "" {
+			f[qv] = v
 		}
+	}
 
-		instances, err := srv.i.Fetch(f)
-		if err != nil {
-			jsonapi.Error(w, err, http.StatusInternalServerError)
-			return
-		}
-
-		jsonapi.Respond(w, map[string][]*lib.Instance{
-			"instances": instances,
-		}, http.StatusOK)
+	instances, err := srv.i.Fetch(f)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	http.Error(w, "NO", http.StatusMethodNotAllowed)
-}
-
-func (srv *server) handleInstanceByID(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
-	switch req.Method {
-	case "GET":
-		srv.handleInstanceByIDFetch(w, req)
-		return
-	case "DELETE":
-		srv.handleInstanceByIDTerminate(w, req)
-		return
-	}
-
-	http.Error(w, "NO", http.StatusMethodNotAllowed)
+	jsonapi.Respond(w, map[string][]*lib.Instance{
+		"instances": instances,
+	}, http.StatusOK)
 }
 
 func (srv *server) handleInstanceByIDFetch(w http.ResponseWriter, req *http.Request) {
@@ -236,20 +206,6 @@ func (srv *server) handleInstanceByIDTerminate(w http.ResponseWriter, req *http.
 	}
 
 	jsonapi.Respond(w, map[string]string{"ok": "working on that"}, http.StatusAccepted)
-}
-
-func (srv *server) handleInstanceBuilds(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
-	switch req.Method {
-	case "POST":
-		srv.handleInstanceBuildsCreate(w, req)
-		return
-	}
-
-	http.Error(w, "NO", http.StatusMethodNotAllowed)
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
@@ -292,20 +248,6 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 	jsonapi.Respond(w, &lib.InstanceBuildsCollection{
 		InstanceBuilds: []*lib.InstanceBuild{build},
 	}, http.StatusAccepted)
-}
-
-func (srv *server) handleInstanceBuildsByID(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
-	switch req.Method {
-	case "PATCH":
-		srv.handleInstanceBuildUpdateByID(w, req)
-		return
-	}
-
-	http.Error(w, "NO", http.StatusMethodNotAllowed)
 }
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
@@ -358,10 +300,6 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 }
 
 func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
-	if !srv.auther.Authenticate(w, req) {
-		return
-	}
-
 	vars := mux.Vars(req)
 	instanceBuildID, ok := vars["instance_build_id"]
 	if !ok {
