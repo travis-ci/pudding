@@ -16,15 +16,17 @@ import (
 	"github.com/travis-pro/worker-manager-service/lib"
 	"github.com/travis-pro/worker-manager-service/lib/db"
 	"github.com/travis-pro/worker-manager-service/lib/server/jsonapi"
+	"github.com/travis-pro/worker-manager-service/lib/server/negroniraven"
 )
 
 var (
 	errMissingInstanceBuildID = fmt.Errorf("missing instance build id")
 	errMissingInstanceID      = fmt.Errorf("missing instance id")
+	errKaboom                 = fmt.Errorf("simulated kaboom ʕノ•ᴥ•ʔノ ︵ ┻━┻")
 )
 
 type server struct {
-	addr, authToken, slackToken, slackTeam, slackChannel string
+	addr, authToken, slackToken, slackTeam, slackChannel, sentryDSN string
 
 	log        *logrus.Logger
 	builder    *instanceBuilder
@@ -38,7 +40,7 @@ type server struct {
 	s *manners.GracefulServer
 }
 
-func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel string,
+func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel, sentryDSN string,
 	instanceExpiry int, queueNames map[string]string) (*server, error) {
 
 	log := logrus.New()
@@ -81,6 +83,8 @@ func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel st
 		slackTeam:    slackTeam,
 		slackChannel: slackChannel,
 
+		sentryDSN: sentryDSN,
+
 		builder:    builder,
 		terminator: terminator,
 		is:         is,
@@ -108,6 +112,8 @@ func (srv *server) Run() {
 func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/`,
 		srv.handleRoot).Methods("GET", "DELETE").Name("root")
+	srv.r.HandleFunc(`/kaboom`,
+		srv.handleKaboom).Methods("POST").Name("kaboom")
 	srv.r.HandleFunc(`/instances`,
 		srv.handleInstances).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instances/{instance_id}`,
@@ -124,8 +130,11 @@ func (srv *server) setupMiddleware() {
 	srv.n.Use(negroni.NewRecovery())
 	srv.n.Use(negronilogrus.NewMiddleware())
 	srv.n.Use(gzip.Gzip(gzip.DefaultCompression))
-	// TODO: implement the raven middleware, eh
-	// srv.n.Use(negroniraven.NewMiddleware(sentryDSN))
+	nr, err := negroniraven.NewMiddleware(srv.sentryDSN)
+	if err != nil {
+		panic(err)
+	}
+	srv.n.Use(nr)
 	srv.n.UseHandler(srv.r)
 }
 
@@ -142,6 +151,14 @@ func (srv *server) handleRoot(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "ohai\n")
 	}
+}
+
+func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {
+	if !srv.auther.Authenticate(w, req) {
+		return
+	}
+
+	panic(errKaboom)
 }
 
 func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {

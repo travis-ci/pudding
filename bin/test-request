@@ -48,6 +48,12 @@ case "$1" in
       -X DELETE \
       ${HOST}:${PORT}/
     ;;
+  kaboom)
+    exec curl \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -X POST \
+      ${HOST}:${PORT}/kaboom
+    ;;
   *)
     echo "unknown request type '$1'"
     exit 1

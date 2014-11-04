@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/meatballhat/go-workers"
+	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/aws"
 )
 

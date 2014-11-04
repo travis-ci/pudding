@@ -44,6 +44,7 @@ func main() {
 		lib.SlackTeamFlag,
 		lib.SlackTokenFlag,
 		lib.SlackChannelFlag,
+		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
 	}
 	app.Action = runServer
@@ -54,6 +55,7 @@ func main() {
 func runServer(c *cli.Context) {
 	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
 		c.String("slack-token"), c.String("slack-team"), c.String("default-slack-channel"),
+		c.String("sentry-dsn"),
 		c.Int("instance-expiry"),
 		map[string]string{
 			"instance-builds":       c.String("instance-builds-queue-name"),

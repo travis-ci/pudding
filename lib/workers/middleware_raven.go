@@ -6,7 +6,8 @@ import (
 	"os"
 
 	"github.com/getsentry/raven-go"
-	"github.com/meatballhat/go-workers"
+	"github.com/jrallison/go-workers"
+	"github.com/travis-pro/worker-manager-service/lib"
 )
 
 // MiddlewareRaven is the go-workers compatible middleware for
@@ -32,8 +33,7 @@ func (r *MiddlewareRaven) Call(queue string, message *workers.Msg, next func() b
 			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 
-		_, ch := r.cl.Capture(packet, map[string]string{})
-		<-ch
+		lib.SendRavenPacket(packet, r.cl, log)
 		panic(p)
 	}()
 
@@ -56,8 +56,7 @@ func (r *MiddlewareRaven) Do(fn func() error) error {
 			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 
-		_, ch := r.cl.Capture(packet, map[string]string{})
-		<-ch
+		lib.SendRavenPacket(packet, r.cl, log)
 		panic(p)
 	}()
 

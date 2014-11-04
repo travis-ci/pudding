@@ -3,7 +3,7 @@ package workers
 import (
 	"net/url"
 
-	"github.com/meatballhat/go-workers"
+	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/aws"
 )
 
