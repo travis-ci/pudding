@@ -55,8 +55,8 @@
 			"Rev": "eca94c41d994ae2215d455ce578ae6e2dc6ee516"
 		},
 		{
-			"ImportPath": "github.com/jrallison/go-workers",
-			"Rev": "00f954fb9278b9ceed81fccba4cd30bd14f6a012"
+			"ImportPath": "github.com/meatballhat/go-workers",
+			"Rev": "e4419248474c817fa1342fd067abbb0a537be175"
 		},
 		{
 			"ImportPath": "github.com/meatballhat/negroni-logrus",

@@ -63,4 +63,10 @@ var (
 		Value:  "#general",
 		EnvVar: "WORKER_MANAGER_DEFAULT_SLACK_CHANNEL",
 	}
+	// SentryDSNFlag is the dsn string used to initialize raven
+	// clients
+	SentryDSNFlag = cli.StringFlag{
+		Name:   "sentry-dsn",
+		EnvVar: "WORKER_MANAGER_SENTRY_DSN",
+	}
 )

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/jrallison/go-workers"
+	"github.com/meatballhat/go-workers"
 	"github.com/mitchellh/goamz/aws"
 )
 
@@ -30,7 +30,8 @@ func init() {
 // Main is the whole shebang
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	travisWorkerYML, slackTeam, slackToken string, miniWorkerInterval, instanceExpiry int) {
+	travisWorkerYML, slackTeam, slackToken, sentryDSN string,
+	miniWorkerInterval, instanceExpiry int) {
 
 	cfg := &config{
 		RedisPoolSize: redisPoolSize,
@@ -40,6 +41,8 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 
 		SlackTeam:  slackTeam,
 		SlackToken: slackToken,
+
+		SentryDSN: sentryDSN,
 
 		DockerRSA:       dockerRSA,
 		TravisWorkerYML: travisWorkerYML,
@@ -99,13 +102,27 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 
 	cfg.RedisURL = redisURL
 
-	runWorkers(cfg, log)
+	err = runWorkers(cfg, log)
+	if err != nil {
+		log.WithField("err", err).Fatal("failed to start workers")
+		os.Exit(1)
+	}
 }
 
-func runWorkers(cfg *config, log *logrus.Logger) {
-	// TODO: implement the raven middleware
-	// workers.Middleware.Prepend(NewRavenMiddleware(sentryDSN))
+func runWorkers(cfg *config, log *logrus.Logger) error {
+	workers.Logger = log
 	workers.Configure(optsFromConfig(cfg))
+
+	rm, err := NewMiddlewareRaven(cfg.SentryDSN)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"sentry_dsn": cfg.SentryDSN,
+			"err":        err,
+		}).Error("failed to build sentry middleware")
+		return err
+	}
+
+	workers.Middleware.Prepend(rm)
 
 	for _, queue := range cfg.Queues {
 		registered, ok := cfg.QueueFuncs[queue]
@@ -119,12 +136,15 @@ func runWorkers(cfg *config, log *logrus.Logger) {
 		}, cfg.QueueConcurrencies[queue])
 	}
 
-	go setupMiniWorkers(cfg, log).Run()
+	go setupMiniWorkers(cfg, log, rm).Run()
+
+	log.Info("starting go-workers")
 	workers.Run()
+	return nil
 }
 
-func setupMiniWorkers(cfg *config, log *logrus.Logger) *miniWorkers {
-	mw := newMiniWorkers(cfg, log)
+func setupMiniWorkers(cfg *config, log *logrus.Logger, rm *MiddlewareRaven) *miniWorkers {
+	mw := newMiniWorkers(cfg, log, rm)
 	mw.Register("ec2-sync", func() error {
 		syncer, err := newEC2Syncer(cfg, log)
 		if err != nil {

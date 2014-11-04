@@ -79,6 +79,7 @@ func main() {
 		},
 		lib.SlackTeamFlag,
 		lib.SlackTokenFlag,
+		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
 	}
 	app.Action = runWorkers
@@ -100,6 +101,6 @@ func runWorkers(c *cli.Context) {
 		c.String("redis-url"), c.String("process-id"),
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
 		dockerRSA, c.String("web-hostname"), workerYML,
-		c.String("slack-team"), c.String("slack-token"),
+		c.String("slack-team"), c.String("slack-token"), c.String("sentry-dsn"),
 		c.Int("mini-worker-interval"), c.Int("instance-expiry"))
 }

@@ -9,13 +9,15 @@ import (
 type miniWorkers struct {
 	cfg *config
 	log *logrus.Logger
+	r   *MiddlewareRaven
 	w   map[string]func() error
 }
 
-func newMiniWorkers(cfg *config, log *logrus.Logger) *miniWorkers {
+func newMiniWorkers(cfg *config, log *logrus.Logger, r *MiddlewareRaven) *miniWorkers {
 	return &miniWorkers{
 		cfg: cfg,
 		log: log,
+		r:   r,
 		w:   map[string]func() error{},
 	}
 }
@@ -41,7 +43,7 @@ func (mw *miniWorkers) runTick() {
 	for name, f := range mw.w {
 		mw.log.WithField("job", name).Debug("running mini worker job")
 
-		err := f()
+		err := mw.r.Do(f)
 		if err != nil {
 			mw.log.WithFields(logrus.Fields{
 				"err": err,

@@ -3,7 +3,7 @@ package workers
 import (
 	"net/url"
 
-	"github.com/jrallison/go-workers"
+	"github.com/meatballhat/go-workers"
 	"github.com/mitchellh/goamz/aws"
 )
 
@@ -16,6 +16,8 @@ type config struct {
 
 	SlackTeam  string
 	SlackToken string
+
+	SentryDSN string
 
 	WebHost   string
 	ProcessID string

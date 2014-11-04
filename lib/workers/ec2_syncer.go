@@ -32,13 +32,13 @@ func (es *ec2Syncer) Sync() error {
 	es.log.Debug("ec2 syncer fetching worker instances")
 	instances, err := lib.GetWorkerInstances(es.ec2)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	es.log.Debug("ec2 syncer storing instances")
 	err = es.i.Store(instances)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	return nil
