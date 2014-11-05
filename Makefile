@@ -10,9 +10,9 @@ SUBPACKAGES := \
 	$(PACKAGE)/lib/workers
 
 VERSION_VAR := $(PACKAGE)/lib.VersionString
-VERSION_VALUE := $(shell git describe --always --dirty --tags)
+VERSION_VALUE := $(shell git describe --always --dirty --tags 2>/dev/null)
 REV_VAR := $(PACKAGE)/lib.RevisionString
-REV_VALUE := $(shell git rev-parse --sq HEAD)
+REV_VALUE := $(shell git rev-parse --sq HEAD 2>/dev/null)
 GENERATED_VAR := $(PACKAGE)/lib.GeneratedString
 GENERATED_VALUE := $(shell date -u +'%Y-%m-%dT%H:%M:%S%z')
 
@@ -20,7 +20,7 @@ FIND ?= find
 GO ?= go
 DEPPY ?= deppy
 GOPATH := $(shell echo $${GOPATH%%:*})
-GOBUILD_LDFLAGS := -ldflags "\
+GOBUILD_LDFLAGS ?= -ldflags "\
 	-X $(VERSION_VAR) '$(VERSION_VALUE)' \
 	-X $(REV_VAR) $(REV_VALUE) \
 	-X $(GENERATED_VAR) '$(GENERATED_VALUE)' \
@@ -47,7 +47,11 @@ all: clean deps test lintall
 
 .PHONY: buildpack
 buildpack:
-	@$(MAKE) build GOBUILD_FLAGS=
+	@$(MAKE) build GOBUILD_FLAGS= \
+    GOBUILD_LDFLAGS="-ldflags \" \
+      -X $(VERSION_VAR) 'heroku' \
+      -X $(REV_VAR) '???' \
+      -X $(GENERATED_VAR) '$(GENERATED_VALUE)'\""
 
 .PHONY: test
 test: build fmtpolice test-deps coverage.html
