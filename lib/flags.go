@@ -1,7 +1,9 @@
 package lib
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/codegangsta/cli"
 )
@@ -71,3 +73,35 @@ var (
 		EnvVar: "WORKER_MANAGER_SENTRY_DSN",
 	}
 )
+
+// WriteFlagsToEnv takes the parsed *cli.Context and writes flag
+// values back into the os env, mostly for purposes of exposing via
+// the server `/debug/vars` route.
+func WriteFlagsToEnv(c *cli.Context) {
+	for _, fl := range c.App.Flags {
+		switch flVal := fl.(type) {
+		case cli.StringFlag:
+			names := strings.Split(flVal.Name, ",")
+			if len(names) < 1 {
+				continue
+			}
+
+			v := c.String(names[0])
+			envVar := flVal.EnvVar
+			if v != "" && envVar != "" {
+				os.Setenv(envVar, v)
+			}
+		case cli.IntFlag:
+			names := strings.Split(flVal.Name, ",")
+			if len(names) < 1 {
+				continue
+			}
+
+			v := c.Int(names[0])
+			envVar := flVal.EnvVar
+			if envVar != "" {
+				os.Setenv(envVar, fmt.Sprintf("%d", v))
+			}
+		}
+	}
+}

@@ -7,8 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.5.1-35-g2e36101",
-			"Rev": "2e36101a197f56f60ca6c37c3c256ed3713a9649"
+			"Comment": "v0.6.0-2-gf302a46",
+			"Rev": "f302a46d2ab1439e88e51192fa8a4abfe511293d"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
@@ -57,6 +57,14 @@
 		{
 			"ImportPath": "github.com/jrallison/go-workers",
 			"Rev": "2aae4d367bfac8d2c9267d3212300df400599717"
+		},
+		{
+			"ImportPath": "github.com/meatballhat/expvarplus",
+			"Rev": "5e58a183508e285b25171258699c577972692457"
+		},
+		{
+			"ImportPath": "github.com/meatballhat/logrus",
+			"Rev": "f302a46d2ab1439e88e51192fa8a4abfe511293d"
 		},
 		{
 			"ImportPath": "github.com/meatballhat/negroni-logrus",

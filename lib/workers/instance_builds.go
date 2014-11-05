@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"

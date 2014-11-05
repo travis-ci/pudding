@@ -1,7 +1,7 @@
 package lib
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/getsentry/raven-go"
 )
 

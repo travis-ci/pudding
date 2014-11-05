@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/getsentry/raven-go"
 	"github.com/travis-pro/worker-manager-service/lib"
 )
