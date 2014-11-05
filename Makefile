@@ -12,7 +12,7 @@ SUBPACKAGES := \
 VERSION_VAR := $(PACKAGE)/lib.VersionString
 VERSION_VALUE := $(shell git describe --always --dirty --tags 2>/dev/null)
 REV_VAR := $(PACKAGE)/lib.RevisionString
-REV_VALUE := $(shell git rev-parse --sq HEAD 2>/dev/null)
+REV_VALUE := $(shell git rev-parse --sq HEAD 2>/dev/null || echo "'???'")
 GENERATED_VAR := $(PACKAGE)/lib.GeneratedString
 GENERATED_VALUE := $(shell date -u +'%Y-%m-%dT%H:%M:%S%z')
 
