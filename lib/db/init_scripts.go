@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/meatballhat/logrus"
 )
 
 // InstanceBuildAuther is the interface used to authenticate

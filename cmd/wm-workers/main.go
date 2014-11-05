@@ -11,6 +11,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Version = lib.VersionString
 	app.Flags = []cli.Flag{
 		lib.RedisURLFlag,
 		cli.StringFlag{
@@ -59,6 +60,9 @@ func main() {
 		cli.StringFlag{
 			Name: "Y, travis-worker-yml",
 		},
+		cli.StringFlag{
+			Name: "T, init-script-template",
+		},
 		cli.IntFlag{
 			Name:   "I, mini-worker-interval",
 			Value:  30,
@@ -85,6 +89,11 @@ func runWorkers(c *cli.Context) {
 		workerYML = lib.GetTravisWorkerYML()
 	}
 
+	initScriptTemplate := c.String("init-script-template")
+	if initScriptTemplate == "" {
+		initScriptTemplate = lib.GetInitScriptTemplate()
+	}
+
 	lib.WriteFlagsToEnv(c)
 
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),
@@ -92,5 +101,6 @@ func runWorkers(c *cli.Context) {
 		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
 		dockerRSA, c.String("web-hostname"), workerYML,
 		c.String("slack-team"), c.String("slack-token"), c.String("sentry-dsn"),
+		initScriptTemplate,
 		c.Int("mini-worker-interval"), c.Int("instance-expiry"))
 }

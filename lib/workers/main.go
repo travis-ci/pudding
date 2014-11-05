@@ -13,7 +13,8 @@ import (
 // Main is the whole shebang
 func Main(queues, redisPoolSize, redisURLString, processID,
 	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	travisWorkerYML, slackTeam, slackToken, sentryDSN string,
+	travisWorkerYML, slackTeam, slackToken, sentryDSN,
+	initScriptTemplateString string,
 	miniWorkerInterval, instanceExpiry int) {
 
 	cfg := &config{

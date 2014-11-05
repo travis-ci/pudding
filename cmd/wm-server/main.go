@@ -10,6 +10,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Version = lib.VersionString
 	app.Flags = []cli.Flag{
 		lib.AddrFlag,
 		lib.RedisURLFlag,

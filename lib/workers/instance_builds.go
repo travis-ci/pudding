@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"text/template"
 	"time"
 
-	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
+	"github.com/meatballhat/logrus"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/lib"
 	"github.com/travis-pro/worker-manager-service/lib/db"
@@ -50,6 +51,7 @@ type instanceBuilderWorker struct {
 	ami    *ec2.Image
 	b      *lib.InstanceBuild
 	i      *ec2.Instance
+	t      *template.Template
 }
 
 func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
@@ -60,6 +62,7 @@ func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *config, jid string, red
 		sn:  lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
 		b:   b,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
+		t:   cfg.InitScriptTemplate,
 	}
 
 	ibw.sgName = fmt.Sprintf("docker-worker-%d-%p", time.Now().UTC().Unix(), ibw)
@@ -235,7 +238,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	err = initScript.Execute(w, &initScriptContext{
+	err = ibw.t.Execute(w, &initScriptContext{
 		Env:              ibw.b.Env,
 		Site:             ibw.b.Site,
 		DockerRSA:        ibw.cfg.DockerRSA,

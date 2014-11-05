@@ -2,6 +2,7 @@ package workers
 
 import (
 	"net/url"
+	"text/template"
 
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/aws"
@@ -31,4 +32,6 @@ type config struct {
 
 	MiniWorkerInterval  int
 	InstanceStoreExpiry int
+
+	InitScriptTemplate *template.Template
 }

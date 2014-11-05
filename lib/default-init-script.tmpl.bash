@@ -1,9 +1,4 @@
-package workers
-
-import "text/template"
-
-var (
-	initScript = template.Must(template.New("init-script").Parse(`#!/bin/bash
+#!/bin/bash
 set -o errexit
 
 export INSTANCE_ID=$(curl -s 'http://169.254.169.254/latest/meta-data/instance-id')
@@ -70,16 +65,3 @@ curl -s -f \
   -d "state=finished&instance-id=$INSTANCE_ID&slack-channel={{.SlackChannel}}" \
   -X PATCH \
   "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=finished"
-`))
-)
-
-type initScriptContext struct {
-	Env              string
-	Site             string
-	DockerRSA        string
-	SlackChannel     string
-	PapertrailSite   string
-	TravisWorkerYML  string
-	InstanceBuildID  string
-	InstanceBuildURL string
-}

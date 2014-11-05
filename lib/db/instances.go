@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/meatballhat/logrus"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/lib"
 )

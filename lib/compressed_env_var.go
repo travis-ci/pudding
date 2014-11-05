@@ -10,7 +10,9 @@ import (
 )
 
 var (
-	errMissingEnvVar = fmt.Errorf("missing env var")
+	// ErrMissingEnvVar is used to signal when an env var is missing
+	// :boom:
+	ErrMissingEnvVar = fmt.Errorf("missing env var")
 )
 
 // GetCompressedEnvVar looks up an env var and base64-decodes and
@@ -18,7 +20,7 @@ var (
 func GetCompressedEnvVar(key string) (string, error) {
 	value := os.Getenv(key)
 	if value == "" {
-		return "", errMissingEnvVar
+		return "", ErrMissingEnvVar
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(value)
