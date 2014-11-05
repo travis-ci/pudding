@@ -67,6 +67,7 @@ var (
 	// clients
 	SentryDSNFlag = cli.StringFlag{
 		Name:   "sentry-dsn",
+		Value:  os.Getenv("SENTRY_DSN"),
 		EnvVar: "WORKER_MANAGER_SENTRY_DSN",
 	}
 )
