@@ -55,37 +55,39 @@ DYNO=1 foreman start
 
 ## Usage
 
+### web
+
 The web API exposes the following resources, with most requiring
 authentication via token:
 
-### `GET /`
+#### `GET /`
 
 Provides a friendly greeting
 
-### `DELETE /` **requires auth**
+#### `DELETE /` **requires auth**
 
 Gracefully shut down the server
 
-### `POST /kaboom` **requires auth**
+#### `POST /kaboom` **requires auth**
 
 Simulate a panic.  No body expected.
 
-### `GET /instances` **requires auth**
+#### `GET /instances` **requires auth**
 
 Provide a list of worker instances, optionally filtered with `env`
 and `site` query params.
 
-### `GET /instances/{instance_id}` **requires auth**
+#### `GET /instances/{instance_id}` **requires auth**
 
 Provide a list containing a single worker matching the given
 `instance_id`, if it exists.
 
-### `DELETE /instances/{instance_id}` **requires auth**
+#### `DELETE /instances/{instance_id}` **requires auth**
 
 Terminate an instance that matches the given `instance_id`, if it
 exists.
 
-### `POST /instance-builds` **requires auth**
+#### `POST /instance-builds` **requires auth**
 
 Start an instance build, which will result in an EC2 instance
 running the `travis-worker` service.  The expected body is a
@@ -104,7 +106,7 @@ jsonapi singular collection of `"instance_build"`, like so:
 
 ```
 
-### `PATCH /instance-builds/{instance_build_id}` **requires auth**
+#### `PATCH /instance-builds/{instance_build_id}` **requires auth**
 
 "Update" an instance build; currently used to send notifications to
 Slack upon completion of a build.  Expects
@@ -114,7 +116,7 @@ Slack upon completion of a build.  Expects
 state=finished&instance-id=i-abcd1234&slack-channel=general
 ```
 
-### `GET /init-scripts/{instance_build_id}` **requires auth**
+#### `GET /init-scripts/{instance_build_id}` **requires auth**
 
 This route accepts both token auth and "init script auth", which is
 basic auth specific to the instance build and is kept in a redis
@@ -122,3 +124,27 @@ key with expiry.  This is the route hit by the cloud-init
 `#include` set in EC2 instance user data when the instance is
 created.  It responds with a content type of `text/x-shellscript;
 charset=utf-8`, which is expected (but not enforced) by cloud-init.
+
+### workers
+
+The background job workers (not to be confused with
+`travis-worker` workers) are started as a separate process and
+communicate with the web server via redis.  The sidekiq-compatible
+workers are built using
+[`go-workers`](https://github.com/jrallison/go-workers).  There are
+also non-evented "mini workers" that run in a simple run-sleep loop
+in a separate goroutine.
+
+#### `instance-builds` queue
+
+Jobs handled by the `instance-builds` perform the following actions:
+
+* resolve the `ami` id, using the most recent available if absent
+* create a custom security group and authorize inbound port 22
+* prepare a cloud-init script and store it in redis
+* prepare an `#include` statement with custom URL to be used in the
+  instance user-data
+* create an instance with the resolved ami id, `#include <url>`
+  user-data, custom security group, and specified instance type
+* tag the instance with `role`, `Name`, `site`, `env`, and `queue`
+* send slack notification that the instance has been created
