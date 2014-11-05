@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/braintree/manners"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
+	"github.com/meatballhat/expvarplus"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/travis-pro/worker-manager-service/lib"
@@ -24,6 +25,13 @@ var (
 	errMissingInstanceID      = fmt.Errorf("missing instance id")
 	errKaboom                 = fmt.Errorf("simulated kaboom ʕノ•ᴥ•ʔノ ︵ ┻━┻")
 )
+
+func init() {
+	expvarplus.AddToEnvWhitelist("VERSION", "REVISION", "GENERATED", "DYNO",
+		"BUILDPACK_URL", "PORT", "DEBUG", "HOSTNAME", "WORKER_MANAGER_WEB_HOSTNAME",
+		"WORKER_MANAGER_INSTANCE_EXPIRY", "WORKER_MANAGER_DEFAULT_SLACK_CHANNEL",
+		"WORKER_MANAGER_SLACK_TEAM")
+}
 
 type server struct {
 	addr, authToken, slackToken, slackTeam, slackChannel, sentryDSN string
@@ -112,6 +120,7 @@ func (srv *server) Run() {
 func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/`, srv.handleGetRoot).Methods("GET").Name("ohai")
 	srv.r.HandleFunc(`/`, srv.ifAuth(srv.handleDeleteRoot)).Methods("DELETE").Name("shutdown")
+	srv.r.HandleFunc(`/debug/vars`, srv.ifAuth(expvarplus.HandleExpvars)).Methods("GET").Name("expvars")
 	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
 	srv.r.HandleFunc(`/instances`, srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
@@ -133,12 +142,6 @@ func (srv *server) setupMiddleware() {
 	srv.n.UseHandler(srv.r)
 }
 
-func (srv *server) handleGetRoot(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text-plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "ohai\n")
-}
-
 func (srv *server) ifAuth(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if !srv.auther.Authenticate(w, req) {
@@ -147,6 +150,11 @@ func (srv *server) ifAuth(f func(http.ResponseWriter, *http.Request)) func(http.
 
 		f(w, req)
 	}
+}
+func (srv *server) handleGetRoot(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text-plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "ohai\n")
 }
 
 func (srv *server) handleDeleteRoot(w http.ResponseWriter, req *http.Request) {

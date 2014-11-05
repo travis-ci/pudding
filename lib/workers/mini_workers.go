@@ -3,7 +3,7 @@ package workers
 import (
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 )
 
 type miniWorkers struct {
@@ -36,7 +36,8 @@ func (mw *miniWorkers) Run() {
 func (mw *miniWorkers) runTick() {
 	defer func() {
 		if err := recover(); err != nil {
-			mw.log.WithField("err", err).Error("recovered from panic")
+			mw.log.WithField("err", err).Error("recovered from panic, sleeping anyway")
+			time.Sleep(time.Duration(int32(mw.cfg.MiniWorkerInterval)) * time.Second)
 		}
 	}()
 

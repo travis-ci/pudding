@@ -50,9 +50,16 @@ func (r *MiddlewareRaven) Do(fn func() error) error {
 		case nil:
 			return
 		case error:
-			packet = raven.NewPacket(rval.Error(), raven.NewException(rval, raven.NewStacktrace(2, 3, nil)))
+			errMsg := rval.Error()
+			if errMsg == "" {
+				errMsg = "generic worker error (?)"
+			}
+			packet = raven.NewPacket(errMsg, raven.NewException(rval, raven.NewStacktrace(2, 3, nil)))
 		default:
 			rvalStr := fmt.Sprint(rval)
+			if rvalStr == "" {
+				rvalStr = "generic worker error (?)"
+			}
 			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 

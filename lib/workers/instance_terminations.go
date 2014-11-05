@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/ec2"

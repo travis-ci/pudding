@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
 )
 

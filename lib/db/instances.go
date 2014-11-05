@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/meatballhat/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/lib"

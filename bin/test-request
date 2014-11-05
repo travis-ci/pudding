@@ -7,6 +7,7 @@
 case "$1" in
   instance-build)
     exec curl \
+      -s \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X POST \
       -d "{
@@ -22,6 +23,7 @@ case "$1" in
     ;;
   list-instances)
     exec curl \
+      -s \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       ${HOST}:${PORT}/instances
     ;;
@@ -31,12 +33,14 @@ case "$1" in
       exit 1
     fi
     exec curl \
+      -s \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X DELETE \
       ${HOST}:${PORT}/instances/$2
     ;;
   bogus-instance-build)
     exec curl \
+      -s \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X POST \
       -d "{\"instance_builds\": {}}" \
@@ -44,15 +48,23 @@ case "$1" in
     ;;
   shutdown)
     exec curl \
+      -s \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X DELETE \
       ${HOST}:${PORT}/
     ;;
   kaboom)
     exec curl \
+      -s \
       -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
       -X POST \
       ${HOST}:${PORT}/kaboom
+    ;;
+  expvars)
+    exec curl \
+      -s \
+      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      ${HOST}:${PORT}/debug/vars
     ;;
   *)
     echo "unknown request type '$1'"

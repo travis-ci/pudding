@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -9,19 +8,7 @@ import (
 	"github.com/travis-pro/worker-manager-service/lib/server"
 )
 
-var (
-	VersionString   = "?"
-	RevisionString  = "?"
-	GeneratedString = "?"
-)
-
-func customVersionPrinter(c *cli.Context) {
-	fmt.Printf("%v v=%v rev=%v d=%v\n", c.App.Name, VersionString, RevisionString, GeneratedString)
-}
-
 func main() {
-	cli.VersionPrinter = customVersionPrinter
-
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
 		lib.AddrFlag,
@@ -53,6 +40,8 @@ func main() {
 }
 
 func runServer(c *cli.Context) {
+	lib.WriteFlagsToEnv(c)
+
 	server.Main(c.String("addr"), c.String("auth-token"), c.String("redis-url"),
 		c.String("slack-token"), c.String("slack-team"), c.String("default-slack-channel"),
 		c.String("sentry-dsn"),

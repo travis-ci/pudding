@@ -9,19 +9,7 @@ import (
 	"github.com/travis-pro/worker-manager-service/lib/workers"
 )
 
-var (
-	VersionString   = "?"
-	RevisionString  = "?"
-	GeneratedString = "?"
-)
-
-func customVersionPrinter(c *cli.Context) {
-	fmt.Printf("%v v=%v rev=%v d=%v\n", c.App.Name, VersionString, RevisionString, GeneratedString)
-}
-
 func main() {
-	cli.VersionPrinter = customVersionPrinter
-
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
 		lib.RedisURLFlag,
@@ -96,6 +84,8 @@ func runWorkers(c *cli.Context) {
 	if workerYML == "" {
 		workerYML = lib.GetTravisWorkerYML()
 	}
+
+	lib.WriteFlagsToEnv(c)
 
 	workers.Main(c.String("queues"), c.String("redis-pool-size"),
 		c.String("redis-url"), c.String("process-id"),

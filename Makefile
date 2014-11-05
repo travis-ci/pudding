@@ -9,11 +9,11 @@ SUBPACKAGES := \
 	$(PACKAGE)/lib/server/negroniraven \
 	$(PACKAGE)/lib/workers
 
-VERSION_VAR := main.VersionString
+VERSION_VAR := $(PACKAGE)/lib.VersionString
 VERSION_VALUE := $(shell git describe --always --dirty --tags)
-REV_VAR := main.RevisionString
+REV_VAR := $(PACKAGE)/lib.RevisionString
 REV_VALUE := $(shell git rev-parse --sq HEAD)
-GENERATED_VAR := main.GeneratedString
+GENERATED_VAR := $(PACKAGE)/lib.GeneratedString
 GENERATED_VALUE := $(shell date -u +'%Y-%m-%dT%H:%M:%S%z')
 
 FIND ?= find
