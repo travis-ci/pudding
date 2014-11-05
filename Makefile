@@ -47,11 +47,7 @@ all: clean deps test lintall
 
 .PHONY: buildpack
 buildpack:
-	@$(MAKE) build GOBUILD_FLAGS= \
-    GOBUILD_LDFLAGS="-ldflags \" \
-      -X $(VERSION_VAR) 'heroku' \
-      -X $(REV_VAR) '???' \
-      -X $(GENERATED_VAR) '$(GENERATED_VALUE)'\""
+	@$(MAKE) build GOBUILD_FLAGS=
 
 .PHONY: test
 test: build fmtpolice test-deps coverage.html
