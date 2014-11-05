@@ -45,6 +45,9 @@ COVERPROFILES := \
 .PHONY: all
 all: clean deps test lintall
 
+.PHONY: buildpack
+buildpack: build
+
 .PHONY: test
 test: build fmtpolice test-deps coverage.html
 
