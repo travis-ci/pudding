@@ -137,7 +137,8 @@ in a separate goroutine.
 
 #### `instance-builds` queue
 
-Jobs handled by the `instance-builds` perform the following actions:
+Jobs handled on the `instance-builds` queue perform the following
+actions:
 
 * resolve the `ami` id, using the most recent available if absent
 * create a custom security group and authorize inbound port 22
@@ -148,3 +149,11 @@ Jobs handled by the `instance-builds` perform the following actions:
   user-data, custom security group, and specified instance type
 * tag the instance with `role`, `Name`, `site`, `env`, and `queue`
 * send slack notification that the instance has been created
+
+#### `instance-terminations` queue
+
+Jobs handled on the `instance-terminations` queue perform the
+following actions:
+
+* terminate the instance by id, e.g. `i-abcd1234`
+* remove the instance from the redis cache
