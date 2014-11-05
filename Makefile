@@ -46,7 +46,8 @@ COVERPROFILES := \
 all: clean deps test lintall
 
 .PHONY: buildpack
-buildpack: build
+buildpack:
+	@$(MAKE) build GOBUILD_FLAGS=
 
 .PHONY: test
 test: build fmtpolice test-deps coverage.html
