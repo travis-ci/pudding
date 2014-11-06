@@ -273,17 +273,18 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		return
 	}
 
-	instanceID := req.FormValue("instance-id")
-	if instanceID == "" {
-		instanceID = "?wat?"
-	}
-
 	slackChannel := req.FormValue("slack-channel")
 	if slackChannel == "" {
 		slackChannel = srv.slackChannel
 	}
 
-	if srv.slackTeam != "" && srv.slackToken != "" {
+	// FIXME: extract this bit for other notification types?
+	if srv.slackTeam != "" && srv.slackToken != "" && slackChannel != "" {
+		instanceID := req.FormValue("instance-id")
+		if instanceID == "" {
+			instanceID = "?wat?"
+		}
+
 		srv.log.Debug("sending slack notification!")
 		notifier := lib.NewSlackNotifier(srv.slackTeam, srv.slackToken)
 		err := notifier.Notify(slackChannel,

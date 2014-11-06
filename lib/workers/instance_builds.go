@@ -42,7 +42,7 @@ func instanceBuildsMain(cfg *config, msg *workers.Msg) {
 
 type instanceBuilderWorker struct {
 	rc     redis.Conn
-	sn     *lib.SlackNotifier
+	n      []lib.Notifier
 	jid    string
 	cfg    *config
 	ec2    *ec2.EC2
@@ -55,11 +55,13 @@ type instanceBuilderWorker struct {
 }
 
 func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
+	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
+
 	ibw := &instanceBuilderWorker{
 		rc:  redisConn,
 		jid: jid,
 		cfg: cfg,
-		sn:  lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
+		n:   []lib.Notifier{notifier},
 		b:   b,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 		t:   cfg.InitScriptTemplate,
@@ -287,6 +289,8 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 }
 
 func (ibw *instanceBuilderWorker) notifyInstanceLaunched() {
-	ibw.sn.Notify(ibw.b.SlackChannel,
-		fmt.Sprintf("Started instance `%s` for instance build *%s*", ibw.i.InstanceId, ibw.b.ID))
+	for _, notifier := range ibw.n {
+		notifier.Notify(ibw.b.SlackChannel,
+			fmt.Sprintf("Started instance `%s` for instance build *%s*", ibw.i.InstanceId, ibw.b.ID))
+	}
 }

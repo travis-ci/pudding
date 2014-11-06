@@ -39,20 +39,22 @@ func instanceTerminationsMain(cfg *config, msg *workers.Msg) {
 type instanceTerminatorWorker struct {
 	rc  redis.Conn
 	jid string
-	sc  string
-	sn  *lib.SlackNotifier
+	nc  string
+	n   []lib.Notifier
 	iid string
 	cfg *config
 	ec2 *ec2.EC2
 }
 
 func newInstanceTerminatorWorker(instanceID, slackChannel string, cfg *config, jid string, redisConn redis.Conn) *instanceTerminatorWorker {
+	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
+
 	return &instanceTerminatorWorker{
 		rc:  redisConn,
 		jid: jid,
 		cfg: cfg,
-		sc:  slackChannel,
-		sn:  lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken),
+		nc:  slackChannel,
+		n:   []lib.Notifier{notifier},
 		iid: instanceID,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
@@ -66,10 +68,14 @@ func (itw *instanceTerminatorWorker) Terminate() error {
 
 	err = db.RemoveInstances(itw.rc, []string{itw.iid})
 	if err != nil {
-		itw.sn.Notify(itw.sc, fmt.Sprintf("Failed to terminate *%s* :scream_cat: _(%s)_", itw.iid, err))
+		for _, notifier := range itw.n {
+			notifier.Notify(itw.nc, fmt.Sprintf("Failed to terminate *%s* :scream_cat: _(%s)_", itw.iid, err))
+		}
 		return err
 	}
 
-	itw.sn.Notify(itw.sc, fmt.Sprintf("Terminating *%s* :boom:", itw.iid))
+	for _, notifier := range itw.n {
+		notifier.Notify(itw.nc, fmt.Sprintf("Terminating *%s* :boom:", itw.iid))
+	}
 	return nil
 }
