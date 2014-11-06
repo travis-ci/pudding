@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/meatballhat/logrus"
 	"github.com/mitchellh/goamz/aws"
@@ -31,11 +32,14 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 		DockerRSA:       dockerRSA,
 		TravisWorkerYML: travisWorkerYML,
 
-		Queues:              []string{},
-		QueueConcurrencies:  map[string]int{},
-		QueueFuncs:          defaultQueueFuncs,
+		Queues:             []string{},
+		QueueConcurrencies: map[string]int{},
+		QueueFuncs:         defaultQueueFuncs,
+
 		MiniWorkerInterval:  miniWorkerInterval,
 		InstanceStoreExpiry: instanceExpiry,
+
+		InitScriptTemplate: template.Must(template.New("init-script").Parse(initScriptTemplateString)),
 	}
 
 	auth, err := aws.GetAuth(awsKey, awsSecret)
