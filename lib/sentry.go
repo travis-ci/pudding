@@ -7,12 +7,12 @@ import (
 
 // SendRavenPacket encapsulates the raven packet send, plus logging
 // around errors and such
-func SendRavenPacket(packet *raven.Packet, cl *raven.Client, log *logrus.Logger) error {
+func SendRavenPacket(packet *raven.Packet, cl *raven.Client, log *logrus.Logger, tags map[string]string) error {
 	log.WithFields(logrus.Fields{
 		"packet": packet,
 	}).Info("sending sentry packet")
 
-	eventID, ch := cl.Capture(packet, map[string]string{})
+	eventID, ch := cl.Capture(packet, tags)
 	err := <-ch
 	if err != nil {
 		log.WithFields(logrus.Fields{

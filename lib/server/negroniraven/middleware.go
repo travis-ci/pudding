@@ -27,18 +27,32 @@ func NewMiddleware(sentryDSN string) (*Middleware, error) {
 func (mw *Middleware) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	defer func() {
 		var packet *raven.Packet
+		tags := map[string]string{"level": "panic"}
+
 		p := recover()
 		switch rval := p.(type) {
 		case nil:
 			return
 		case error:
-			packet = raven.NewPacket(rval.Error(), raven.NewException(rval, raven.NewStacktrace(2, 3, nil)))
+			packet = raven.NewPacket(rval.Error(), raven.NewException(rval, raven.NewStacktrace(2, 3, nil)), raven.NewHttp(req))
+		case *logrus.Entry:
+			entryErrInterface, ok := rval.Data["err"]
+			if !ok {
+				entryErrInterface = fmt.Errorf(rval.Message)
+			}
+
+			entryErr, ok := entryErrInterface.(error)
+			if !ok {
+				entryErr = fmt.Errorf(rval.Message)
+			}
+
+			packet = raven.NewPacket(rval.Message, raven.NewException(entryErr, raven.NewStacktrace(2, 3, nil)), raven.NewHttp(req))
 		default:
 			rvalStr := fmt.Sprint(rval)
-			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
+			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)), raven.NewHttp(req))
 		}
 
-		lib.SendRavenPacket(packet, mw.cl, mw.log)
+		lib.SendRavenPacket(packet, mw.cl, mw.log, tags)
 		panic(p)
 	}()
 

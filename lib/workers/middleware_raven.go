@@ -1,10 +1,10 @@
 package workers
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-pro/worker-manager-service/lib"
@@ -21,19 +21,33 @@ type MiddlewareRaven struct {
 func (r *MiddlewareRaven) Call(queue string, message *workers.Msg, next func() bool) (ack bool) {
 	defer func() {
 		var packet *raven.Packet
+		tags := map[string]string{"level": "panic"}
 		p := recover()
+
 		switch rval := p.(type) {
 		case nil:
 			ack = true
 			return
 		case error:
 			packet = raven.NewPacket(rval.Error(), raven.NewException(rval, raven.NewStacktrace(2, 3, nil)))
+		case *logrus.Entry:
+			entryErrInterface, ok := rval.Data["err"]
+			if !ok {
+				entryErrInterface = fmt.Errorf(rval.Message)
+			}
+
+			entryErr, ok := entryErrInterface.(error)
+			if !ok {
+				entryErr = fmt.Errorf(rval.Message)
+			}
+
+			packet = raven.NewPacket(rval.Message, raven.NewException(entryErr, raven.NewStacktrace(2, 3, nil)))
 		default:
 			rvalStr := fmt.Sprint(rval)
-			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
+			packet = raven.NewPacket(rvalStr, raven.NewException(fmt.Errorf(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 
-		lib.SendRavenPacket(packet, r.cl, log)
+		lib.SendRavenPacket(packet, r.cl, log, tags)
 		panic(p)
 	}()
 
@@ -45,7 +59,9 @@ func (r *MiddlewareRaven) Call(queue string, message *workers.Msg, next func() b
 func (r *MiddlewareRaven) Do(fn func() error) error {
 	defer func() {
 		var packet *raven.Packet
+		tags := map[string]string{"level": "panic"}
 		p := recover()
+
 		switch rval := p.(type) {
 		case nil:
 			return
@@ -55,15 +71,27 @@ func (r *MiddlewareRaven) Do(fn func() error) error {
 				errMsg = "generic worker error (?)"
 			}
 			packet = raven.NewPacket(errMsg, raven.NewException(rval, raven.NewStacktrace(2, 3, nil)))
+		case *logrus.Entry:
+			entryErrInterface, ok := rval.Data["err"]
+			if !ok {
+				entryErrInterface = fmt.Errorf(rval.Message)
+			}
+
+			entryErr, ok := entryErrInterface.(error)
+			if !ok {
+				entryErr = fmt.Errorf(rval.Message)
+			}
+
+			packet = raven.NewPacket(rval.Message, raven.NewException(entryErr, raven.NewStacktrace(2, 3, nil)))
 		default:
 			rvalStr := fmt.Sprint(rval)
 			if rvalStr == "" {
 				rvalStr = "generic worker error (?)"
 			}
-			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
+			packet = raven.NewPacket(rvalStr, raven.NewException(fmt.Errorf(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 
-		lib.SendRavenPacket(packet, r.cl, log)
+		lib.SendRavenPacket(packet, r.cl, log, tags)
 		panic(p)
 	}()
 
