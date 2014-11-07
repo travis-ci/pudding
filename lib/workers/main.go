@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/meatballhat/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/mitchellh/goamz/aws"
 )
 

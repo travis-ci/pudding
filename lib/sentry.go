@@ -1,8 +1,8 @@
 package lib
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
-	"github.com/meatballhat/logrus"
 )
 
 // SendRavenPacket encapsulates the raven packet send, plus logging

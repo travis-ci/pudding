@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
-	"github.com/meatballhat/logrus"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/lib"
 	"github.com/travis-pro/worker-manager-service/lib/db"

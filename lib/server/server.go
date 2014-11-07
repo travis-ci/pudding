@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/braintree/manners"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/expvarplus"
-	"github.com/meatballhat/logrus"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/travis-pro/worker-manager-service/lib"

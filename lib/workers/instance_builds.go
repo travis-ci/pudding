@@ -11,10 +11,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
-	"github.com/meatballhat/logrus"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-pro/worker-manager-service/lib"
 	"github.com/travis-pro/worker-manager-service/lib/db"

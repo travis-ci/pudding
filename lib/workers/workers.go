@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/jrallison/go-workers"
-	"github.com/meatballhat/logrus"
 )
 
 var (

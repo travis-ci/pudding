@@ -3,7 +3,7 @@ package workers
 import (
 	"time"
 
-	"github.com/meatballhat/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 type miniWorkers struct {
