@@ -12,7 +12,7 @@ import (
 var (
 	log *logrus.Logger
 
-	defaultQueueFuncs = map[string]func(*config, *workers.Msg){}
+	defaultQueueFuncs = map[string]func(*internalConfig, *workers.Msg){}
 )
 
 func init() {
@@ -24,7 +24,7 @@ func init() {
 	}
 }
 
-func runWorkers(cfg *config, log *logrus.Logger) error {
+func runWorkers(cfg *internalConfig, log *logrus.Logger) error {
 	workers.Logger = log
 	workers.Configure(optsFromConfig(cfg))
 
@@ -58,7 +58,7 @@ func runWorkers(cfg *config, log *logrus.Logger) error {
 	return nil
 }
 
-func setupMiniWorkers(cfg *config, log *logrus.Logger, rm *MiddlewareRaven) *miniWorkers {
+func setupMiniWorkers(cfg *internalConfig, log *logrus.Logger, rm *MiddlewareRaven) *miniWorkers {
 	mw := newMiniWorkers(cfg, log, rm)
 	mw.Register("ec2-sync", func() error {
 		syncer, err := newEC2Syncer(cfg, log)
@@ -82,7 +82,7 @@ func setupMiniWorkers(cfg *config, log *logrus.Logger, rm *MiddlewareRaven) *min
 	return mw
 }
 
-func optsFromConfig(cfg *config) map[string]string {
+func optsFromConfig(cfg *internalConfig) map[string]string {
 	opts := map[string]string{
 		"server":    cfg.RedisURL.Host,
 		"database":  strings.TrimLeft(cfg.RedisURL.Path, "/"),

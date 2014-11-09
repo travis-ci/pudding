@@ -1,37 +1,25 @@
 package workers
 
-import (
-	"net/url"
-	"text/template"
+type Config struct {
+	ProcessID   string
+	WebHostname string
 
-	"github.com/jrallison/go-workers"
-	"github.com/mitchellh/goamz/aws"
-)
-
-type config struct {
-	AWSAuth   aws.Auth
-	AWSRegion aws.Region
-
-	RedisURL      *url.URL
+	Queues        string
 	RedisPoolSize string
+	RedisURL      string
+
+	AWSKey    string
+	AWSSecret string
+	AWSRegion string
+
+	DockerRSA          string
+	WorkerYML          string
+	InitScriptTemplate string
+	MiniWorkerInterval int
+	InstanceExpiry     int
 
 	SlackTeam  string
 	SlackToken string
 
 	SentryDSN string
-
-	WebHost   string
-	ProcessID string
-
-	DockerRSA       string
-	TravisWorkerYML string
-
-	Queues             []string
-	QueueFuncs         map[string]func(*config, *workers.Msg)
-	QueueConcurrencies map[string]int
-
-	MiniWorkerInterval  int
-	InstanceStoreExpiry int
-
-	InitScriptTemplate *template.Template
 }

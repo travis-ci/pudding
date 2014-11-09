@@ -12,56 +12,51 @@ import (
 )
 
 // Main is the whole shebang
-func Main(queues, redisPoolSize, redisURLString, processID,
-	awsKey, awsSecret, awsRegion, dockerRSA, webHost,
-	travisWorkerYML, slackTeam, slackToken, sentryDSN,
-	initScriptTemplateString string,
-	miniWorkerInterval, instanceExpiry int) {
+func Main(cfg *Config) {
+	ic := &internalConfig{
+		RedisPoolSize: cfg.RedisPoolSize,
 
-	cfg := &config{
-		RedisPoolSize: redisPoolSize,
+		SlackTeam:  cfg.SlackTeam,
+		SlackToken: cfg.SlackToken,
 
-		WebHost:   webHost,
-		ProcessID: processID,
+		SentryDSN: cfg.SentryDSN,
 
-		SlackTeam:  slackTeam,
-		SlackToken: slackToken,
+		WebHost:   cfg.WebHostname,
+		ProcessID: cfg.ProcessID,
 
-		SentryDSN: sentryDSN,
-
-		DockerRSA:       dockerRSA,
-		TravisWorkerYML: travisWorkerYML,
+		DockerRSA:       cfg.DockerRSA,
+		TravisWorkerYML: cfg.WorkerYML,
 
 		Queues:             []string{},
 		QueueConcurrencies: map[string]int{},
 		QueueFuncs:         defaultQueueFuncs,
 
-		MiniWorkerInterval:  miniWorkerInterval,
-		InstanceStoreExpiry: instanceExpiry,
+		MiniWorkerInterval:  cfg.MiniWorkerInterval,
+		InstanceStoreExpiry: cfg.InstanceExpiry,
 
-		InitScriptTemplate: template.Must(template.New("init-script").Parse(initScriptTemplateString)),
+		InitScriptTemplate: template.Must(template.New("init-script").Parse(cfg.InitScriptTemplate)),
 	}
 
-	auth, err := aws.GetAuth(awsKey, awsSecret)
+	auth, err := aws.GetAuth(cfg.AWSKey, cfg.AWSSecret)
 	if err != nil {
 		log.WithField("err", err).Fatal("failed to load aws auth")
 		os.Exit(1)
 	}
 
-	region, ok := aws.Regions[awsRegion]
+	region, ok := aws.Regions[cfg.AWSRegion]
 	if !ok {
-		log.WithField("region", awsRegion).Fatal("invalid region")
+		log.WithField("region", cfg.AWSRegion).Fatal("invalid region")
 		os.Exit(1)
 	}
-	cfg.AWSAuth = auth
-	cfg.AWSRegion = region
+	ic.AWSAuth = auth
+	ic.AWSRegion = region
 
-	if cfg.DockerRSA == "" {
+	if ic.DockerRSA == "" {
 		log.Fatal("missing docker rsa key")
 		os.Exit(1)
 	}
 
-	for _, queue := range strings.Split(queues, ",") {
+	for _, queue := range strings.Split(cfg.Queues, ",") {
 		concurrency := 10
 		qParts := strings.Split(queue, ":")
 		if len(qParts) == 2 {
@@ -78,19 +73,19 @@ func Main(queues, redisPoolSize, redisURLString, processID,
 			}
 		}
 		queue = strings.TrimSpace(queue)
-		cfg.QueueConcurrencies[queue] = concurrency
-		cfg.Queues = append(cfg.Queues, queue)
+		ic.QueueConcurrencies[queue] = concurrency
+		ic.Queues = append(ic.Queues, queue)
 	}
 
-	redisURL, err := url.Parse(redisURLString)
+	redisURL, err := url.Parse(cfg.RedisURL)
 	if err != nil {
 		log.WithField("err", err).Fatal("failed to parse redis url")
 		os.Exit(1)
 	}
 
-	cfg.RedisURL = redisURL
+	ic.RedisURL = redisURL
 
-	err = runWorkers(cfg, log)
+	err = runWorkers(ic, log)
 	if err != nil {
 		log.WithField("err", err).Fatal("failed to start workers")
 		os.Exit(1)

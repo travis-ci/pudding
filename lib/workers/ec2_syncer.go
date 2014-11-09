@@ -8,13 +8,13 @@ import (
 )
 
 type ec2Syncer struct {
-	cfg *config
+	cfg *internalConfig
 	ec2 *ec2.EC2
 	log *logrus.Logger
 	i   db.InstanceFetcherStorer
 }
 
-func newEC2Syncer(cfg *config, log *logrus.Logger) (*ec2Syncer, error) {
+func newEC2Syncer(cfg *internalConfig, log *logrus.Logger) (*ec2Syncer, error) {
 	i, err := db.NewInstances(cfg.RedisURL.String(), log, cfg.InstanceStoreExpiry)
 	if err != nil {
 		return nil, err

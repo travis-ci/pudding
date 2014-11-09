@@ -96,11 +96,27 @@ func runWorkers(c *cli.Context) {
 
 	lib.WriteFlagsToEnv(c)
 
-	workers.Main(c.String("queues"), c.String("redis-pool-size"),
-		c.String("redis-url"), c.String("process-id"),
-		c.String("aws-key"), c.String("aws-secret"), c.String("aws-region"),
-		dockerRSA, c.String("web-hostname"), workerYML,
-		c.String("slack-team"), c.String("slack-token"), c.String("sentry-dsn"),
-		initScriptTemplate,
-		c.Int("mini-worker-interval"), c.Int("instance-expiry"))
+	workers.Main(&workers.Config{
+		ProcessID:   c.String("process-id"),
+		WebHostname: c.String("web-hostname"),
+
+		Queues:        c.String("queues"),
+		RedisPoolSize: c.String("redis-pool-size"),
+		RedisURL:      c.String("redis-url"),
+
+		AWSKey:    c.String("aws-key"),
+		AWSSecret: c.String("aws-secret"),
+		AWSRegion: c.String("aws-region"),
+
+		DockerRSA:          dockerRSA,
+		WorkerYML:          workerYML,
+		InitScriptTemplate: initScriptTemplate,
+		MiniWorkerInterval: c.Int("mini-worker-interval"),
+		InstanceExpiry:     c.Int("instance-expiry"),
+
+		SlackTeam:  c.String("slack-team"),
+		SlackToken: c.String("slack-token"),
+
+		SentryDSN: c.String("sentry-dsn"),
+	})
 }

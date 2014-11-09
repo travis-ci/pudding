@@ -16,7 +16,7 @@ func init() {
 	defaultQueueFuncs["instance-terminations"] = instanceTerminationsMain
 }
 
-func instanceTerminationsMain(cfg *config, msg *workers.Msg) {
+func instanceTerminationsMain(cfg *internalConfig, msg *workers.Msg) {
 	log.WithFields(logrus.Fields{
 		"jid": msg.Jid(),
 	}).Debug("starting processing of termination job")
@@ -42,11 +42,11 @@ type instanceTerminatorWorker struct {
 	nc  string
 	n   []lib.Notifier
 	iid string
-	cfg *config
+	cfg *internalConfig
 	ec2 *ec2.EC2
 }
 
-func newInstanceTerminatorWorker(instanceID, slackChannel string, cfg *config, jid string, redisConn redis.Conn) *instanceTerminatorWorker {
+func newInstanceTerminatorWorker(instanceID, slackChannel string, cfg *internalConfig, jid string, redisConn redis.Conn) *instanceTerminatorWorker {
 	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
 
 	return &instanceTerminatorWorker{

@@ -24,7 +24,7 @@ func init() {
 	defaultQueueFuncs["instance-builds"] = instanceBuildsMain
 }
 
-func instanceBuildsMain(cfg *config, msg *workers.Msg) {
+func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 	buildPayloadJSON := []byte(msg.OriginalJson())
 	buildPayload := &lib.InstanceBuildPayload{}
 
@@ -44,7 +44,7 @@ type instanceBuilderWorker struct {
 	rc     redis.Conn
 	n      []lib.Notifier
 	jid    string
-	cfg    *config
+	cfg    *internalConfig
 	ec2    *ec2.EC2
 	sg     *ec2.SecurityGroup
 	sgName string
@@ -54,7 +54,7 @@ type instanceBuilderWorker struct {
 	t      *template.Template
 }
 
-func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *config, jid string, redisConn redis.Conn) *instanceBuilderWorker {
+func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *instanceBuilderWorker {
 	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
 
 	ibw := &instanceBuilderWorker{

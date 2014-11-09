@@ -7,13 +7,13 @@ import (
 )
 
 type miniWorkers struct {
-	cfg *config
+	cfg *internalConfig
 	log *logrus.Logger
 	r   *MiddlewareRaven
 	w   map[string]func() error
 }
 
-func newMiniWorkers(cfg *config, log *logrus.Logger, r *MiddlewareRaven) *miniWorkers {
+func newMiniWorkers(cfg *internalConfig, log *logrus.Logger, r *MiddlewareRaven) *miniWorkers {
 	return &miniWorkers{
 		cfg: cfg,
 		log: log,
