@@ -4,7 +4,9 @@ package server
 type Config struct {
 	Addr      string
 	AuthToken string
-	RedisURL  string
+	Debug     bool
+
+	RedisURL string
 
 	SlackToken          string
 	SlackTeam           string

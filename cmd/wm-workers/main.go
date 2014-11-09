@@ -73,6 +73,7 @@ func main() {
 		lib.SlackTokenFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
+		lib.DebugFlag,
 	}
 	app.Action = runWorkers
 	app.Run(os.Args)
@@ -99,6 +100,7 @@ func runWorkers(c *cli.Context) {
 	workers.Main(&workers.Config{
 		ProcessID:   c.String("process-id"),
 		WebHostname: c.String("web-hostname"),
+		Debug:       c.Bool("debug"),
 
 		Queues:        c.String("queues"),
 		RedisPoolSize: c.String("redis-pool-size"),

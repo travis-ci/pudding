@@ -34,6 +34,7 @@ func main() {
 		lib.SlackChannelFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
+		lib.DebugFlag,
 	}
 	app.Action = runServer
 
@@ -46,7 +47,9 @@ func runServer(c *cli.Context) {
 	server.Main(&server.Config{
 		Addr:      c.String("addr"),
 		AuthToken: c.String("auth-token"),
-		RedisURL:  c.String("redis-url"),
+		Debug:     c.Bool("debug"),
+
+		RedisURL: c.String("redis-url"),
 
 		SlackToken:          c.String("slack-token"),
 		SlackTeam:           c.String("slack-team"),

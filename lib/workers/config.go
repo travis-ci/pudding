@@ -4,6 +4,7 @@ package workers
 type Config struct {
 	ProcessID   string
 	WebHostname string
+	Debug       bool
 
 	Queues        string
 	RedisPoolSize string

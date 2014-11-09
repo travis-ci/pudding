@@ -13,6 +13,10 @@ import (
 
 // Main is the whole shebang
 func Main(cfg *Config) {
+	if cfg.Debug {
+		log.Level = logrus.DebugLevel
+	}
+
 	ic := &internalConfig{
 		RedisPoolSize: cfg.RedisPoolSize,
 

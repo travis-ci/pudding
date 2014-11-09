@@ -72,6 +72,11 @@ var (
 		Value:  os.Getenv("SENTRY_DSN"),
 		EnvVar: "WORKER_MANAGER_SENTRY_DSN",
 	}
+	// DebugFlag enables debug logging
+	DebugFlag = cli.BoolFlag{
+		Name:   "debug",
+		EnvVar: "DEBUG",
+	}
 )
 
 // WriteFlagsToEnv takes the parsed *cli.Context and writes flag
@@ -101,6 +106,17 @@ func WriteFlagsToEnv(c *cli.Context) {
 			envVar := flVal.EnvVar
 			if envVar != "" {
 				os.Setenv(envVar, fmt.Sprintf("%d", v))
+			}
+		case cli.BoolFlag:
+			names := strings.Split(flVal.Name, ",")
+			if len(names) < 1 {
+				continue
+			}
+
+			v := c.Bool(names[0])
+			envVar := flVal.EnvVar
+			if envVar != "" {
+				os.Setenv(envVar, fmt.Sprintf("%v", v))
 			}
 		}
 	}

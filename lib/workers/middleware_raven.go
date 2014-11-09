@@ -21,7 +21,6 @@ type MiddlewareRaven struct {
 func (r *MiddlewareRaven) Call(queue string, message *workers.Msg, next func() bool) (ack bool) {
 	defer func() {
 		var packet *raven.Packet
-		tags := map[string]string{"level": "panic"}
 		p := recover()
 
 		switch rval := p.(type) {
@@ -47,7 +46,7 @@ func (r *MiddlewareRaven) Call(queue string, message *workers.Msg, next func() b
 			packet = raven.NewPacket(rvalStr, raven.NewException(fmt.Errorf(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 
-		lib.SendRavenPacket(packet, r.cl, log, tags)
+		lib.SendRavenPacket(packet, r.cl, log, nil)
 		panic(p)
 	}()
 
@@ -59,7 +58,6 @@ func (r *MiddlewareRaven) Call(queue string, message *workers.Msg, next func() b
 func (r *MiddlewareRaven) Do(fn func() error) error {
 	defer func() {
 		var packet *raven.Packet
-		tags := map[string]string{"level": "panic"}
 		p := recover()
 
 		switch rval := p.(type) {
@@ -91,7 +89,7 @@ func (r *MiddlewareRaven) Do(fn func() error) error {
 			packet = raven.NewPacket(rvalStr, raven.NewException(fmt.Errorf(rvalStr), raven.NewStacktrace(2, 3, nil)))
 		}
 
-		lib.SendRavenPacket(packet, r.cl, log, tags)
+		lib.SendRavenPacket(packet, r.cl, log, nil)
 		panic(p)
 	}()
 
@@ -101,7 +99,7 @@ func (r *MiddlewareRaven) Do(fn func() error) error {
 // NewMiddlewareRaven builds a *MiddlewareRaven given a sentry DSN
 func NewMiddlewareRaven(sentryDSN string) (*MiddlewareRaven, error) {
 	cl, err := raven.NewClient(sentryDSN, map[string]string{
-		"level":    "error",
+		"level":    "panic",
 		"logger":   "root",
 		"dyno":     os.Getenv("DYNO"),
 		"hostname": os.Getenv("HOSTNAME"),

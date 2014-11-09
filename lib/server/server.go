@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/braintree/manners"
@@ -50,8 +49,7 @@ type server struct {
 
 func newServer(cfg *Config) (*server, error) {
 	log := logrus.New()
-	// FIXME: move this elsewhere
-	if os.Getenv("DEBUG") != "" {
+	if cfg.Debug {
 		log.Level = logrus.DebugLevel
 	}
 

@@ -2,7 +2,6 @@ package workers
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -10,19 +9,10 @@ import (
 )
 
 var (
-	log *logrus.Logger
+	log = logrus.New()
 
 	defaultQueueFuncs = map[string]func(*internalConfig, *workers.Msg){}
 )
-
-func init() {
-	log = logrus.New()
-
-	// FIXME: move this elsewhere
-	if os.Getenv("DEBUG") != "" {
-		log.Level = logrus.DebugLevel
-	}
-}
 
 func runWorkers(cfg *internalConfig, log *logrus.Logger) error {
 	workers.Logger = log
