@@ -48,50 +48,48 @@ type server struct {
 	s *manners.GracefulServer
 }
 
-func newServer(addr, authToken, redisURL, slackToken, slackTeam, slackChannel, sentryDSN string,
-	instanceExpiry int, queueNames map[string]string) (*server, error) {
-
+func newServer(cfg *Config) (*server, error) {
 	log := logrus.New()
 	// FIXME: move this elsewhere
 	if os.Getenv("DEBUG") != "" {
 		log.Level = logrus.DebugLevel
 	}
 
-	builder, err := newInstanceBuilder(redisURL, queueNames["instance-builds"])
+	builder, err := newInstanceBuilder(cfg.RedisURL, cfg.QueueNames["instance-builds"])
 	if err != nil {
 		return nil, err
 	}
 
-	terminator, err := newInstanceTerminator(redisURL, queueNames["instance-terminations"])
+	terminator, err := newInstanceTerminator(cfg.RedisURL, cfg.QueueNames["instance-terminations"])
 	if err != nil {
 		return nil, err
 	}
 
-	i, err := db.NewInstances(redisURL, log, instanceExpiry)
+	i, err := db.NewInstances(cfg.RedisURL, log, cfg.InstanceExpiry)
 	if err != nil {
 		return nil, err
 	}
 
-	is, err := db.NewInitScripts(redisURL, log)
+	is, err := db.NewInitScripts(cfg.RedisURL, log)
 	if err != nil {
 		return nil, err
 	}
 
-	auther, err := newServerAuther(authToken, redisURL, log)
+	auther, err := newServerAuther(cfg.AuthToken, cfg.RedisURL, log)
 	if err != nil {
 		return nil, err
 	}
 
 	srv := &server{
-		addr:      addr,
-		authToken: authToken,
+		addr:      cfg.Addr,
+		authToken: cfg.AuthToken,
 		auther:    auther,
 
-		slackToken:   slackToken,
-		slackTeam:    slackTeam,
-		slackChannel: slackChannel,
+		slackToken:   cfg.SlackToken,
+		slackTeam:    cfg.SlackTeam,
+		slackChannel: cfg.DefaultSlackChannel,
 
-		sentryDSN: sentryDSN,
+		sentryDSN: cfg.SentryDSN,
 
 		builder:    builder,
 		terminator: terminator,
