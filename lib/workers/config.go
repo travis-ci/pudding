@@ -1,5 +1,6 @@
 package workers
 
+// Config is everything needed to run the workers
 type Config struct {
 	ProcessID   string
 	WebHostname string

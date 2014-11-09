@@ -44,14 +44,18 @@ func runServer(c *cli.Context) {
 	lib.WriteFlagsToEnv(c)
 
 	server.Main(&server.Config{
-		Addr:                c.String("addr"),
-		AuthToken:           c.String("auth-token"),
-		RedisURL:            c.String("redis-url"),
+		Addr:      c.String("addr"),
+		AuthToken: c.String("auth-token"),
+		RedisURL:  c.String("redis-url"),
+
 		SlackToken:          c.String("slack-token"),
 		SlackTeam:           c.String("slack-team"),
 		DefaultSlackChannel: c.String("default-slack-channel"),
-		SentryDSN:           c.String("sentry-dsn"),
-		InstanceExpiry:      c.Int("instance-expiry"),
+
+		SentryDSN: c.String("sentry-dsn"),
+
+		InstanceExpiry: c.Int("instance-expiry"),
+
 		QueueNames: map[string]string{
 			"instance-builds":       c.String("instance-builds-queue-name"),
 			"instance-terminations": c.String("instance-terminations-queue-name"),
