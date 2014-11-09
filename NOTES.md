@@ -10,7 +10,6 @@ group creation time, e.g.:
 aws autoscaling create-auto-scaling-group \
   --instance-id i-2a32e3cb \
   --tags \
-    Key=template-instance,Value=i-2a32e3cb \
     Key=role,Value=worker \
     Key=queue,Value=testing \
     Key=site,Value=org \
@@ -40,7 +39,11 @@ The `Name` tag for instances within an autoscaling group cannot (?)
 be based on the instance id, e.g.
 `travis-org-staging-docker-abcd1234`.  One option is to do like the
 above `aws autoscaling create-auto-scaling-group` invocation and
-assign a name that ends with the root instance id and `-asg`.
+assign a name that ends with the root instance id and `-asg`, but
+then individual instances within the autoscaling group will not be
+unique.  This may require setting the system hostname dynamically
+during cloud init so that it includes the instance id fetched from
+the metadata API.
 
 ### Managing autoscaling policies
 
@@ -73,3 +76,18 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --alarm-actions "$POLICY_ARN"
 ```
+
+Alternatively, we could expose a small web API on `travis-worker`
+to take advantage of ELB-based health checks.
+
+### Graceful shutdown is hard
+
+By default, scale-in policies are very coarse grained and will
+result in a `shutdown`/`halt`/`poweroff`, meaning there will not be
+an opportunity to gracefully wait for long-running jobs to finish.
+It is not possible to accurately anticipate which instance in an
+autoscaling group will be targeted for termination during a
+scale-in, so there's not much we can do to make this any more
+graceful.  Again, it seems like the system is geared toward web
+servers with short-lived connections.
+
