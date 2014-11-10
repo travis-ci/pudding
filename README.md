@@ -1,17 +1,7 @@
 pudding
 ======================
 
-[![Build Status](https://magnum.travis-ci.com/travis-ci/pudding.svg?token=kPejzpHX8hnAbfFzykif&branch=master)](https://magnum.travis-ci.com/travis-ci/pudding)
-
-It's a service for managing instances!
-
-Specifically, this is a web API + background jobs that allow for
-easier-ish management of machines that run
-[`travis-worker`](https://github.com/travis-ci/travis-worker).
-Currently supported:
-
-* EC2 instances
-
+[![Build Status](https://travis-ci.org/travis-ci/pudding.svg?branch=master)](https://travis-ci.org/travis-ci/pudding)
 
 ## Development and such
 
