@@ -3,6 +3,8 @@ pudding
 
 [![Build Status](https://travis-ci.org/travis-ci/pudding.svg?branch=master)](https://travis-ci.org/travis-ci/pudding)
 
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+
 ## Development and such
 
 This repo should be cloned into your `GOPATH` at
