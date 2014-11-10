@@ -32,8 +32,9 @@ script:
     while read line ; do echo $line | python -m json.tool ; done
 - kill "$(cat redis-server.pid)"
 - ./bin/test-request shutdown
-- make save
-- git diff --exit-code
-- git diff --cached --exit-code
+# TODO: reinstate after repo is renamed
+# - make save
+# - git diff --exit-code
+# - git diff --cached --exit-code
 after_script:
 - cat server.log
