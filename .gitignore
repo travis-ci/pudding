@@ -28,3 +28,5 @@ gin-bin
 
 *.coverprofile
 coverage.html
+
+config.yml
