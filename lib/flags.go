@@ -23,12 +23,15 @@ var (
 		EnvVar: "WORKER_MANAGER_ADDR",
 	}
 	// RedisURLFlag is the flag used to specify the redis URL, and
-	// checks for REDISGREEN_URL and REDIS_URL before defaulting to a
+	// checks for REDIS_PROVIDER and REDIS_URL before defaulting to a
 	// local redis addr
 	RedisURLFlag = cli.StringFlag{
 		Name: "r, redis-url",
 		Value: func() string {
-			v := os.Getenv("REDISGREEN_URL")
+			provider := os.Getenv("REDIS_PROVIDER")
+			if provider != "" {
+			}
+			v := os.Getenv(provider)
 			if v == "" {
 				v = os.Getenv("REDIS_URL")
 			}

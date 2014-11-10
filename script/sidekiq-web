@@ -10,7 +10,7 @@ require 'sidekiq/web'
 Sidekiq.redis = {
   namespace: 'worker-manager',
   size: 30,
-  url: ENV['REDISGREEN_URL'] || ENV['REDIS_URL'] || 'redis://localhost:6379/0'
+  url: ENV[ENV['REDIS_PROVIDER'] || 'REDIS_URL'] || 'redis://localhost:6379/0'
 }
 
 configure do
