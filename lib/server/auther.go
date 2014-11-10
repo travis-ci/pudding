@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	internalAuthHeader = "Worker-Manager-Internal-Is-Authorized"
+	internalAuthHeader = "Pudding-Internal-Is-Authorized"
 )
 
 var (

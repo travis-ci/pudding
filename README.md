@@ -3,15 +3,14 @@ pudding
 
 [![Build Status](https://magnum.travis-ci.com/travis-pro/pudding.svg?token=kPejzpHX8hnAbfFzykif&branch=master)](https://magnum.travis-ci.com/travis-pro/pudding)
 
-It's a service for managing workers!
+It's a service for managing instances!
 
 Specifically, this is a web API + background jobs that allow for
 easier-ish management of machines that run
 [`travis-worker`](https://github.com/travis-ci/travis-worker).
 Currently supported:
 
-* EC2 instances prepared by
-  [`worker-images`](https://github.com/travis-pro/worker-images)
+* EC2 instances
 
 
 ## Development and such
@@ -74,12 +73,12 @@ Simulate a panic.  No body expected.
 
 #### `GET /instances` **requires auth**
 
-Provide a list of worker instances, optionally filtered with `env`
+Provide a list of instances, optionally filtered with `env`
 and `site` query params.
 
 #### `GET /instances/{instance_id}` **requires auth**
 
-Provide a list containing a single worker matching the given
+Provide a list containing a single instance matching the given
 `instance_id`, if it exists.
 
 #### `DELETE /instances/{instance_id}` **requires auth**
@@ -89,9 +88,9 @@ exists.
 
 #### `POST /instance-builds` **requires auth**
 
-Start an instance build, which will result in an EC2 instance
-running the `travis-worker` service.  The expected body is a
-jsonapi singular collection of `"instance_build"`, like so:
+Start an instance build, which will result in an EC2 instance being
+created.  The expected body is a jsonapi singular collection of
+`"instance_build"`, like so:
 
 ``` javascript
 {
@@ -127,8 +126,7 @@ charset=utf-8`, which is expected (but not enforced) by cloud-init.
 
 ### workers
 
-The background job workers (not to be confused with
-`travis-worker` workers) are started as a separate process and
+The background job workers are started as a separate process and
 communicate with the web server via redis.  The sidekiq-compatible
 workers are built using
 [`go-workers`](https://github.com/jrallison/go-workers).  There are

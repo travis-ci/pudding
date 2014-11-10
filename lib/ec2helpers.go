@@ -9,7 +9,7 @@ import (
 // ResolveAMI attempts to get an ec2.Image by id, falling back to
 // fetching the most recently provisioned worker ami via
 // FetchLatestWorkerAMI
-func ResolveAMI(conn *ec2.EC2, ID string) (*ec2.Image, error) {
+func ResolveAMI(conn *ec2.EC2, ID string, f *ec2.Filter) (*ec2.Image, error) {
 	if ID != "" {
 		resp, err := conn.Images([]string{ID}, ec2.NewFilter())
 		if err != nil {
@@ -22,16 +22,14 @@ func ResolveAMI(conn *ec2.EC2, ID string) (*ec2.Image, error) {
 		}
 	}
 
-	return FetchLatestWorkerAMI(conn)
+	return FetchLatestAMIWithFilter(conn, f)
 }
 
-// FetchLatestWorkerAMI looks up all images with a tag of
-// role=worker, then sorting by the image name which contains a
-// timestamp, then returns the most recent image.
-func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
-	filter := ec2.NewFilter()
-	filter.Add("tag:role", "worker")
-	allImages, err := conn.Images([]string{}, filter)
+// FetchLatestAMIWithFilter looks up all images matching the given
+// filter, then sorts by the image name which is assumed to contain
+// a timestamp, then returns the most recent image.
+func FetchLatestAMIWithFilter(conn *ec2.EC2, f *ec2.Filter) (*ec2.Image, error) {
+	allImages, err := conn.Images([]string{}, f)
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +47,10 @@ func FetchLatestWorkerAMI(conn *ec2.EC2) (*ec2.Image, error) {
 	return &img, nil
 }
 
-// GetWorkerInstances fetches all running instances with tag of
-// role=worker in a state of "running"
-func GetWorkerInstances(conn *ec2.EC2) (map[string]ec2.Instance, error) {
-	filter := ec2.NewFilter()
-	filter.Add("tag:role", "worker")
-	filter.Add("instance-state-name", "running")
-	resp, err := conn.Instances([]string{}, filter)
+// GetInstancesWithFilter fetches all instances that match the
+// given filter
+func GetInstancesWithFilter(conn *ec2.EC2, f *ec2.Filter) (map[string]ec2.Instance, error) {
+	resp, err := conn.Instances([]string{}, f)
 
 	if err != nil {
 		return nil, err

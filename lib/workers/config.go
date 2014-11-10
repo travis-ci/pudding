@@ -14,8 +14,8 @@ type Config struct {
 	AWSSecret string
 	AWSRegion string
 
-	DockerRSA          string
-	WorkerYML          string
+	InstanceRSA        string
+	InstanceYML        string
 	InitScriptTemplate string
 	MiniWorkerInterval int
 	InstanceExpiry     int

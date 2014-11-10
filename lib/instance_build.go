@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gorilla/feeds"
 )
@@ -32,9 +33,12 @@ type InstanceBuildsCollection struct {
 // InstanceBuild contains everything needed by a background worker
 // to build the instance
 type InstanceBuild struct {
+	Role         string `json:"role"`
 	Site         string `json:"site"`
 	Env          string `json:"env"`
 	AMI          string `json:"ami"`
+	InstanceID   string `json:"instance_id,omitempty"`
+	NameTemplate string `json:"name_template,omitempty"`
 	InstanceType string `json:"instance_type"`
 	SlackChannel string `json:"slack_channel"`
 	Count        int    `json:"count"`
@@ -50,6 +54,16 @@ func NewInstanceBuild() *InstanceBuild {
 	return &InstanceBuild{
 		ID:    feeds.NewUUID().String(),
 		State: "pending",
+
+		// FIXME: accept Role and NameTemplate as configuration
+		Role: "worker",
+		// XXX: formerly known as:
+		//   fmt.Sprintf("travis-%s-%s-%s-%s",
+		//     b.Site,
+		//     b.Env,
+		//     b.Queue,
+		//     strings.TrimPrefix(b.InstanceID, "i-"))
+		NameTemplate: "travis-{{.Site}}-{{.Env}}-{{.Queue}}-{{.InstanceIDWithoutPrefix}}",
 	}
 }
 
@@ -83,4 +97,9 @@ func (b *InstanceBuild) Validate() []error {
 	}
 
 	return errors
+}
+
+// InstanceIDWithoutPrefix returns the InstanceID without "i-"
+func (b *InstanceBuild) InstanceIDWithoutPrefix() string {
+	return strings.TrimPrefix(b.InstanceID, "i-")
 }

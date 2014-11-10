@@ -2,7 +2,6 @@ package lib
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hamfist/yaml"
 )
@@ -12,10 +11,10 @@ var (
 	errMissingEnvConfig  = fmt.Errorf("missing \"env\" sub-config")
 )
 
-// MultiEnvSiteTravisYML represents a travis config yml structure
-// that generally has two levels of nesting below the
-// concern-specific keys, one for site and another for env.
-type MultiEnvSiteTravisYML struct {
+// MetaYML represents a yml structure that generally has two levels
+// of nesting below the concern-specific keys, one for site and
+// another for env.
+type MetaYML struct {
 	AMQP       map[string]map[string]*amqpConfig  `yaml:"amqp"`
 	Build      map[string]map[string]*buildConfig `yaml:"build"`
 	Librato    map[string]*libratoConfig          `yaml:"librato"`
@@ -55,15 +54,15 @@ type s3config struct {
 	Bucket          string `yaml:"bucket"`
 }
 
-// WorkerTravisYML is the worker-specific configuration generated
-// from a MultiEnvSiteTravisYML
-type WorkerTravisYML struct {
-	Env            string           `yaml:"env"`
-	LinuxConfig    *workerEnvConfig `yaml:"linux,omitempty"`
-	PapertrailSite string           `yaml:"papertrail_site,omitempty"`
+// InstanceSpecificYML is the instance-specific configuration
+// generated from a MetaYML
+type InstanceSpecificYML struct {
+	Env            string             `yaml:"env"`
+	LinuxConfig    *instanceEnvConfig `yaml:"linux,omitempty"`
+	PapertrailSite string             `yaml:"papertrail_site,omitempty"`
 }
 
-func (wty *WorkerTravisYML) String() (string, error) {
+func (wty *InstanceSpecificYML) String() (string, error) {
 	out, err := yaml.Marshal(wty)
 	if out == nil {
 		out = []byte{}
@@ -71,7 +70,7 @@ func (wty *WorkerTravisYML) String() (string, error) {
 	return string(out), err
 }
 
-type workerEnvConfig struct {
+type instanceEnvConfig struct {
 	Host              string            `yaml:"host"`
 	LogLevel          string            `yaml:"log_level"`
 	Queue             string            `yaml:"queue"`
@@ -101,11 +100,11 @@ type timeoutsConfig struct {
 	HardLimit int `yaml:"hard_limit"`
 }
 
-// BuildTravisWorkerYML accepts a string form of
-// MultiEnvSiteTravisYML, site, env, queue, and count, and
-// constructs a worker-specific configuration
-func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (*WorkerTravisYML, error) {
-	multiYML := &MultiEnvSiteTravisYML{
+// BuildInstanceSpecificYML accepts a string form of MetaYML, site,
+// env, queue, and count, and constructs a instance-specific
+// configuration
+func BuildInstanceSpecificYML(site, env, rawYML, queue string, count int) (*InstanceSpecificYML, error) {
+	multiYML := &MetaYML{
 		AMQP:       map[string]map[string]*amqpConfig{},
 		Build:      map[string]map[string]*buildConfig{},
 		Librato:    map[string]*libratoConfig{},
@@ -158,10 +157,10 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (*WorkerTr
 		return nil, errMissingSiteConfig
 	}
 
-	wty := &WorkerTravisYML{
+	wty := &InstanceSpecificYML{
 		Env: "linux",
-		LinuxConfig: &workerEnvConfig{
-			Host:     "$TRAVIS_WORKER_HOST_NAME",
+		LinuxConfig: &instanceEnvConfig{
+			Host:     "$INSTANCE_HOST_NAME",
 			LogLevel: "info",
 			Queue:    fmt.Sprintf("builds.%s", queue),
 			AMQP:     amqp,
@@ -194,17 +193,16 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (*WorkerTr
 	return wty, err
 }
 
-// GetTravisWorkerYML attempts to look up the MultiEnvSiteTravisYML
-// string as a compressed env var at both TRAVIS_WORKER_YML and
-// PUDDING_TRAVIS_WORKER_YML, then falls back to a lookup
-// of an uncompressed travis_config var.
-func GetTravisWorkerYML() string {
-	for _, key := range []string{"TRAVIS_WORKER_YML", "PUDDING_TRAVIS_WORKER_YML"} {
+// GetInstanceYML attempts to look up the MetaYML
+// string as a compressed env var at both INSTANCE_YML and
+// PUDDING_INSTANCE_YML.
+func GetInstanceYML() string {
+	for _, key := range []string{"INSTANCE_YML", "PUDDING_INSTANCE_YML"} {
 		value, err := GetCompressedEnvVar(key)
 		if err == nil {
 			return value
 		}
 	}
 
-	return os.Getenv("travis_config")
+	return ""
 }

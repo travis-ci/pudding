@@ -6,20 +6,20 @@ import (
 	"path/filepath"
 )
 
-// GetDockerRSAKey attempts to retrieve the docker rsa private key
+// GetInstanceRSAKey attempts to retrieve the docker rsa private key
 // from compressed env vars DOCKER_RSA and
 // PUDDING_DOCKER_RSA, then falls back to attempting to read
 // $PWD/docker_rsa
-func GetDockerRSAKey() string {
-	value := getDockerRSAKeyFromEnv()
+func GetInstanceRSAKey() string {
+	value := getInstanceRSAKeyFromEnv()
 	if value != "" {
 		return value
 	}
 
-	return getDockerRSAKeyFromFile()
+	return getInstanceRSAKeyFromFile()
 }
 
-func getDockerRSAKeyFromEnv() string {
+func getInstanceRSAKeyFromEnv() string {
 	for _, key := range []string{"DOCKER_RSA", "PUDDING_DOCKER_RSA"} {
 		value, err := GetCompressedEnvVar(key)
 		if err == nil {
@@ -30,7 +30,7 @@ func getDockerRSAKeyFromEnv() string {
 	return ""
 }
 
-func getDockerRSAKeyFromFile() string {
+func getInstanceRSAKeyFromFile() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		return ""

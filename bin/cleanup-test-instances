@@ -1,6 +1,0 @@
-#!/bin/bash
-set -o pipefail
-
-$(dirname ${BASH_SOURCE[0]})/list-test-instances | \
-  awk '{ print $2 }' | \
-  exec xargs aws ec2 terminate-instances --instance-ids

@@ -3,10 +3,10 @@ package workers
 type initScriptContext struct {
 	Env              string
 	Site             string
-	DockerRSA        string
+	InstanceRSA      string
 	SlackChannel     string
 	PapertrailSite   string
-	TravisWorkerYML  string
+	InstanceYML      string
 	InstanceBuildID  string
 	InstanceBuildURL string
 }

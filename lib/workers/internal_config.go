@@ -23,8 +23,8 @@ type internalConfig struct {
 	WebHost   string
 	ProcessID string
 
-	DockerRSA       string
-	TravisWorkerYML string
+	InstanceRSA string
+	InstanceYML string
 
 	Queues             []string
 	QueueFuncs         map[string]func(*internalConfig, *workers.Msg)

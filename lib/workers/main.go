@@ -28,8 +28,8 @@ func Main(cfg *Config) {
 		WebHost:   cfg.WebHostname,
 		ProcessID: cfg.ProcessID,
 
-		DockerRSA:       cfg.DockerRSA,
-		TravisWorkerYML: cfg.WorkerYML,
+		InstanceRSA: cfg.InstanceRSA,
+		InstanceYML: cfg.InstanceYML,
 
 		Queues:             []string{},
 		QueueConcurrencies: map[string]int{},
@@ -55,7 +55,7 @@ func Main(cfg *Config) {
 	ic.AWSAuth = auth
 	ic.AWSRegion = region
 
-	if ic.DockerRSA == "" {
+	if ic.InstanceRSA == "" {
 		log.Fatal("missing docker rsa key")
 		os.Exit(1)
 	}

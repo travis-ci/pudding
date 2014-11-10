@@ -49,7 +49,7 @@ func main() {
 			EnvVar: "AWS_DEFAULT_REGION",
 		},
 		cli.StringFlag{
-			Name: "docker-rsa",
+			Name: "instance-rsa",
 		},
 		cli.StringFlag{
 			Name:   "H, web-hostname",
@@ -58,7 +58,7 @@ func main() {
 			EnvVar: "PUDDING_WEB_HOSTNAME",
 		},
 		cli.StringFlag{
-			Name: "Y, travis-worker-yml",
+			Name: "Y, instance-yml",
 		},
 		cli.StringFlag{
 			Name: "T, init-script-template",
@@ -80,14 +80,14 @@ func main() {
 }
 
 func runWorkers(c *cli.Context) {
-	dockerRSA := c.String("docker-rsa")
-	if dockerRSA == "" {
-		dockerRSA = lib.GetDockerRSAKey()
+	instanceRSA := c.String("instance-rsa")
+	if instanceRSA == "" {
+		instanceRSA = lib.GetInstanceRSAKey()
 	}
 
-	workerYML := c.String("travis-worker-yml")
-	if workerYML == "" {
-		workerYML = lib.GetTravisWorkerYML()
+	instanceYML := c.String("instance-yml")
+	if instanceYML == "" {
+		instanceYML = lib.GetInstanceYML()
 	}
 
 	initScriptTemplate := c.String("init-script-template")
@@ -110,8 +110,8 @@ func runWorkers(c *cli.Context) {
 		AWSSecret: c.String("aws-secret"),
 		AWSRegion: c.String("aws-region"),
 
-		DockerRSA:          dockerRSA,
-		WorkerYML:          workerYML,
+		InstanceRSA:        instanceRSA,
+		InstanceYML:        instanceYML,
 		InitScriptTemplate: initScriptTemplate,
 		MiniWorkerInterval: c.Int("mini-worker-interval"),
 		InstanceExpiry:     c.Int("instance-expiry"),

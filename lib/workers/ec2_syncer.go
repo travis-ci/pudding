@@ -29,8 +29,10 @@ func newEC2Syncer(cfg *internalConfig, log *logrus.Logger) (*ec2Syncer, error) {
 }
 
 func (es *ec2Syncer) Sync() error {
-	es.log.Debug("ec2 syncer fetching worker instances")
-	instances, err := lib.GetWorkerInstances(es.ec2)
+	es.log.Debug("ec2 syncer fetching instances")
+	f := ec2.NewFilter()
+	f.Add("instance-state-name", "running")
+	instances, err := lib.GetInstancesWithFilter(es.ec2, f)
 	if err != nil {
 		panic(err)
 	}

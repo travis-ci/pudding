@@ -10,14 +10,14 @@ curl -s -f \
 
 cd /tmp
 
-export TRAVIS_WORKER_HOST_NAME="worker-linux-docker-${INSTANCE_ID#i-}.{{.Env}}.travis-ci.{{.Site}}"
+export INSTANCE_HOST_NAME="worker-linux-docker-${INSTANCE_ID#i-}.{{.Env}}.travis-ci.{{.Site}}"
 
 cat > docker_rsa <<EOF
-{{.DockerRSA}}
+{{.InstanceRSA}}
 EOF
 
 cat > travis-worker.yml <<EOF
-{{.TravisWorkerYML}}
+{{.InstanceYML}}
 EOF
 
 cat > papertrail.conf <<EOF
@@ -45,8 +45,8 @@ curl -s -f \
   "{{.InstanceBuildURL}}?l=cloud-init-$LINENO&m=pre-install"
 
 IPV4=$(curl -s 'http://169.254.169.254/latest/meta-data/local-ipv4')
-echo "$IPV4 $TRAVIS_WORKER_HOST_NAME worker-linux-docker-${INSTANCE_ID#i-}" >> /etc/hosts
-sed -i -e "s/^Hostname.*$/Hostname \"$TRAVIS_WORKER_HOST_NAME\"/" /etc/collectd/collectd.conf
+echo "$IPV4 $INSTANCE_HOST_NAME worker-linux-docker-${INSTANCE_ID#i-}" >> /etc/hosts
+sed -i -e "s/^Hostname.*$/Hostname \"$INSTANCE_HOST_NAME\"/" /etc/collectd/collectd.conf
 mkdir /home/deploy/.ssh
 chown travis:travis /home/deploy/.ssh
 chmod 0700 /home/deploy/.ssh

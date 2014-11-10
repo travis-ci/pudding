@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strings"
 	"text/template"
 	"time"
 
@@ -67,15 +66,23 @@ func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid str
 		t:   cfg.InitScriptTemplate,
 	}
 
-	ibw.sgName = fmt.Sprintf("docker-worker-%d-%p", time.Now().UTC().Unix(), ibw)
+	ibw.sgName = fmt.Sprintf("pudding-%d-%p", time.Now().UTC().Unix(), ibw)
 	return ibw
 }
 
 func (ibw *instanceBuilderWorker) Build() error {
 	var err error
 
-	log.WithField("jid", ibw.jid).Debug("resolving ami by id")
-	ibw.ami, err = lib.ResolveAMI(ibw.ec2, ibw.b.AMI)
+	// FIXME: accept this filter as configuration
+	f := ec2.NewFilter()
+	f.Add("tag:role", "worker")
+
+	log.WithFields(logrus.Fields{
+		"jid":    ibw.jid,
+		"filter": f,
+	}).Debug("resolving ami")
+
+	ibw.ami, err = lib.ResolveAMI(ibw.ec2, ibw.b.AMI, f)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"jid":    ibw.jid,
@@ -106,6 +113,8 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
+	ibw.b.InstanceID = ibw.i.InstanceId
+
 	log.WithField("jid", ibw.jid).Debug("tagging instance")
 	err = ibw.tagInstance()
 	if err != nil {
@@ -125,7 +134,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 	newSg := ec2.SecurityGroup{
 		Name:        ibw.sgName,
-		Description: "custom docker worker security group",
+		Description: "custom security group",
 	}
 
 	log.WithFields(logrus.Fields{
@@ -198,9 +207,20 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 }
 
 func (ibw *instanceBuilderWorker) tagInstance() error {
-	_, err := ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, []ec2.Tag{
-		ec2.Tag{Key: "role", Value: "worker"},
-		ec2.Tag{Key: "Name", Value: fmt.Sprintf("travis-%s-%s-%s-%s", ibw.b.Site, ibw.b.Env, ibw.b.Queue, strings.TrimPrefix(ibw.i.InstanceId, "i-"))},
+	nameTmpl, err := template.New("name-template").Parse(ibw.b.NameTemplate)
+	if err != nil {
+		return err
+	}
+
+	nameBuf := &bytes.Buffer{}
+	err = nameTmpl.Execute(nameBuf, ibw.b)
+	if err != nil {
+		return err
+	}
+
+	_, err = ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, []ec2.Tag{
+		ec2.Tag{Key: "Name", Value: nameBuf.String()},
+		ec2.Tag{Key: "role", Value: ibw.b.Role},
 		ec2.Tag{Key: "site", Value: ibw.b.Site},
 		ec2.Tag{Key: "env", Value: ibw.b.Env},
 		ec2.Tag{Key: "queue", Value: ibw.b.Queue},
@@ -230,7 +250,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	yml, err := lib.BuildTravisWorkerYML(ibw.b.Site, ibw.b.Env, ibw.cfg.TravisWorkerYML, ibw.b.Queue, ibw.b.Count)
+	yml, err := lib.BuildInstanceSpecificYML(ibw.b.Site, ibw.b.Env, ibw.cfg.InstanceYML, ibw.b.Queue, ibw.b.Count)
 	if err != nil {
 		return nil, err
 	}
@@ -243,10 +263,10 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	err = ibw.t.Execute(w, &initScriptContext{
 		Env:              ibw.b.Env,
 		Site:             ibw.b.Site,
-		DockerRSA:        ibw.cfg.DockerRSA,
+		InstanceRSA:      ibw.cfg.InstanceRSA,
 		SlackChannel:     ibw.b.SlackChannel,
 		PapertrailSite:   yml.PapertrailSite,
-		TravisWorkerYML:  ymlString,
+		InstanceYML:      ymlString,
 		InstanceBuildID:  ibw.b.ID,
 		InstanceBuildURL: instanceBuildURL,
 	})
