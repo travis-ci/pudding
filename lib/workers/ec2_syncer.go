@@ -3,8 +3,8 @@ package workers
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/lib"
-	"github.com/travis-pro/worker-manager-service/lib/db"
+	"github.com/travis-pro/pudding/lib"
+	"github.com/travis-pro/pudding/lib/db"
 )
 
 type ec2Syncer struct {

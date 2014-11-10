@@ -18,9 +18,9 @@ before_script:
 - echo $! > redis-server.pid
 script:
 - make
-- ~/gopath/bin/wm-server --version
-- ~/gopath/bin/wm-workers --version
-- ~/gopath/bin/wm-server >> server.log 2>&1 &
+- ~/gopath/bin/pudding-server --version
+- ~/gopath/bin/pudding-workers --version
+- ~/gopath/bin/pudding-server >> server.log 2>&1 &
 - for r in 0 1 2 3 4 ; do
   ./bin/test-request instance-build ;
   done

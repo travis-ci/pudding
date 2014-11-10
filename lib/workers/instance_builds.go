@@ -16,8 +16,8 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/lib"
-	"github.com/travis-pro/worker-manager-service/lib/db"
+	"github.com/travis-pro/pudding/lib"
+	"github.com/travis-pro/pudding/lib/db"
 )
 
 func init() {

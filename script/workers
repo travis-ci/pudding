@@ -7,7 +7,7 @@ fi
 
 export WORKER_MANAGER_WEB_HOSTNAME
 
-cmd="wm-workers"
+cmd="pudding-workers"
 if [[ ! $DYNO ]] ; then
   exec rerun -p '**/*.{js,css,go}' "make && $cmd"
 fi

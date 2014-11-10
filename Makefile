@@ -1,7 +1,7 @@
-PACKAGE := github.com/travis-pro/worker-manager-service
+PACKAGE := github.com/travis-pro/pudding
 SUBPACKAGES := \
-	$(PACKAGE)/cmd/wm-server \
-	$(PACKAGE)/cmd/wm-workers \
+	$(PACKAGE)/cmd/pudding-server \
+	$(PACKAGE)/cmd/pudding-workers \
 	$(PACKAGE)/lib \
 	$(PACKAGE)/lib/db \
 	$(PACKAGE)/lib/server \

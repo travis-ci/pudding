@@ -7,7 +7,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/pudding/lib"
 )
 
 // InitScriptRedisKey provides the key for an init script given the

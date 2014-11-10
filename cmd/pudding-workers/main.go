@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/travis-pro/worker-manager-service/lib"
-	"github.com/travis-pro/worker-manager-service/lib/workers"
+	"github.com/travis-pro/pudding/lib"
+	"github.com/travis-pro/pudding/lib/workers"
 )
 
 func main() {

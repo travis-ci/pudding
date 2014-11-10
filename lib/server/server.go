@@ -13,10 +13,10 @@ import (
 	"github.com/meatballhat/expvarplus"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/phyber/negroni-gzip/gzip"
-	"github.com/travis-pro/worker-manager-service/lib"
-	"github.com/travis-pro/worker-manager-service/lib/db"
-	"github.com/travis-pro/worker-manager-service/lib/server/jsonapi"
-	"github.com/travis-pro/worker-manager-service/lib/server/negroniraven"
+	"github.com/travis-pro/pudding/lib"
+	"github.com/travis-pro/pudding/lib/db"
+	"github.com/travis-pro/pudding/lib/server/jsonapi"
+	"github.com/travis-pro/pudding/lib/server/negroniraven"
 )
 
 var (

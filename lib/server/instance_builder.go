@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/travis-pro/worker-manager-service/lib"
-	"github.com/travis-pro/worker-manager-service/lib/db"
+	"github.com/travis-pro/pudding/lib"
+	"github.com/travis-pro/pudding/lib/db"
 )
 
 type instanceBuilder struct {

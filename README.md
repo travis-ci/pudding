@@ -1,7 +1,7 @@
-worker-manager-service
+pudding
 ======================
 
-[![Build Status](https://magnum.travis-ci.com/travis-pro/worker-manager-service.svg?token=kPejzpHX8hnAbfFzykif&branch=master)](https://magnum.travis-ci.com/travis-pro/worker-manager-service)
+[![Build Status](https://magnum.travis-ci.com/travis-pro/pudding.svg?token=kPejzpHX8hnAbfFzykif&branch=master)](https://magnum.travis-ci.com/travis-pro/pudding)
 
 It's a service for managing workers!
 
@@ -17,7 +17,7 @@ Currently supported:
 ## Development and such
 
 This repo should be cloned into your `GOPATH` at
-`${GOPATH%%:*}/src/github.com/travis-pro/worker-manager-service`.
+`${GOPATH%%:*}/src/github.com/travis-pro/pudding`.
 If you don't know what `GOPATH` is or are unsure if the top entry
 is in a non-volatile location, you should Ask Someone &trade;
 

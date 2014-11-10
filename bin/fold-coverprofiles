@@ -8,8 +8,8 @@ if [[ $# -lt 1 ]] ; then
 fi
 
 GO=${GO:-deppy go}
-OUT_TMP=$(mktemp worker-manager-service.XXXXX)
-PACKAGE=${PACKAGE:-github.com/travis-pro/worker-manager-service}
+OUT_TMP=$(mktemp pudding.XXXXX)
+PACKAGE=${PACKAGE:-github.com/travis-pro/pudding}
 
 trap "rm -f $OUT_TMP" EXIT TERM QUIT
 

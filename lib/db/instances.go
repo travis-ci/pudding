@@ -4,7 +4,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/mitchellh/goamz/ec2"
-	"github.com/travis-pro/worker-manager-service/lib"
+	"github.com/travis-pro/pudding/lib"
 )
 
 // InstanceFetcherStorer defines the interface for fetching and

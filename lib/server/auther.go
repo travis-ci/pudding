@@ -9,7 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	"github.com/travis-pro/worker-manager-service/lib/db"
+	"github.com/travis-pro/pudding/lib/db"
 )
 
 const (
