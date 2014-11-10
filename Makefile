@@ -47,7 +47,7 @@ all: clean deps test lintall
 
 .PHONY: buildpack
 buildpack:
-	@grep -l -R -E 'v\d\d' $(HOME) || true
+	@grep -l -R -E 'v\d\d' /tmp || true
 	@$(MAKE) build \
 		GOBUILD_FLAGS= \
 		REV_VALUE="'$(shell git log -1 --format='%H')'" \
