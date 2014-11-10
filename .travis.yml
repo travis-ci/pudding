@@ -11,10 +11,6 @@ before_install:
 - go get github.com/hamfist/deppy
 - go get github.com/golang/lint/golint
 - go get code.google.com/p/go.tools/cmd/cover
-- if ! test -d ~/gopath/src/github.com/travis-pro/pudding ; then
-    mkdir -p ~/gopath/src/github.com/travis-pro/pudding &&
-    rsync -az ${TRAVIS_BUILD_DIR}/ ~/gopath/src/github.com/travis-pro/pudding ;
-  fi
 install:
 - deppy restore
 before_script:
@@ -32,9 +28,8 @@ script:
     while read line ; do echo $line | python -m json.tool ; done
 - kill "$(cat redis-server.pid)"
 - ./bin/test-request shutdown
-# TODO: reinstate after repo is renamed
-# - make save
-# - git diff --exit-code
-# - git diff --cached --exit-code
+- make save
+- git diff --exit-code
+- git diff --cached --exit-code
 after_script:
 - cat server.log
