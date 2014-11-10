@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 )
 
-// GetInstanceRSAKey attempts to retrieve the docker rsa private key
-// from compressed env vars DOCKER_RSA and
-// PUDDING_DOCKER_RSA, then falls back to attempting to read
-// $PWD/docker_rsa
+// GetInstanceRSAKey attempts to retrieve the instance rsa private
+// key from compressed env vars INSTANCE_RSA and
+// PUDDING_INSTANCE_RSA, then falls back to attempting to read
+// $PWD/instance_rsa
 func GetInstanceRSAKey() string {
 	value := getInstanceRSAKeyFromEnv()
 	if value != "" {
@@ -20,7 +20,7 @@ func GetInstanceRSAKey() string {
 }
 
 func getInstanceRSAKeyFromEnv() string {
-	for _, key := range []string{"DOCKER_RSA", "PUDDING_DOCKER_RSA"} {
+	for _, key := range []string{"INSTANCE_RSA", "PUDDING_INSTANCE_RSA"} {
 		value, err := GetCompressedEnvVar(key)
 		if err == nil {
 			return value
@@ -36,7 +36,7 @@ func getInstanceRSAKeyFromFile() string {
 		return ""
 	}
 
-	b, err := ioutil.ReadFile(filepath.Join(wd, "docker_rsa"))
+	b, err := ioutil.ReadFile(filepath.Join(wd, "instance_rsa"))
 	if err != nil {
 		return ""
 	}

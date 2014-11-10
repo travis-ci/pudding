@@ -71,12 +71,13 @@ func (wty *InstanceSpecificYML) String() (string, error) {
 }
 
 type instanceEnvConfig struct {
-	Host              string            `yaml:"host"`
-	LogLevel          string            `yaml:"log_level"`
-	Queue             string            `yaml:"queue"`
-	AMQP              *amqpConfig       `yaml:"amqp"`
-	VMs               *vmsConfig        `yaml:"vms"`
-	Build             *buildConfig      `yaml:"build"`
+	Host     string       `yaml:"host"`
+	LogLevel string       `yaml:"log_level"`
+	Queue    string       `yaml:"queue"`
+	AMQP     *amqpConfig  `yaml:"amqp"`
+	VMs      *vmsConfig   `yaml:"vms"`
+	Build    *buildConfig `yaml:"build"`
+	// FIXME: rename the docker bits to "instance" ?
 	Docker            *dockerConfig     `yaml:"docker"`
 	Paranoid          bool              `yaml:"paranoid"`
 	SkipResolvUpdates bool              `yaml:"skip_resolv_updates"`

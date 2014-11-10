@@ -56,7 +56,7 @@ func Main(cfg *Config) {
 	ic.AWSRegion = region
 
 	if ic.InstanceRSA == "" {
-		log.Fatal("missing docker rsa key")
+		log.Fatal("missing instance rsa key")
 		os.Exit(1)
 	}
 
