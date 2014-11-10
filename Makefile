@@ -10,11 +10,11 @@ SUBPACKAGES := \
 	$(PACKAGE)/lib/workers
 
 VERSION_VAR := $(PACKAGE)/lib.VersionString
-VERSION_VALUE := $(shell git describe --always --dirty --tags 2>/dev/null)
+VERSION_VALUE ?= $(shell git describe --always --dirty --tags 2>/dev/null)
 REV_VAR := $(PACKAGE)/lib.RevisionString
-REV_VALUE := $(shell git rev-parse --sq HEAD 2>/dev/null || echo "'???'")
+REV_VALUE ?= $(shell git rev-parse --sq HEAD 2>/dev/null || echo "'???'")
 GENERATED_VAR := $(PACKAGE)/lib.GeneratedString
-GENERATED_VALUE := $(shell date -u +'%Y-%m-%dT%H:%M:%S%z')
+GENERATED_VALUE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%S%z')
 
 FIND ?= find
 GO ?= go
@@ -47,7 +47,11 @@ all: clean deps test lintall
 
 .PHONY: buildpack
 buildpack:
-	@$(MAKE) build GOBUILD_FLAGS=
+	@$(MAKE) build \
+		GOBUILD_FLAGS= \
+		REV_VALUE="'$(shell git log -1 --format='%H')'" \
+		VERSION_VALUE=heroku \
+		| sed 's/^/       /'
 
 .PHONY: test
 test: build fmtpolice test-deps coverage.html
