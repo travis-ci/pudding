@@ -20,7 +20,7 @@ var (
 			}
 			return v
 		}(),
-		EnvVar: "WORKER_MANAGER_ADDR",
+		EnvVar: "PUDDING_ADDR",
 	}
 	// RedisURLFlag is the flag used to specify the redis URL, and
 	// checks for REDIS_PROVIDER and REDIS_URL before defaulting to a
@@ -40,7 +40,7 @@ var (
 			}
 			return v
 		}(),
-		EnvVar: "WORKER_MANAGER_REDIS_URL",
+		EnvVar: "PUDDING_REDIS_URL",
 	}
 	// InstanceExpiryFlag is the flag used to for defining the expiry
 	// used in redis when storing instance metadat
@@ -48,17 +48,17 @@ var (
 		Name:   "E, instance-expiry",
 		Value:  90,
 		Usage:  "expiry in seconds for instance attributes",
-		EnvVar: "WORKER_MANAGER_INSTANCE_EXPIRY",
+		EnvVar: "PUDDING_INSTANCE_EXPIRY",
 	}
 	// SlackTokenFlag is the hubot token for slack integration
 	SlackTokenFlag = cli.StringFlag{
 		Name:   "slack-token",
-		EnvVar: "WORKER_MANAGER_SLACK_TOKEN",
+		EnvVar: "PUDDING_SLACK_TOKEN",
 	}
 	// SlackTeamFlag is the team name for slack integration
 	SlackTeamFlag = cli.StringFlag{
 		Name:   "slack-team",
-		EnvVar: "WORKER_MANAGER_SLACK_TEAM",
+		EnvVar: "PUDDING_SLACK_TEAM",
 	}
 	// SlackChannelFlag is the default channel used when no channel
 	// is provided in a web request
@@ -66,14 +66,14 @@ var (
 		Name:   "default-slack-channel",
 		Usage:  "default slack channel to use if none provided with request",
 		Value:  "#general",
-		EnvVar: "WORKER_MANAGER_DEFAULT_SLACK_CHANNEL",
+		EnvVar: "PUDDING_DEFAULT_SLACK_CHANNEL",
 	}
 	// SentryDSNFlag is the dsn string used to initialize raven
 	// clients
 	SentryDSNFlag = cli.StringFlag{
 		Name:   "sentry-dsn",
 		Value:  os.Getenv("SENTRY_DSN"),
-		EnvVar: "WORKER_MANAGER_SENTRY_DSN",
+		EnvVar: "PUDDING_SENTRY_DSN",
 	}
 	// DebugFlag enables debug logging
 	DebugFlag = cli.BoolFlag{

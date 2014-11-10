@@ -2,13 +2,13 @@
 
 : ${HOST:=http://localhost}
 : ${PORT:=42151}
-: ${WORKER_MANAGER_AUTH_TOKEN:=swordfish}
+: ${PUDDING_AUTH_TOKEN:=swordfish}
 
 case "$1" in
   instance-build)
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       -X POST \
       -d "{
           \"instance_builds\": {
@@ -24,7 +24,7 @@ case "$1" in
   list-instances)
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       ${HOST}:${PORT}/instances
     ;;
   terminate-instance)
@@ -34,14 +34,14 @@ case "$1" in
     fi
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       -X DELETE \
       ${HOST}:${PORT}/instances/$2
     ;;
   bogus-instance-build)
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       -X POST \
       -d "{\"instance_builds\": {}}" \
       ${HOST}:${PORT}/instance-builds
@@ -49,21 +49,21 @@ case "$1" in
   shutdown)
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       -X DELETE \
       ${HOST}:${PORT}/
     ;;
   kaboom)
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       -X POST \
       ${HOST}:${PORT}/kaboom
     ;;
   expvars)
     exec curl \
       -s \
-      -H "Authorization: token ${WORKER_MANAGER_AUTH_TOKEN}" \
+      -H "Authorization: token ${PUDDING_AUTH_TOKEN}" \
       ${HOST}:${PORT}/debug/vars
     ;;
   *)

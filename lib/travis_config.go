@@ -196,10 +196,10 @@ func BuildTravisWorkerYML(site, env, rawYML, queue string, count int) (*WorkerTr
 
 // GetTravisWorkerYML attempts to look up the MultiEnvSiteTravisYML
 // string as a compressed env var at both TRAVIS_WORKER_YML and
-// WORKER_MANAGER_TRAVIS_WORKER_YML, then falls back to a lookup
+// PUDDING_TRAVIS_WORKER_YML, then falls back to a lookup
 // of an uncompressed travis_config var.
 func GetTravisWorkerYML() string {
-	for _, key := range []string{"TRAVIS_WORKER_YML", "WORKER_MANAGER_TRAVIS_WORKER_YML"} {
+	for _, key := range []string{"TRAVIS_WORKER_YML", "PUDDING_TRAVIS_WORKER_YML"} {
 		value, err := GetCompressedEnvVar(key)
 		if err == nil {
 			return value

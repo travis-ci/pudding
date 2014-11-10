@@ -8,7 +8,7 @@ import (
 
 // GetDockerRSAKey attempts to retrieve the docker rsa private key
 // from compressed env vars DOCKER_RSA and
-// WORKER_MANAGER_DOCKER_RSA, then falls back to attempting to read
+// PUDDING_DOCKER_RSA, then falls back to attempting to read
 // $PWD/docker_rsa
 func GetDockerRSAKey() string {
 	value := getDockerRSAKeyFromEnv()
@@ -20,7 +20,7 @@ func GetDockerRSAKey() string {
 }
 
 func getDockerRSAKeyFromEnv() string {
-	for _, key := range []string{"DOCKER_RSA", "WORKER_MANAGER_DOCKER_RSA"} {
+	for _, key := range []string{"DOCKER_RSA", "PUDDING_DOCKER_RSA"} {
 		value, err := GetCompressedEnvVar(key)
 		if err == nil {
 			return value

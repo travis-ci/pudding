@@ -2,10 +2,10 @@
 cd "$(dirname "$0")/.."
 
 if [[ $PORT ]] ; then
-  : ${WORKER_MANAGER_WEB_HOSTNAME:=http://localhost:5000}
+  : ${PUDDING_WEB_HOSTNAME:=http://localhost:5000}
 fi
 
-export WORKER_MANAGER_WEB_HOSTNAME
+export PUDDING_WEB_HOSTNAME
 
 cmd="pudding-workers"
 if [[ ! $DYNO ]] ; then

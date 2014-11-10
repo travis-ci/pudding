@@ -17,7 +17,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "redis-pool-size",
 			Value:  "30",
-			EnvVar: "WORKER_MANAGER_REDIS_POOL_SIZE",
+			EnvVar: "PUDDING_REDIS_POOL_SIZE",
 		},
 		cli.StringFlag{
 			Name:   "q, queues",
@@ -33,7 +33,7 @@ func main() {
 				}
 				return v
 			}(),
-			EnvVar: "WORKER_MANAGER_PROCESS_ID",
+			EnvVar: "PUDDING_PROCESS_ID",
 		},
 		cli.StringFlag{
 			Name:   "K, aws-key",
@@ -55,7 +55,7 @@ func main() {
 			Name:   "H, web-hostname",
 			Usage:  "publicly-accessible hostname with protocol",
 			Value:  "http://localhost:42151",
-			EnvVar: "WORKER_MANAGER_WEB_HOSTNAME",
+			EnvVar: "PUDDING_WEB_HOSTNAME",
 		},
 		cli.StringFlag{
 			Name: "Y, travis-worker-yml",
@@ -67,7 +67,7 @@ func main() {
 			Name:   "I, mini-worker-interval",
 			Value:  30,
 			Usage:  "interval in seconds for the mini worker loop",
-			EnvVar: "WORKER_MANAGER_MINI_WORKER_INTERVAL",
+			EnvVar: "PUDDING_MINI_WORKER_INTERVAL",
 		},
 		lib.SlackTeamFlag,
 		lib.SlackTokenFlag,

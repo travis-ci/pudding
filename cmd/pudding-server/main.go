@@ -17,17 +17,17 @@ func main() {
 		cli.StringFlag{
 			Name:   "instance-builds-queue-name",
 			Value:  "instance-builds",
-			EnvVar: "WORKER_MANAGER_INSTANCE_BUILDS_QUEUE_NAME",
+			EnvVar: "PUDDING_INSTANCE_BUILDS_QUEUE_NAME",
 		},
 		cli.StringFlag{
 			Name:   "instance-terminations-queue-name",
 			Value:  "instance-terminations",
-			EnvVar: "WORKER_MANAGER_INSTANCE_TERMINATIONS_QUEUE_NAME",
+			EnvVar: "PUDDING_INSTANCE_TERMINATIONS_QUEUE_NAME",
 		},
 		cli.StringFlag{
 			Name:   "A, auth-token",
 			Value:  "swordfish",
-			EnvVar: "WORKER_MANAGER_AUTH_TOKEN",
+			EnvVar: "PUDDING_AUTH_TOKEN",
 		},
 		lib.SlackTeamFlag,
 		lib.SlackTokenFlag,
