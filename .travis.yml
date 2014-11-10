@@ -11,6 +11,10 @@ before_install:
 - go get github.com/hamfist/deppy
 - go get github.com/golang/lint/golint
 - go get code.google.com/p/go.tools/cmd/cover
+- if ! -d ~/gopath/src/github.com/travis-pro/pudding ; then
+    mkdir -p ~/gopath/src/github.com/travis-pro/pudding &&
+    rsync -az ${TRAVIS_BUILD_DIR}/ ~/gopath/src/github.com/travis-pro/pudding ;
+  fi
 install:
 - deppy restore
 before_script:
