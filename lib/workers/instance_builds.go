@@ -26,8 +26,8 @@ func init() {
 func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 	buildPayloadJSON := []byte(msg.OriginalJson())
 	buildPayload := &lib.InstanceBuildPayload{
-		Args: []*InstanceBuild{
-			NewInstanceBuild(),
+		Args: []*lib.InstanceBuild{
+			lib.NewInstanceBuild(),
 		},
 	}
 
