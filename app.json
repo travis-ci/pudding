@@ -8,6 +8,7 @@
   ],
   "website": "https://github.com/travis-ci/pudding",
   "repository": "https://github.com/travis-ci/pudding",
+  "logo": "http://docs.travis-ci.com/images/travis-mascot-200px.png",
   "success_url": "/",
   "addons": [
     "redisgreen:minidev"
@@ -50,11 +51,11 @@
       "required": true
     },
     "PUDDING_INSTANCE_YML": {
-      "description": "YAML configuration used to generate instance-specific configurations based on \"site\" and \"env\"",
+      "description": "YAML configuration used to generate instance-specific configurations based on \"site\" and \"env\".  Must be a gzipped and base64-encoded string",
       "required": true
     },
     "PUDDING_SENTRY_DSN": {
-      "description": "Sentry DSN for sentry integration, e.g. https://REDACTED@app.getsentry.com/1234",
+      "description": "Sentry DSN for sentry integration, e.g. https://abcd1234@app.getsentry.com/1234",
       "required": false
     },
     "PUDDING_INIT_SCRIPT_TEMPLATE": {
