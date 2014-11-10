@@ -1,0 +1,65 @@
+{
+  "name": "Pudding",
+  "description": "It's a thing for managing instances!",
+  "keywords": [
+    "ec2",
+    "chatops",
+    "tool"
+  ],
+  "website": "https://github.com/travis-ci/pudding",
+  "repository": "https://github.com/travis-ci/pudding",
+  "success_url": "/",
+  "addons": [
+    "redisgreen:minidev"
+  ],
+  "env": {
+    "AWS_ACCESS_KEY_ID": {
+      "description": "AWS access key ID",
+      "required": true
+    },
+    "AWS_SECRET_ACCESS_KEY": {
+      "description": "AWS secret access key",
+      "required": true
+    },
+    "BUILDPACK_URL": "https://github.com/meatballhat/heroku-buildpack-go",
+    "REDIS_PROVIDER": "REDISGREEN_URL",
+    "PUDDING_AUTH_TOKEN": {
+      "description": "A secret token used for web authentication",
+      "generator": "secret",
+      "required": true
+    },
+    "PUDDING_SLACK_CHANNEL": {
+      "description": "Default Slack channel name for notifications",
+      "value": "general",
+      "required": false
+    },
+    "PUDDING_SLACK_TEAM": {
+      "description": "Slack team name for hubot notifications API requests",
+      "required": false
+    },
+    "PUDDING_SLACK_TOKEN": {
+      "description": "Slack auth token for hubot notification API requests",
+      "required": false
+    },
+    "PUDDING_WEB_HOSTNAME": {
+      "description": "The publicly-accessible hostname of your heroku app, e.g. https://the-name-of-your-app.herokuapp.com/",
+      "required": true
+    },
+    "PUDDING_INSTANCE_RSA": {
+      "description": "RSA private key for use in cloud init script templates.  Must be a gzipped and base64-encoded string",
+      "required": true
+    },
+    "PUDDING_INSTANCE_YML": {
+      "description": "YAML configuration used to generate instance-specific configurations based on \"site\" and \"env\"",
+      "required": true
+    },
+    "PUDDING_SENTRY_DSN": {
+      "description": "Sentry DSN for sentry integration, e.g. https://REDACTED@app.getsentry.com/1234",
+      "required": false
+    },
+    "PUDDING_INIT_SCRIPT_TEMPLATE": {
+      "description": "A Golang text/template string used to generate the script executed by cloud init.  Must be a gzipped and base64-encoded string",
+      "required": true
+    }
+  }
+}
