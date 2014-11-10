@@ -95,6 +95,10 @@ func FetchInstances(conn redis.Conn, f map[string]string) ([]*lib.Instance, erro
 				if inst.Site != value {
 					failedChecks++
 				}
+			case "role":
+				if inst.Role != value {
+					failedChecks++
+				}
 			}
 		}
 
@@ -145,7 +149,7 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 
 		for _, tag := range inst.Tags {
 			switch tag.Key {
-			case "queue", "env", "site":
+			case "queue", "env", "site", "role":
 				hmSet = append(hmSet, tag.Key, tag.Value)
 			case "Name":
 				hmSet = append(hmSet, "name", tag.Value)

@@ -164,7 +164,7 @@ func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {
 
 func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
 	f := map[string]string{}
-	for _, qv := range []string{"env", "site"} {
+	for _, qv := range []string{"env", "site", "role"} {
 		v := req.FormValue(qv)
 		if v != "" {
 			f[qv] = v

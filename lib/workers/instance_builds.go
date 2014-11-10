@@ -77,9 +77,10 @@ func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid str
 func (ibw *instanceBuilderWorker) Build() error {
 	var err error
 
-	// FIXME: accept this filter as configuration
 	f := ec2.NewFilter()
-	f.Add("tag:role", "worker")
+	if ibw.b.Role != "" {
+		f.Add("tag:role", ibw.b.Role)
+	}
 
 	log.WithFields(logrus.Fields{
 		"jid":    ibw.jid,
