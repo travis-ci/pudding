@@ -207,7 +207,7 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 }
 
 func (ibw *instanceBuilderWorker) tagInstance() error {
-	nameTmpl, err := template.New("name-template").Parse(ibw.b.NameTemplate)
+	nameTmpl, err := template.New(fmt.Sprintf("name-template-%s", ibw.jid)).Parse(ibw.b.NameTemplate)
 	if err != nil {
 		return err
 	}
@@ -218,13 +218,20 @@ func (ibw *instanceBuilderWorker) tagInstance() error {
 		return err
 	}
 
-	_, err = ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, []ec2.Tag{
+	tags := []ec2.Tag{
 		ec2.Tag{Key: "Name", Value: nameBuf.String()},
 		ec2.Tag{Key: "role", Value: ibw.b.Role},
 		ec2.Tag{Key: "site", Value: ibw.b.Site},
 		ec2.Tag{Key: "env", Value: ibw.b.Env},
 		ec2.Tag{Key: "queue", Value: ibw.b.Queue},
-	})
+	}
+
+	log.WithFields(logrus.Fields{
+		"jid":  ibw.jid,
+		"tags": tags,
+	}).Debug("tagging instance")
+
+	_, err = ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, tags)
 
 	return err
 }
