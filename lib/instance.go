@@ -12,4 +12,5 @@ type Instance struct {
 	Queue        string `json:"queue" redis:"queue"`
 	Env          string `json:"env" redis:"env"`
 	Site         string `json:"site" redis:"site"`
+	Role         string `json:"role" redis:"role"`
 }
