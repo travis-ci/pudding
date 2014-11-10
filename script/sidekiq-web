@@ -8,7 +8,7 @@ require 'sidekiq'
 require 'sidekiq/web'
 
 Sidekiq.redis = {
-  namespace: 'worker-manager',
+  namespace: 'pudding',
   size: 30,
   url: ENV[ENV['REDIS_PROVIDER'] || 'REDIS_URL'] || 'redis://localhost:6379/0'
 }

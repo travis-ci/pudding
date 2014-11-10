@@ -78,7 +78,7 @@ func optsFromConfig(cfg *internalConfig) map[string]string {
 		"database":  strings.TrimLeft(cfg.RedisURL.Path, "/"),
 		"pool":      cfg.RedisPoolSize,
 		"process":   cfg.ProcessID,
-		"namespace": "worker-manager",
+		"namespace": "pudding",
 	}
 
 	if cfg.RedisURL.User != nil {
