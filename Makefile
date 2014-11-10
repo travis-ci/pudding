@@ -47,11 +47,10 @@ all: clean deps test lintall
 
 .PHONY: buildpack
 buildpack:
-	@grep -l -R -E 'v\d\d' /tmp || true
 	@$(MAKE) build \
 		GOBUILD_FLAGS= \
 		REV_VALUE="'$(shell git log -1 --format='%H')'" \
-		VERSION_VALUE=heroku
+		VERSION_VALUE=buildpack-$(STACK)-$(USER)-$(DYNO)
 
 .PHONY: test
 test: build fmtpolice test-deps coverage.html
