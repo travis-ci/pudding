@@ -33,7 +33,7 @@ type InstanceBuildsCollection struct {
 // InstanceBuild contains everything needed by a background worker
 // to build the instance
 type InstanceBuild struct {
-	Role         string `json:"role"`
+	Role         string `json:"role,omitempty"`
 	Site         string `json:"site"`
 	Env          string `json:"env"`
 	AMI          string `json:"ami"`
