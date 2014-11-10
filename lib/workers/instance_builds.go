@@ -212,8 +212,8 @@ func (ibw *instanceBuilderWorker) tagInstance() error {
 		return err
 	}
 
-	nameBuf := &bytes.Buffer{}
-	err = nameTmpl.Execute(nameBuf, ibw.b)
+	var nameBuf bytes.Buffer
+	err = nameTmpl.Execute(&nameBuf, ibw.b)
 	if err != nil {
 		return err
 	}
