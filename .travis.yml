@@ -17,8 +17,7 @@ before_script:
 - redis-server --port 16379 > redis-server.log 2>&1 &
 - echo $! > redis-server.pid
 script:
-- go get -x -v ./...
-- go test -v ./...
+- make
 - ~/gopath/bin/wm-server --version
 - ~/gopath/bin/wm-workers --version
 - ~/gopath/bin/wm-server >> server.log 2>&1 &
