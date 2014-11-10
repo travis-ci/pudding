@@ -1,7 +1,7 @@
 pudding
 ======================
 
-[![Build Status](https://magnum.travis-ci.com/travis-pro/pudding.svg?token=kPejzpHX8hnAbfFzykif&branch=master)](https://magnum.travis-ci.com/travis-pro/pudding)
+[![Build Status](https://magnum.travis-ci.com/travis-ci/pudding.svg?token=kPejzpHX8hnAbfFzykif&branch=master)](https://magnum.travis-ci.com/travis-ci/pudding)
 
 It's a service for managing instances!
 
@@ -16,7 +16,7 @@ Currently supported:
 ## Development and such
 
 This repo should be cloned into your `GOPATH` at
-`${GOPATH%%:*}/src/github.com/travis-pro/pudding`.
+`${GOPATH%%:*}/src/github.com/travis-ci/pudding`.
 If you don't know what `GOPATH` is or are unsure if the top entry
 is in a non-volatile location, you should Ask Someone &trade;
 

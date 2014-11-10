@@ -9,7 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
-	"github.com/travis-pro/pudding/lib/db"
+	"github.com/travis-ci/pudding/lib/db"
 )
 
 const (

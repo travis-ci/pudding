@@ -7,7 +7,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
-	"github.com/travis-pro/pudding/lib"
+	"github.com/travis-ci/pudding/lib"
 )
 
 type Middleware struct {

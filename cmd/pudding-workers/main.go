@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/travis-pro/pudding/lib"
-	"github.com/travis-pro/pudding/lib/workers"
+	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding/lib/workers"
 )
 
 func main() {

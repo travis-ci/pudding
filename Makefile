@@ -1,4 +1,4 @@
-PACKAGE := github.com/travis-pro/pudding
+PACKAGE := github.com/travis-ci/pudding
 SUBPACKAGES := \
 	$(PACKAGE)/cmd/pudding-server \
 	$(PACKAGE)/cmd/pudding-workers \

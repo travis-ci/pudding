@@ -2,7 +2,7 @@
 
 set -e
 
-PACKAGE=${PACKAGE:-github.com/travis-pro/pudding}
+PACKAGE=${PACKAGE:-github.com/travis-ci/pudding}
 
 golint "${PACKAGE}"
 for pkg in lib lib/server lib/server/jsonapi lib/db lib/workers ; do

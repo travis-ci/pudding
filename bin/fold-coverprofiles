@@ -9,7 +9,7 @@ fi
 
 GO=${GO:-deppy go}
 OUT_TMP=$(mktemp pudding.XXXXX)
-PACKAGE=${PACKAGE:-github.com/travis-pro/pudding}
+PACKAGE=${PACKAGE:-github.com/travis-ci/pudding}
 
 trap "rm -f $OUT_TMP" EXIT TERM QUIT
 
