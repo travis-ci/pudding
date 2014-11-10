@@ -25,7 +25,11 @@ func init() {
 
 func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 	buildPayloadJSON := []byte(msg.OriginalJson())
-	buildPayload := &lib.InstanceBuildPayload{}
+	buildPayload := &lib.InstanceBuildPayload{
+		Args: []*InstanceBuild{
+			NewInstanceBuild(),
+		},
+	}
 
 	err := json.Unmarshal(buildPayloadJSON, buildPayload)
 	if err != nil {
