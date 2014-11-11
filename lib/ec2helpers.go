@@ -30,7 +30,7 @@ func ResolveAMI(conn *ec2.EC2, ID string, f *ec2.Filter) (*ec2.Image, error) {
 // name which is assumed to contain a timestamp, then returns the
 // most recent image.
 func FetchLatestAMIWithFilter(conn *ec2.EC2, f *ec2.Filter) (*ec2.Image, error) {
-	f.Add("tag:active", "true")
+	f.Add("tag-key", "active")
 
 	allImages, err := conn.Images([]string{}, f)
 	if err != nil {
