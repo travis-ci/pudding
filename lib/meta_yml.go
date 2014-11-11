@@ -62,8 +62,8 @@ type InstanceSpecificYML struct {
 	PapertrailSite string             `yaml:"papertrail_site,omitempty"`
 }
 
-func (wty *InstanceSpecificYML) String() (string, error) {
-	out, err := yaml.Marshal(wty)
+func (isy *InstanceSpecificYML) String() (string, error) {
+	out, err := yaml.Marshal(isy)
 	if out == nil {
 		out = []byte{}
 	}
@@ -158,7 +158,7 @@ func BuildInstanceSpecificYML(site, env, rawYML, queue string, count int) (*Inst
 		return nil, errMissingSiteConfig
 	}
 
-	wty := &InstanceSpecificYML{
+	isy := &InstanceSpecificYML{
 		Env: "linux",
 		LinuxConfig: &instanceEnvConfig{
 			Host:     "$INSTANCE_HOST_NAME",
@@ -191,7 +191,7 @@ func BuildInstanceSpecificYML(site, env, rawYML, queue string, count int) (*Inst
 		PapertrailSite: ps,
 	}
 
-	return wty, err
+	return isy, err
 }
 
 // GetInstanceYML attempts to look up the MetaYML

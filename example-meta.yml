@@ -1,0 +1,98 @@
+# This is an example "meta yml" config file, which is currently
+# very specific to Travis internals.  The whole thing might be
+# better-represented in Go as something less strictly typed than a
+# bunch of structs.  Unknown.  Feedback wanted.
+
+amqp:
+  org:
+    staging:
+      host: "hostname"
+      port: 1234
+      username: "username"
+      password: "password"
+      vhost: "vhost"
+    prod:
+      host: "hostname"
+      port: 1234
+      username: "username"
+      password: "password"
+      vhost: "vhost"
+      tls: "TLSv1"
+  com:
+    prod:
+      host: "hostname"
+      port: 1234
+      username: "username"
+      password: "password"
+      vhost: "vhost"
+      tls: "TLSv1"
+    staging:
+      host: "hostname"
+      port: 1234
+      username: "username"
+      password: "password"
+      vhost: "vhost"
+
+build:
+  org:
+    staging:
+      api_token: "api-token"
+      url: "bulid-api-url"
+    prod:
+      api_token: "api-token"
+      url: "bulid-api-url"
+  com:
+    staging:
+      api_token: "api-token"
+      url: "bulid-api-url"
+    prod:
+      api_token: "api-token"
+      url: "bulid-api-url"
+
+librato:
+  org:
+    email: "email-address"
+    token: "token"
+  com:
+    email: "email-address"
+    token: "token"
+
+cache:
+  org:
+    staging:
+      type: "s3"
+      s3:
+        access_key_id: "access-key-id"
+        secret_access_key: "secret-access-key"
+        bucket: "bucket"
+      fetch_timeout: 1200
+      push_timeout: 6600
+    prod:
+      type: "s3"
+      s3:
+        access_key_id: "access-key-id"
+        secret_access_key: "secret-access-key"
+        bucket: "bucket"
+      fetch_timeout: 1200
+      push_timeout: 6600
+  com:
+    staging:
+      type: "s3"
+      s3:
+        access_key_id: "access-key-id"
+        secret_access_key: "secret-access-key"
+        bucket: "bucket"
+      fetch_timeout: 1200
+      push_timeout: 6600
+    prod:
+      type: "s3"
+      s3:
+        access_key_id: "access-key-id"
+        secret_access_key: "secret-access-key"
+        bucket: "bucket"
+      fetch_timeout: 1200
+      push_timeout: 6600
+
+papertrail:
+  org: "papertrail-syslog-upstream"
+  com: "papertrail-syslog-upstream"
