@@ -37,17 +37,17 @@ build:
   org:
     staging:
       api_token: "api-token"
-      url: "bulid-api-url"
+      url: "build-api-url"
     prod:
       api_token: "api-token"
-      url: "bulid-api-url"
+      url: "build-api-url"
   com:
     staging:
       api_token: "api-token"
-      url: "bulid-api-url"
+      url: "build-api-url"
     prod:
       api_token: "api-token"
-      url: "bulid-api-url"
+      url: "build-api-url"
 
 librato:
   org:
