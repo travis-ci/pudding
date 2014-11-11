@@ -62,5 +62,17 @@
       "description": "A Golang text/template string used to generate the script executed by cloud init.  Must be a gzipped and base64-encoded string",
       "required": true
     }
-  }
+  },
+  "formation": [
+    {
+      "process": "web",
+      "quantity": 1,
+      "size": "1X"
+    },
+    {
+      "process": "worker",
+      "quantity": 1,
+      "size": "1X"
+    }
+  ]
 }
