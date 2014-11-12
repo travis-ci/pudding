@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+set -o errexit
+
+: ${NAMESPACE:=pudding}
+: ${INSTANCE_ID:=i-abcd1234}
+: ${REDIS_URL:=redis://localhost:6379/0}
+export REDIS_URL
+
+eval "$(ruby -ruri <<-EORUBY
+parts = URI(ENV['REDIS_URL'])
+puts "export REDIS_PORT=#{parts.port}"
+puts "export REDIS_HOST=#{parts.host}"
+EORUBY
+)"
+
+case "$1" in
+  autoscaling-group-build)
+    NOW=$(date +%s)
+    exec redis-cli \
+      -p "$REDIS_PORT" \
+      -h "$REDIS_HOST" \
+      LPUSH "${NAMESPACE}:queue:autoscaling-group-builds" \
+      "{
+        \"args\": [
+          {
+            \"id\": \"f9774b24-ea61-4dd3-abd0-6829aff0ba7e\",
+            \"name\": \"test-asg-$NOW\",
+            \"instance_id\": \"$INSTANCE_ID\",
+            \"queue\": \"docker\",
+            \"env\": \"test\",
+            \"site\": \"org\",
+            \"role\": \"worker\",
+            \"min_size\": 1,
+            \"max_size\": 1,
+            \"desired_capacity\": 1,
+            \"state\": \"pending\",
+            \"slack_channel\": \"#general\"
+          }
+        ],
+        \"enqueued_at\": $NOW,
+        \"jid\": \"$(ruby -rsecurerandom -e 'puts SecureRandom.uuid')\",
+        \"queue\": \"autoscaling-group-builds\",
+        \"retry\": true
+      }"
+    ;;
+  *)
+    echo "unknown job type '$1'"
+    exit 1
+    ;;
+esac

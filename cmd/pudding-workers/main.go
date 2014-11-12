@@ -21,7 +21,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "q, queues",
-			Value:  "instance-builds,instance-terminations",
+			Value:  "instance-builds,instance-terminations,autoscaling-group-builds",
 			EnvVar: "QUEUES",
 		},
 		cli.StringFlag{
