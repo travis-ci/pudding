@@ -65,7 +65,6 @@ func newAutoscalingGroupBuilderWorker(b *lib.AutoscalingGroupBuild, cfg *interna
 
 func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 	b := asgbw.b
-
 	tags := []autoscaling.Tag{
 		autoscaling.Tag{
 			Key:   "role",
@@ -91,14 +90,24 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 		},
 	}
 
-	_, err := asgbw.as.CreateAutoScalingGroup(&autoscaling.CreateAutoScalingGroup{
-		Name:            b.Name,
-		InstanceId:      b.InstanceID,
-		MinSize:         b.MinSize,
-		MaxSize:         b.MaxSize,
-		DesiredCapacity: b.DesiredCapacity,
-		Tags:            tags,
-	})
+	asg := &autoscaling.CreateAutoScalingGroup{
+		Name:               b.Name,
+		InstanceId:         b.InstanceID,
+		MinSize:            b.MinSize,
+		MaxSize:            b.MaxSize,
+		DesiredCapacity:    b.DesiredCapacity,
+		Tags:               tags,
+		SetMinSize:         true,
+		SetMaxSize:         true,
+		SetDesiredCapacity: true,
+	}
+
+	log.WithFields(logrus.Fields{
+		"jid": asgbw.jid,
+		"asg": fmt.Sprintf("%#v", asg),
+	}).Debug("creating autoscaling group")
+
+	_, err := asgbw.as.CreateAutoScalingGroup(asg)
 
 	if err != nil {
 		log.WithFields(logrus.Fields{
