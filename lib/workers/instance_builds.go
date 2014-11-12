@@ -36,8 +36,9 @@ func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 		log.WithField("err", err).Panic("failed to deserialize message")
 	}
 
-	err = newInstanceBuilderWorker(buildPayload.InstanceBuild(),
-		cfg, msg.Jid(), workers.Config.Pool.Get()).Build()
+	b := buildPayload.InstanceBuild()
+	b.Hydrate()
+	err = newInstanceBuilderWorker(b, cfg, msg.Jid(), workers.Config.Pool.Get()).Build()
 	if err != nil {
 		log.WithField("err", err).Panic("instance build failed")
 	}

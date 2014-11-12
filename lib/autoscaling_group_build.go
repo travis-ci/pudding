@@ -1,5 +1,7 @@
 package lib
 
+import "strings"
+
 // AutoscalingGroupBuildsCollectionSingular is the singular representation
 // used in jsonapi bodies
 type AutoscalingGroupBuildsCollectionSingular struct {
@@ -18,6 +20,7 @@ type AutoscalingGroupBuild struct {
 	ID              string `json:"id,omitempty"`
 	Name            string `json:"name" redis:"name"`
 	InstanceID      string `json:"instance_id,omitempty"`
+	NameTemplate    string `json:"name_template,omitempty"`
 	Queue           string `json:"queue" redis:"queue"`
 	Env             string `json:"env" redis:"env"`
 	Site            string `json:"site" redis:"site"`
@@ -44,4 +47,12 @@ func (asgb *AutoscalingGroupBuild) Hydrate() {
 	if asgb.DesiredCapacity == 0 {
 		asgb.DesiredCapacity = 1
 	}
+
+	if asgb.NameTemplate == "" {
+		asgb.NameTemplate = "{{.Role}}-{{.Site}}-{{.Env}}-{{.Queue}}-{{.InstanceIDWithoutPrefix}}"
+	}
+}
+
+func (asgb *AutoscalingGroupBuild) InstanceIDWithoutPrefix() string {
+	return strings.TrimPrefix(asgb.InstanceID, "i-")
 }

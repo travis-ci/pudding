@@ -52,18 +52,23 @@ type InstanceBuild struct {
 // generating a unique ID and setting the State to "pending"
 func NewInstanceBuild() *InstanceBuild {
 	return &InstanceBuild{
-		ID:    feeds.NewUUID().String(),
-		State: "pending",
+		ID: feeds.NewUUID().String(),
+	}
+}
 
-		// FIXME: accept Role and NameTemplate as configuration
-		Role: "worker",
-		// XXX: formerly known as:
-		//   fmt.Sprintf("travis-%s-%s-%s-%s",
-		//     b.Site,
-		//     b.Env,
-		//     b.Queue,
-		//     strings.TrimPrefix(b.InstanceID, "i-"))
-		NameTemplate: "travis-{{.Site}}-{{.Env}}-{{.Queue}}-{{.InstanceIDWithoutPrefix}}",
+// Hydrate is used to overwrite "null" defaults that result from
+// serialize/deserialize via JSON
+func (b *InstanceBuild) Hydrate() {
+	if b.State == "" {
+		b.State = "pending"
+	}
+
+	if b.Role == "" {
+		b.Role = "worker"
+	}
+
+	if b.NameTemplate == "" {
+		b.NameTemplate = "{{.Role}}-{{.Site}}-{{.Env}}-{{.Queue}}-{{.InstanceIDWithoutPrefix}}"
 	}
 }
 

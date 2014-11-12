@@ -1,9 +1,10 @@
 package workers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"html/template"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
@@ -47,6 +48,8 @@ type autoscalingGroupBuilderWorker struct {
 	ec2 *ec2.EC2
 	as  *autoscaling.AutoScaling
 	b   *lib.AutoscalingGroupBuild
+	sop string
+	sip string
 }
 
 func newAutoscalingGroupBuilderWorker(b *lib.AutoscalingGroupBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *autoscalingGroupBuilderWorker {
@@ -64,7 +67,77 @@ func newAutoscalingGroupBuilderWorker(b *lib.AutoscalingGroupBuild, cfg *interna
 }
 
 func (asgbw *autoscalingGroupBuilderWorker) Build() error {
+	asg, err := asgbw.createAutoscalingGroup()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": asgbw.jid,
+		}).Error("failed to create autoscaling group")
+		return err
+	}
+
+	sop, err := asgbw.createScaleOutPolicy()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":  err,
+			"name": asg.Name,
+			"jid":  asgbw.jid,
+		}).Error("failed to create scale out policy")
+		return err
+	}
+
+	asgbw.sop = sop
+
+	sip, err := asgbw.createScaleInPolicy()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":  err,
+			"name": asg.Name,
+			"jid":  asgbw.jid,
+		}).Error("failed to create scale in policy")
+		return err
+	}
+
+	asgbw.sip = sip
+
+	err = asgbw.createScaleOutMetricAlarm()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":  err,
+			"name": asg.Name,
+			"jid":  asgbw.jid,
+		}).Error("failed to create scale out metric alarm")
+		return err
+	}
+
+	err = asgbw.createScaleInMetricAlarm()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":  err,
+			"name": asg.Name,
+			"jid":  asgbw.jid,
+		}).Error("failed to create scale in metric alarm")
+		return err
+	}
+
+	log.WithField("jid", asgbw.jid).Debug("all done")
+	return nil
+}
+
+func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscaling.CreateAutoScalingGroup, error) {
 	b := asgbw.b
+
+	nameTmpl, err := template.New(fmt.Sprintf("name-template-%s", asgbw.jid)).Parse(b.NameTemplate)
+	if err != nil {
+		return nil, err
+	}
+
+	var nameBuf bytes.Buffer
+	err = nameTmpl.Execute(&nameBuf, b)
+	if err != nil {
+		return nil, err
+	}
+
 	tags := []autoscaling.Tag{
 		autoscaling.Tag{
 			Key:   "role",
@@ -83,10 +156,8 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 			Value: b.Env,
 		},
 		autoscaling.Tag{
-			Key: "Name",
-			// FIXME: build name with template as with instance builds
-			// Value: name,
-			Value: fmt.Sprintf("travis-%s-%s-%s-%s-asg", b.Site, b.Env, b.Queue, strings.TrimPrefix(b.InstanceID, "i-")),
+			Key:   "Name",
+			Value: nameBuf.String(),
 		},
 	}
 
@@ -107,16 +178,22 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 		"asg": fmt.Sprintf("%#v", asg),
 	}).Debug("creating autoscaling group")
 
-	_, err := asgbw.as.CreateAutoScalingGroup(asg)
+	_, err = asgbw.as.CreateAutoScalingGroup(asg)
+	return asg, err
+}
 
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"err": err,
-			"jid": asgbw.jid,
-		}).Error("failed to create autoscaling group")
-		return err
-	}
+func (asgbw *autoscalingGroupBuilderWorker) createScaleOutPolicy() (string, error) {
+	return "", nil
+}
 
-	log.WithField("jid", asgbw.jid).Debug("all done")
+func (asgbw *autoscalingGroupBuilderWorker) createScaleInPolicy() (string, error) {
+	return "", nil
+}
+
+func (asgbw *autoscalingGroupBuilderWorker) createScaleOutMetricAlarm() error {
+	return nil
+}
+
+func (asgbw *autoscalingGroupBuilderWorker) createScaleInMetricAlarm() error {
 	return nil
 }
