@@ -2,10 +2,13 @@ package workers
 
 import (
 	"encoding/json"
-	"time"
+	"fmt"
+	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
+	"github.com/mitchellh/goamz/autoscaling"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 )
@@ -27,8 +30,10 @@ func autoscalingGroupBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 		log.WithField("err", err).Panic("failed to deserialize message")
 	}
 
-	err = newAutoscalingGroupBuilderWorker(buildPayload.AutoscalingGroupBuild(),
-		cfg, msg.Jid(), workers.Config.Pool.Get()).Build()
+	b := buildPayload.AutoscalingGroupBuild()
+	b.Hydrate()
+
+	err = newAutoscalingGroupBuilderWorker(b, cfg, msg.Jid(), workers.Config.Pool.Get()).Build()
 	if err != nil {
 		log.WithField("err", err).Panic("autoscaling group build failed")
 	}
@@ -40,6 +45,7 @@ type autoscalingGroupBuilderWorker struct {
 	jid string
 	cfg *internalConfig
 	ec2 *ec2.EC2
+	as  *autoscaling.AutoScaling
 	b   *lib.AutoscalingGroupBuild
 }
 
@@ -53,11 +59,55 @@ func newAutoscalingGroupBuilderWorker(b *lib.AutoscalingGroupBuild, cfg *interna
 		n:   []lib.Notifier{notifier},
 		b:   b,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
+		as:  autoscaling.New(cfg.AWSAuth, cfg.AWSRegion),
 	}
 }
 
 func (asgbw *autoscalingGroupBuilderWorker) Build() error {
-	time.Sleep(3 * time.Second)
+	b := asgbw.b
+
+	tags := []autoscaling.Tag{
+		autoscaling.Tag{
+			Key:   "role",
+			Value: b.Role,
+		},
+		autoscaling.Tag{
+			Key:   "queue",
+			Value: b.Queue,
+		},
+		autoscaling.Tag{
+			Key:   "site",
+			Value: b.Site,
+		},
+		autoscaling.Tag{
+			Key:   "env",
+			Value: b.Env,
+		},
+		autoscaling.Tag{
+			Key: "Name",
+			// FIXME: build name with template as with instance builds
+			// Value: name,
+			Value: fmt.Sprintf("travis-%s-%s-%s-%s-asg", b.Site, b.Env, b.Queue, strings.TrimPrefix(b.InstanceID, "i-")),
+		},
+	}
+
+	_, err := asgbw.as.CreateAutoScalingGroup(&autoscaling.CreateAutoScalingGroup{
+		Name:            b.Name,
+		InstanceId:      b.InstanceID,
+		MinSize:         b.MinSize,
+		MaxSize:         b.MaxSize,
+		DesiredCapacity: b.DesiredCapacity,
+		Tags:            tags,
+	})
+
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": asgbw.jid,
+		}).Error("failed to create autoscaling group")
+		return err
+	}
+
 	log.WithField("jid", asgbw.jid).Debug("all done")
 	return nil
 }

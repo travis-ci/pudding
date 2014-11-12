@@ -31,3 +31,17 @@ type AutoscalingGroupBuild struct {
 func NewAutoscalingGroupBuild() *AutoscalingGroupBuild {
 	return &AutoscalingGroupBuild{}
 }
+
+// Hydrate is used to overwrite "null" defaults that result from
+// serialize/deserialize via JSON
+func (asgb *AutoscalingGroupBuild) Hydrate() {
+	if asgb.MinSize == 0 {
+		asgb.MinSize = 1
+	}
+	if asgb.MaxSize == 0 {
+		asgb.MaxSize = 1
+	}
+	if asgb.DesiredCapacity == 0 {
+		asgb.DesiredCapacity = 1
+	}
+}
