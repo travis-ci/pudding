@@ -275,6 +275,10 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	err = ibw.t.Execute(w, &initScriptContext{
 		Env:              ibw.b.Env,
 		Site:             ibw.b.Site,
+		Queue:            ibw.b.Queue,
+		Role:             ibw.b.Role,
+		AMI:              ibw.b.AMI,
+		InstanceType:     ibw.b.InstanceType,
 		InstanceRSA:      ibw.cfg.InstanceRSA,
 		SlackChannel:     ibw.b.SlackChannel,
 		PapertrailSite:   yml.PapertrailSite,
