@@ -69,6 +69,11 @@ func newServer(cfg *Config) (*server, error) {
 		return nil, err
 	}
 
+	img, err := db.NewImages(cfg.RedisURL, log, cfg.ImageExpiry)
+	if err != nil {
+		return nil, err
+	}
+
 	is, err := db.NewInitScripts(cfg.RedisURL, log)
 	if err != nil {
 		return nil, err
@@ -94,6 +99,7 @@ func newServer(cfg *Config) (*server, error) {
 		terminator: terminator,
 		is:         is,
 		i:          i,
+		img:        img,
 		log:        log,
 
 		n: negroni.New(),
