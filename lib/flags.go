@@ -50,6 +50,14 @@ var (
 		Usage:  "expiry in seconds for instance attributes",
 		EnvVar: "PUDDING_INSTANCE_EXPIRY",
 	}
+	// ImageExpiryFlag is the flag used to for defining the expiry
+	// used in redis when storing image metadata
+	ImageExpiryFlag = cli.IntFlag{
+		Name:   "image-expiry",
+		Value:  90,
+		Usage:  "expiry in seconds for image attributes",
+		EnvVar: "PUDDING_IMAGE_EXPIRY",
+	}
 	// SlackTokenFlag is the hubot token for slack integration
 	SlackTokenFlag = cli.StringFlag{
 		Name:   "slack-token",

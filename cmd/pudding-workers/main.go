@@ -73,6 +73,7 @@ func main() {
 		lib.SlackTokenFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
+		lib.ImageExpiryFlag,
 		lib.DebugFlag,
 	}
 	app.Action = runWorkers
@@ -115,6 +116,7 @@ func runWorkers(c *cli.Context) {
 		InitScriptTemplate: initScriptTemplate,
 		MiniWorkerInterval: c.Int("mini-worker-interval"),
 		InstanceExpiry:     c.Int("instance-expiry"),
+		ImageExpiry:        c.Int("image-expiry"),
 
 		SlackTeam:  c.String("slack-team"),
 		SlackToken: c.String("slack-token"),

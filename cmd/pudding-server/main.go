@@ -34,6 +34,7 @@ func main() {
 		lib.SlackChannelFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
+		lib.ImageExpiryFlag,
 		lib.DebugFlag,
 	}
 	app.Action = runServer
@@ -58,6 +59,7 @@ func runServer(c *cli.Context) {
 		SentryDSN: c.String("sentry-dsn"),
 
 		InstanceExpiry: c.Int("instance-expiry"),
+		ImageExpiry:    c.Int("image-expiry"),
 
 		QueueNames: map[string]string{
 			"instance-builds":       c.String("instance-builds-queue-name"),

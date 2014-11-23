@@ -69,3 +69,21 @@ func GetInstancesWithFilter(conn *ec2.EC2, f *ec2.Filter) (map[string]ec2.Instan
 
 	return instances, nil
 }
+
+// GetImagesWithFilter fetches all images that match the
+// given filter
+func GetImagesWithFilter(conn *ec2.EC2, f *ec2.Filter) (map[string]ec2.Image, error) {
+	resp, err := conn.Images([]string{}, f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	images := map[string]ec2.Image{}
+
+	for _, img := range resp.Images {
+		images[img.Id] = img
+	}
+
+	return images, nil
+}

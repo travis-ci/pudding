@@ -12,6 +12,7 @@ type ec2Syncer struct {
 	ec2 *ec2.EC2
 	log *logrus.Logger
 	i   db.InstanceFetcherStorer
+	img db.ImageFetcherStorer
 }
 
 func newEC2Syncer(cfg *internalConfig, log *logrus.Logger) (*ec2Syncer, error) {
@@ -20,10 +21,16 @@ func newEC2Syncer(cfg *internalConfig, log *logrus.Logger) (*ec2Syncer, error) {
 		return nil, err
 	}
 
+	img, err := db.NewImages(cfg.RedisURL.String(), log, cfg.ImageStoreExpiry)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ec2Syncer{
 		cfg: cfg,
 		log: log,
 		i:   i,
+		img: img,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
 	}, nil
 }
@@ -39,6 +46,20 @@ func (es *ec2Syncer) Sync() error {
 
 	es.log.Debug("ec2 syncer storing instances")
 	err = es.i.Store(instances)
+	if err != nil {
+		panic(err)
+	}
+
+	es.log.Debug("ec2 syncer fetching images")
+	f = ec2.NewFilter()
+	f.Add("tag-key", "role")
+	images, err := lib.GetImagesWithFilter(es.ec2, f)
+	if err != nil {
+		panic(err)
+	}
+
+	es.log.Debug("ec2 syncer storing images")
+	err = es.img.Store(images)
 	if err != nil {
 		panic(err)
 	}

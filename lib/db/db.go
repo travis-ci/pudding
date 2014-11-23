@@ -200,3 +200,140 @@ func RemoveInstances(conn redis.Conn, IDs []string) error {
 	_, err = conn.Do("EXEC")
 	return err
 }
+
+// FetchImages gets a slice of images given a redis conn and
+// optional filter map
+func FetchImages(conn redis.Conn, f map[string]string) ([]*lib.Image, error) {
+	var err error
+	keys := []string{}
+
+	if key, ok := f["image_id"]; ok {
+		keys = append(keys, key)
+	} else {
+		keys, err = redis.Strings(conn.Do("SMEMBERS", fmt.Sprintf("%s:images", lib.RedisNamespace)))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	images := []*lib.Image{}
+
+	for _, key := range keys {
+		reply, err := redis.Values(conn.Do("HGETALL", fmt.Sprintf("%s:image:%s", lib.RedisNamespace, key)))
+		if err != nil {
+			return nil, err
+		}
+
+		img := &lib.Image{}
+		err = redis.ScanStruct(reply, img)
+		if err != nil {
+			return nil, err
+		}
+
+		failedChecks := 0
+		for key, value := range f {
+			switch key {
+			case "active":
+				if img.Active != (value == "true") {
+					failedChecks++
+				}
+			case "role":
+				if img.Role != value {
+					failedChecks++
+				}
+			}
+		}
+
+		if failedChecks == 0 {
+			images = append(images, img)
+		}
+	}
+
+	return images, nil
+}
+
+// StoreImages stores the ec2 representation of an image
+// given a redis conn and slice of ec2 images, as well as an
+// expiry integer that is used to to run EXPIRE on all sets and
+// hashes involved
+func StoreImages(conn redis.Conn, images map[string]ec2.Image, expiry int) error {
+	err := conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
+
+	imageSetKey := fmt.Sprintf("%s:images", lib.RedisNamespace)
+
+	err = conn.Send("DEL", imageSetKey)
+	if err != nil {
+		conn.Do("DISCARD")
+		return err
+	}
+
+	for ID, img := range images {
+		imageAttrsKey := fmt.Sprintf("%s:image:%s", lib.RedisNamespace, ID)
+
+		err = conn.Send("SADD", imageSetKey, ID)
+		if err != nil {
+			conn.Do("DISCARD")
+			return err
+		}
+
+		hmSet := []interface{}{
+			imageAttrsKey,
+			"image_id", img.Id,
+		}
+
+		for _, tag := range img.Tags {
+			switch tag.Key {
+			case "role":
+				hmSet = append(hmSet, tag.Key, tag.Value)
+			case "active":
+				hmSet = append(hmSet, tag.Key, true)
+			}
+		}
+
+		err = conn.Send("HMSET", hmSet...)
+		if err != nil {
+			conn.Do("DISCARD")
+			return err
+		}
+
+		err = conn.Send("EXPIRE", imageAttrsKey, expiry)
+		if err != nil {
+			conn.Do("DISCARD")
+			return err
+		}
+	}
+
+	err = conn.Send("EXPIRE", imageSetKey, expiry)
+	if err != nil {
+		conn.Do("DISCARD")
+		return err
+	}
+
+	_, err = conn.Do("EXEC")
+	return err
+}
+
+// RemoveImages removes the given images from the image
+// set
+func RemoveImages(conn redis.Conn, IDs []string) error {
+	err := conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
+
+	imageSetKey := fmt.Sprintf("%s:images", lib.RedisNamespace)
+
+	for _, ID := range IDs {
+		err = conn.Send("SREM", imageSetKey, ID)
+		if err != nil {
+			conn.Do("DISCARD")
+			return err
+		}
+	}
+
+	_, err = conn.Do("EXEC")
+	return err
+}
