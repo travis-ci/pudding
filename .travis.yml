@@ -33,3 +33,9 @@ script:
 - git diff --cached --exit-code
 after_script:
 - cat server.log
+notifications:
+  slack:
+    rooms:
+      - secure: "yZ1p5BGWUPq7hssHbYXiS/z5q0Ojm4ip7zpAA+aqGFs+yKJnpkCCEENXDHlZX1VhbYZfkYKg8mQo40088qjbt9IAdSiXZ4PcKRTucrKJ+7NWuFryHSpmMmW4u0Xp7iTdHEDphfQHndJqtivKdbKuEFtKp02dikzQlMuaizOB36U="
+    on_success: always
+    on_failure: always
