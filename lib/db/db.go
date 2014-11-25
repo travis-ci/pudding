@@ -283,7 +283,7 @@ func StoreImages(conn redis.Conn, images map[string]ec2.Image, expiry int) error
 			imageAttrsKey,
 			"image_id", img.Id,
 			"description", img.Description,
-			"state": img.State,
+			"state", img.State,
 		}
 
 		for _, tag := range img.Tags {
