@@ -6,4 +6,5 @@ type Image struct {
 	Role        string `json:"role" redis:"role"`
 	Active      bool   `json:"active" redis:"active"`
 	Description string `json:"description" redis:"description"`
+	State       string `json:"state" redis:"state"`
 }
