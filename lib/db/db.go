@@ -282,7 +282,7 @@ func StoreImages(conn redis.Conn, images map[string]ec2.Image, expiry int) error
 		hmSet := []interface{}{
 			imageAttrsKey,
 			"image_id", img.Id,
-			"description", img.Description,
+			"name", img.Name,
 			"state", img.State,
 		}
 
