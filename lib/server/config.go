@@ -15,6 +15,7 @@ type Config struct {
 	SentryDSN string
 
 	InstanceExpiry int
+	ImageExpiry    int
 
 	QueueNames map[string]string
 }

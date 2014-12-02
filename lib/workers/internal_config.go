@@ -32,6 +32,7 @@ type internalConfig struct {
 
 	MiniWorkerInterval  int
 	InstanceStoreExpiry int
+	ImageStoreExpiry    int
 
 	InitScriptTemplate *template.Template
 }

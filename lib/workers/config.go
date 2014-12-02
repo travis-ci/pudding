@@ -19,6 +19,7 @@ type Config struct {
 	InitScriptTemplate string
 	MiniWorkerInterval int
 	InstanceExpiry     int
+	ImageExpiry        int
 
 	SlackTeam  string
 	SlackToken string

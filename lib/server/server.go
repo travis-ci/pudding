@@ -41,6 +41,7 @@ type server struct {
 	auther     *serverAuther
 	is         db.InitScriptGetterAuther
 	i          db.InstanceFetcherStorer
+	img        db.ImageFetcherStorer
 
 	n *negroni.Negroni
 	r *mux.Router
@@ -64,6 +65,11 @@ func newServer(cfg *Config) (*server, error) {
 	}
 
 	i, err := db.NewInstances(cfg.RedisURL, log, cfg.InstanceExpiry)
+	if err != nil {
+		return nil, err
+	}
+
+	img, err := db.NewImages(cfg.RedisURL, log, cfg.ImageExpiry)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +99,7 @@ func newServer(cfg *Config) (*server, error) {
 		terminator: terminator,
 		is:         is,
 		i:          i,
+		img:        img,
 		log:        log,
 
 		n: negroni.New(),
@@ -124,6 +131,7 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/instance-builds`, srv.ifAuth(srv.handleInstanceBuildsCreate)).Methods("POST").Name("instance-builds-create")
 	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`, srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
 	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
+	srv.r.HandleFunc(`/images`, srv.ifAuth(srv.handleImages)).Methods("GET").Name("images")
 }
 
 func (srv *server) setupMiddleware() {
@@ -329,4 +337,24 @@ func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {
 	w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, script)
+}
+
+func (srv *server) handleImages(w http.ResponseWriter, req *http.Request) {
+	f := map[string]string{}
+	for _, qv := range []string{"active", "role"} {
+		v := req.FormValue(qv)
+		if v != "" {
+			f[qv] = v
+		}
+	}
+
+	images, err := srv.img.Fetch(f)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string][]*lib.Image{
+		"images": images,
+	}, http.StatusOK)
 }

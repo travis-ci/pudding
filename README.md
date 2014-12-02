@@ -116,6 +116,27 @@ key with expiry.  This is the route hit by the cloud-init
 created.  It responds with a content type of `text/x-shellscript;
 charset=utf-8`, which is expected (but not enforced) by cloud-init.
 
+#### `GET /images` **requires auth**
+
+Provide a list of images per role, denoting which is active. Example response:
+
+``` javascript
+{
+  "images": [
+    {
+      "ami": "ami-00aabbcc",
+      "active": true,
+      "role": "web"
+    },
+    {
+      "ami": "ami-00aabbcd",
+      "active": false,
+      "role": "web"
+    }
+  ]
+}
+```
+
 ### workers
 
 The background job workers are started as a separate process and
