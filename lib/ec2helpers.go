@@ -1,9 +1,14 @@
 package lib
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/mitchellh/goamz/ec2"
+)
+
+var (
+	errNoLatestImage = fmt.Errorf("no latest image available matching filter")
 )
 
 // ResolveAMI attempts to get an ec2.Image by id, falling back to
@@ -35,6 +40,10 @@ func FetchLatestAMIWithFilter(conn *ec2.EC2, f *ec2.Filter) (*ec2.Image, error) 
 	allImages, err := conn.Images([]string{}, f)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(allImages.Images) == 0 {
+		return nil, errNoLatestImage
 	}
 
 	imgNames := []string{}
