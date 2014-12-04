@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"text/template"
 	"time"
@@ -257,10 +258,13 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	instanceBuildURL := webURL.String()
 
 	buf := &bytes.Buffer{}
-	w, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
+	gzw, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
 	if err != nil {
 		return nil, err
 	}
+
+	tw := &bytes.Buffer{}
+	w := io.MultiWriter(tw, gzw)
 
 	yml, err := lib.BuildInstanceSpecificYML(ibw.b.Site, ibw.b.Env, ibw.cfg.InstanceYML, ibw.b.Queue, ibw.b.Count)
 	if err != nil {
@@ -290,7 +294,12 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	err = w.Close()
+	log.WithFields(logrus.Fields{
+		"jid":    ibw.jid,
+		"script": tw.String(),
+	}).Debug("rendered init script")
+
+	err = gzw.Close()
 	if err != nil {
 		return nil, err
 	}
