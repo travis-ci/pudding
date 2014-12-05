@@ -38,6 +38,7 @@ func Main(cfg *Config) {
 		MiniWorkerInterval:  cfg.MiniWorkerInterval,
 		InstanceStoreExpiry: cfg.InstanceExpiry,
 		ImageStoreExpiry:    cfg.ImageExpiry,
+		TmpInitExpiry:       cfg.TmpInitExpiry,
 
 		InitScriptTemplate: template.Must(template.New("init-script").Parse(cfg.InitScriptTemplate)),
 	}
