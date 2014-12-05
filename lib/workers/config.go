@@ -20,6 +20,7 @@ type Config struct {
 	MiniWorkerInterval int
 	InstanceExpiry     int
 	ImageExpiry        int
+	TmpInitExpiry      int
 
 	SlackTeam  string
 	SlackToken string

@@ -74,6 +74,12 @@ func main() {
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
 		lib.ImageExpiryFlag,
+		cli.IntFlag{
+			Name:   "E, temporary-init-expiry",
+			Value:  1200,
+			Usage:  "expiry in seconds for temporary cloud-init script and auth",
+			EnvVar: "PUDDING_TEMPORARY_INIT_EXPIRY",
+		},
 		lib.DebugFlag,
 	}
 	app.Action = runWorkers
@@ -117,6 +123,7 @@ func runWorkers(c *cli.Context) {
 		MiniWorkerInterval: c.Int("mini-worker-interval"),
 		InstanceExpiry:     c.Int("instance-expiry"),
 		ImageExpiry:        c.Int("image-expiry"),
+		TmpInitExpiry:      c.Int("temporary-init-expiry"),
 
 		SlackTeam:  c.String("slack-team"),
 		SlackToken: c.String("slack-token"),
