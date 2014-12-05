@@ -75,7 +75,7 @@ func main() {
 		lib.InstanceExpiryFlag,
 		lib.ImageExpiryFlag,
 		cli.IntFlag{
-			Name:   "E, temporary-init-expiry",
+			Name:   "X, temporary-init-expiry",
 			Value:  1200,
 			Usage:  "expiry in seconds for temporary cloud-init script and auth",
 			EnvVar: "PUDDING_TEMPORARY_INIT_EXPIRY",
