@@ -68,6 +68,12 @@ var (
 		Name:   "slack-team",
 		EnvVar: "PUDDING_SLACK_TEAM",
 	}
+	// SlackUsernameFlag is the username for slack integration
+	SlackUsernameFlag = cli.StringFlag{
+		Name:   "slack-username",
+		Value:  "puddingbot",
+		EnvVar: "PUDDING_SLACK_USERNAME",
+	}
 	// SlackChannelFlag is the default channel used when no channel
 	// is provided in a web request
 	SlackChannelFlag = cli.StringFlag{

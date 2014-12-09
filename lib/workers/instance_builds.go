@@ -59,7 +59,7 @@ type instanceBuilderWorker struct {
 }
 
 func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *instanceBuilderWorker {
-	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
+	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken, cfg.SlackUsername)
 
 	ibw := &instanceBuilderWorker{
 		rc:  redisConn,

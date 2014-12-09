@@ -14,16 +14,16 @@ var (
 
 // SlackNotifier notifies on slack omgeeeee! ☃
 type SlackNotifier struct {
-	team  string
-	token string
+	team, token, username string
 }
 
 // NewSlackNotifier creates a new *SlackNotifier given a team and
 // token
-func NewSlackNotifier(team, token string) *SlackNotifier {
+func NewSlackNotifier(team, token, username string) *SlackNotifier {
 	return &SlackNotifier{
-		team:  team,
-		token: token,
+		team:     team,
+		token:    token,
+		username: username,
 	}
 }
 
@@ -37,7 +37,7 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 	bodyMap := map[string]string{
 		"text":       msg,
 		"channel":    channel,
-		"username":   "travisbot",
+		"username":   sn.username,
 		"icon_emoji": ":travis:",
 	}
 

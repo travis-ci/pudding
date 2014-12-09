@@ -54,7 +54,7 @@ func init() {
 }
 
 type server struct {
-	addr, authToken, slackToken, slackTeam, slackChannel, sentryDSN string
+	addr, authToken, slackToken, slackTeam, slackUsername, slackChannel, sentryDSN string
 
 	log        *logrus.Logger
 	builder    *instanceBuilder
@@ -311,7 +311,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		}
 
 		srv.log.Debug("sending slack notification!")
-		notifier := lib.NewSlackNotifier(srv.slackTeam, srv.slackToken)
+		notifier := lib.NewSlackNotifier(srv.slackTeam, srv.slackToken, srv.slackUsername)
 		err := notifier.Notify(slackChannel,
 			fmt.Sprintf("Finished starting instance `%s` for instance build *%s*", instanceID, instanceBuildID))
 		if err != nil {

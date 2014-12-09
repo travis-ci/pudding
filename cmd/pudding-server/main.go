@@ -31,6 +31,7 @@ func main() {
 		},
 		lib.SlackTeamFlag,
 		lib.SlackTokenFlag,
+		lib.SlackUsernameFlag,
 		lib.SlackChannelFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
@@ -54,6 +55,7 @@ func runServer(c *cli.Context) {
 
 		SlackToken:          c.String("slack-token"),
 		SlackTeam:           c.String("slack-team"),
+		SlackUsername:       c.String("slack-username"),
 		DefaultSlackChannel: c.String("default-slack-channel"),
 
 		SentryDSN: c.String("sentry-dsn"),

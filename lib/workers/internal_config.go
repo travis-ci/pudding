@@ -15,8 +15,9 @@ type internalConfig struct {
 	RedisURL      *url.URL
 	RedisPoolSize string
 
-	SlackTeam  string
-	SlackToken string
+	SlackTeam     string
+	SlackToken    string
+	SlackUsername string
 
 	SentryDSN string
 

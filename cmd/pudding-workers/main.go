@@ -71,6 +71,7 @@ func main() {
 		},
 		lib.SlackTeamFlag,
 		lib.SlackTokenFlag,
+		lib.SlackUsernameFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
 		lib.ImageExpiryFlag,
@@ -125,8 +126,9 @@ func runWorkers(c *cli.Context) {
 		ImageExpiry:        c.Int("image-expiry"),
 		TmpInitExpiry:      c.Int("temporary-init-expiry"),
 
-		SlackTeam:  c.String("slack-team"),
-		SlackToken: c.String("slack-token"),
+		SlackTeam:     c.String("slack-team"),
+		SlackToken:    c.String("slack-token"),
+		SlackUsername: c.String("slack-username"),
 
 		SentryDSN: c.String("sentry-dsn"),
 	})

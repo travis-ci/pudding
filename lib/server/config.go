@@ -10,6 +10,7 @@ type Config struct {
 
 	SlackToken          string
 	SlackTeam           string
+	SlackUsername       string
 	DefaultSlackChannel string
 
 	SentryDSN string

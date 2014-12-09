@@ -20,8 +20,9 @@ func Main(cfg *Config) {
 	ic := &internalConfig{
 		RedisPoolSize: cfg.RedisPoolSize,
 
-		SlackTeam:  cfg.SlackTeam,
-		SlackToken: cfg.SlackToken,
+		SlackTeam:     cfg.SlackTeam,
+		SlackToken:    cfg.SlackToken,
+		SlackUsername: cfg.SlackUsername,
 
 		SentryDSN: cfg.SentryDSN,
 
