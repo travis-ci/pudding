@@ -121,8 +121,15 @@ func (ibw *instanceBuilderWorker) Build() error {
 
 	ibw.b.InstanceID = ibw.i.InstanceId
 
-	log.WithField("jid", ibw.jid).Debug("tagging instance")
-	err = ibw.tagInstance()
+	for i := ibw.cfg.InstanceTagRetries; i > 0; i-- {
+		log.WithField("jid", ibw.jid).Debug("tagging instance")
+		err = ibw.tagInstance()
+		if err == nil {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,

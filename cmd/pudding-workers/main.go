@@ -120,6 +120,8 @@ func runWorkers(c *cli.Context) {
 
 		InstanceRSA:        instanceRSA,
 		InstanceYML:        instanceYML,
+		InstanceTagRetries: 10,
+
 		InitScriptTemplate: initScriptTemplate,
 		MiniWorkerInterval: c.Int("mini-worker-interval"),
 		InstanceExpiry:     c.Int("instance-expiry"),

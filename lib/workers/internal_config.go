@@ -24,8 +24,9 @@ type internalConfig struct {
 	WebHost   string
 	ProcessID string
 
-	InstanceRSA string
-	InstanceYML string
+	InstanceRSA        string
+	InstanceYML        string
+	InstanceTagRetries int
 
 	Queues             []string
 	QueueFuncs         map[string]func(*internalConfig, *workers.Msg)

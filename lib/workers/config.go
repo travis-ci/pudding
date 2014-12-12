@@ -16,6 +16,8 @@ type Config struct {
 
 	InstanceRSA        string
 	InstanceYML        string
+	InstanceTagRetries int
+
 	InitScriptTemplate string
 	MiniWorkerInterval int
 	InstanceExpiry     int

@@ -29,8 +29,9 @@ func Main(cfg *Config) {
 		WebHost:   cfg.WebHostname,
 		ProcessID: cfg.ProcessID,
 
-		InstanceRSA: cfg.InstanceRSA,
-		InstanceYML: cfg.InstanceYML,
+		InstanceRSA:        cfg.InstanceRSA,
+		InstanceYML:        cfg.InstanceYML,
+		InstanceTagRetries: cfg.InstanceTagRetries,
 
 		Queues:             []string{},
 		QueueConcurrencies: map[string]int{},
