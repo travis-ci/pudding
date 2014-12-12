@@ -6,6 +6,7 @@ type initScriptContext struct {
 	Queue            string
 	Role             string
 	AMI              string
+	Count            int
 	InstanceType     string
 	InstanceRSA      string
 	SlackChannel     string

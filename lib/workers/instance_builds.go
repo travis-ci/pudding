@@ -282,6 +282,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		Queue:            ibw.b.Queue,
 		Role:             ibw.b.Role,
 		AMI:              ibw.b.AMI,
+		Count:            ibw.b.Count,
 		InstanceType:     ibw.b.InstanceType,
 		InstanceRSA:      ibw.cfg.InstanceRSA,
 		SlackChannel:     ibw.b.SlackChannel,
