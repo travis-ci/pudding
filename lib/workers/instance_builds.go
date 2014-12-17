@@ -98,15 +98,19 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Debug("creating security group")
-	err = ibw.createSecurityGroup()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"jid": ibw.jid,
-			"security_group_name": ibw.sgName,
-			"err": err,
-		}).Error("failed to create security group")
-		return err
+	if ibw.b.SecurityGroupID != "" {
+		ibw.sg = &ec2.SecurityGroup{Id: ibw.b.SecurityGroupID}
+	} else {
+		log.WithField("jid", ibw.jid).Debug("creating security group")
+		err = ibw.createSecurityGroup()
+		if err != nil {
+			log.WithFields(logrus.Fields{
+				"jid": ibw.jid,
+				"security_group_name": ibw.sgName,
+				"err": err,
+			}).Error("failed to create security group")
+			return err
+		}
 	}
 
 	log.WithField("jid", ibw.jid).Debug("creating instance")
@@ -210,6 +214,7 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 		UserData:       userData,
 		InstanceType:   ibw.b.InstanceType,
 		SecurityGroups: []ec2.SecurityGroup{*ibw.sg},
+		SubnetId:       ibw.b.SubnetID,
 	})
 	if err != nil {
 		return err

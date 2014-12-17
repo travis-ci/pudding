@@ -33,19 +33,21 @@ type InstanceBuildsCollection struct {
 // InstanceBuild contains everything needed by a background worker
 // to build the instance
 type InstanceBuild struct {
-	Role         string `json:"role,omitempty"`
-	Site         string `json:"site"`
-	Env          string `json:"env"`
-	AMI          string `json:"ami"`
-	InstanceID   string `json:"instance_id,omitempty"`
-	NameTemplate string `json:"name_template,omitempty"`
-	InstanceType string `json:"instance_type"`
-	SlackChannel string `json:"slack_channel"`
-	Count        int    `json:"count"`
-	Queue        string `json:"queue"`
-	HREF         string `json:"href,omitempty"`
-	State        string `json:"state,omitempty"`
-	ID           string `json:"id,omitempty"`
+	Role            string `json:"role,omitempty"`
+	Site            string `json:"site"`
+	Env             string `json:"env"`
+	AMI             string `json:"ami"`
+	InstanceID      string `json:"instance_id,omitempty"`
+	NameTemplate    string `json:"name_template,omitempty"`
+	InstanceType    string `json:"instance_type"`
+	SlackChannel    string `json:"slack_channel"`
+	Count           int    `json:"count"`
+	Queue           string `json:"queue"`
+	SubnetID        string `json:"subnet_id,omitempty"`
+	SecurityGroupID string `json:"security_group_id,omitempty"`
+	HREF            string `json:"href,omitempty"`
+	State           string `json:"state,omitempty"`
+	ID              string `json:"id,omitempty"`
 }
 
 // NewInstanceBuild creates a new *InstanceBuild, along with
