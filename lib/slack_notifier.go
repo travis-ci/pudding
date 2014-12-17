@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -53,13 +51,7 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 		return err
 	}
 
-	log := logrus.New()
-
 	u := fmt.Sprintf("https://hooks.slack.com/services/%s", sn.hookPath)
-	log.WithFields(logrus.Fields{
-		"url":     u,
-		"payload": bodyMap,
-	}).Info("sending slack webhook")
 	resp, err := http.Post(u, "application/x-www-form-urlencoded", bytes.NewReader(b))
 	if err != nil {
 		return err
