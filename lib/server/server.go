@@ -54,7 +54,7 @@ func init() {
 }
 
 type server struct {
-	addr, authToken, slackToken, slackTeam, slackUsername, slackChannel, sentryDSN string
+	addr, authToken, slackHookPath, slackUsername, slackIcon, slackChannel, sentryDSN string
 
 	log        *logrus.Logger
 	builder    *instanceBuilder
@@ -110,9 +110,9 @@ func newServer(cfg *Config) (*server, error) {
 		authToken: cfg.AuthToken,
 		auther:    auther,
 
-		slackToken:   cfg.SlackToken,
-		slackTeam:    cfg.SlackTeam,
-		slackChannel: cfg.DefaultSlackChannel,
+		slackHookPath: cfg.SlackHookPath,
+		slackIcon:     cfg.SlackIcon,
+		slackChannel:  cfg.DefaultSlackChannel,
 
 		sentryDSN: cfg.SentryDSN,
 
@@ -304,14 +304,14 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	}
 
 	// FIXME: extract this bit for other notification types?
-	if srv.slackTeam != "" && srv.slackToken != "" && slackChannel != "" {
+	if srv.slackHookPath != "" && slackChannel != "" {
 		instanceID := req.FormValue("instance-id")
 		if instanceID == "" {
 			instanceID = "?wat?"
 		}
 
 		srv.log.Debug("sending slack notification!")
-		notifier := lib.NewSlackNotifier(srv.slackTeam, srv.slackToken, srv.slackUsername)
+		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
 		err := notifier.Notify(slackChannel,
 			fmt.Sprintf("Finished starting instance `%s` for instance build *%s*", instanceID, instanceBuildID))
 		if err != nil {
@@ -319,8 +319,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		}
 	} else {
 		srv.log.WithFields(logrus.Fields{
-			"slack_team":  srv.slackTeam,
-			"slack_token": srv.slackToken,
+			"slack_hook_path": srv.slackHookPath,
 		}).Debug("slack fields empty?")
 	}
 

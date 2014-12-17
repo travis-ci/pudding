@@ -24,9 +24,9 @@ type Config struct {
 	ImageExpiry        int
 	TmpInitExpiry      int
 
-	SlackTeam     string
-	SlackToken    string
+	SlackHookPath string
 	SlackUsername string
+	SlackIcon     string
 
 	SentryDSN string
 }

@@ -69,9 +69,9 @@ func main() {
 			Usage:  "interval in seconds for the mini worker loop",
 			EnvVar: "PUDDING_MINI_WORKER_INTERVAL",
 		},
-		lib.SlackTeamFlag,
-		lib.SlackTokenFlag,
+		lib.SlackHookPathFlag,
 		lib.SlackUsernameFlag,
+		lib.SlackIconFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
 		lib.ImageExpiryFlag,
@@ -128,9 +128,9 @@ func runWorkers(c *cli.Context) {
 		ImageExpiry:        c.Int("image-expiry"),
 		TmpInitExpiry:      c.Int("temporary-init-expiry"),
 
-		SlackTeam:     c.String("slack-team"),
-		SlackToken:    c.String("slack-token"),
+		SlackHookPath: c.String("slack-hook-path"),
 		SlackUsername: c.String("slack-username"),
+		SlackIcon:     c.String("slack-icon"),
 
 		SentryDSN: c.String("sentry-dsn"),
 	})

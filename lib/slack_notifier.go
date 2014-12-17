@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -14,16 +16,21 @@ var (
 
 // SlackNotifier notifies on slack omgeeeee! ☃
 type SlackNotifier struct {
-	team, token, username string
+	hookPath, username, icon string
 }
 
 // NewSlackNotifier creates a new *SlackNotifier given a team and
 // token
-func NewSlackNotifier(team, token, username string) *SlackNotifier {
+func NewSlackNotifier(hookPath, username, icon string) *SlackNotifier {
 	return &SlackNotifier{
-		team:     team,
-		token:    token,
+		hookPath: hookPath,
 		username: username,
+		icon: func() string {
+			if icon == "" {
+				return ":travis:"
+			}
+			return icon
+		}(),
 	}
 }
 
@@ -38,7 +45,7 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 		"text":       msg,
 		"channel":    channel,
 		"username":   sn.username,
-		"icon_emoji": ":travis:",
+		"icon_emoji": sn.icon,
 	}
 
 	b, err := json.Marshal(bodyMap)
@@ -46,7 +53,13 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 		return err
 	}
 
-	u := fmt.Sprintf("https://%s.slack.com/services/hooks/hubot?token=%s", sn.team, sn.token)
+	log := logrus.New()
+
+	u := fmt.Sprintf("https://hooks.slack.com/services/%s", sn.hookPath)
+	log.WithFields(logrus.Fields{
+		"url":     u,
+		"payload": bodyMap,
+	}).Info("sending slack webhook")
 	resp, err := http.Post(u, "application/x-www-form-urlencoded", bytes.NewReader(b))
 	if err != nil {
 		return err
