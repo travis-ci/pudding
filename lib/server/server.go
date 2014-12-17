@@ -111,6 +111,7 @@ func newServer(cfg *Config) (*server, error) {
 		auther:    auther,
 
 		slackHookPath: cfg.SlackHookPath,
+		slackUsername: cfg.SlackUsername,
 		slackIcon:     cfg.SlackIcon,
 		slackChannel:  cfg.DefaultSlackChannel,
 
