@@ -1,8 +1,6 @@
 package workers
 
 import (
-	"net/url"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
@@ -92,10 +90,5 @@ func (es *ec2Syncer) fetchInstances() (map[string]ec2.Instance, error) {
 		return instances, nil
 	}
 
-	switch err.(type) {
-	case *url.Error:
-		return nil, nil
-	default:
-		return nil, err
-	}
+	return nil, nil
 }
