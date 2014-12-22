@@ -19,6 +19,58 @@ aws autoscaling create-auto-scaling-group \
   --auto-scaling-group-name org-staging-docker-asg
 ```
 
+Each autoscaling group will need both scale-in and scale-out policies, e.g. scale out:
+
+``` bash
+aws autoscaling put-scaling-policy \
+  --policy-name org-staging-docker-sop \
+  --auto-scaling-group-name org-staging-docker-asg \
+  --adjustment-type ChangeInCapacity \
+  --scaling-adjustment 1
+```
+
+and scale in:
+
+``` bash
+aws autoscaling put-scaling-policy \
+  --policy-name org-staging-docker-sip \
+  --auto-scaling-group-name org-staging-docker-asg \
+  --adjustment-type ChangeInCapacity \
+  --scaling-adjustment -1
+```
+
+The above call responds with a policy ARN which must be used when assigning the metric alarm, e.g. scale out:
+
+``` bash
+aws cloudwatch put-metric-alarm \
+  --alarm-name org-staging-docker-add-capacity \
+  --metric-name CPUUtilization \
+  --namespace AWS/EC2 \
+  --statistic Average \
+  --period 120 \
+  --threshold 95 \
+  --comparison-operator GreaterThanOrEqualToThreshold \
+  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg \
+  --evaluation-periods 2 \
+  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:59a4e27a-0538-4edd-9fcb-dd9a6d9d5f77:autoScalingGroupName/org-staging-docker-asg:policyName/org-staging-docker-sop"
+```
+
+and scale in:
+
+``` bash
+aws cloudwatch put-metric-alarm \
+  --alarm-name org-staging-docker-remove-capacity \
+  --metric-name CPUUtilization \
+  --namespace AWS/EC2 \
+  --statistic Average \
+  --period 120 \
+  --threshold 10 \
+  --comparison-operator LessThanOrEqualToThreshold \
+  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg \
+  --evaluation-periods 2 \
+  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:ff543466-6f36-4d62-b41f-94601078b147:autoScalingGroupName/org-staging-docker-asg:policyName/org-staging-docker-sip"
+```
+
 Because of the nature of the workload we typically run on our instances, we can't take advantage of plain autoscaling
 policies that result in scale in/out with immediate instance termination.  Instead, we use lifecycle management events
 to account for instance setup/teardown time.  Managing capacity in this way means more interactions between AWS and
