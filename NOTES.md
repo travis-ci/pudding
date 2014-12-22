@@ -182,6 +182,23 @@ payload like this for each subscription (each lifecyle transition):
 }
 ```
 
+## Cycling out instances
+
+Given that we're definining an autoscaling group from a template instance, the "cycling" or replacement process is a bit
+involved.  The rough steps might be:
+
+1. Create a new instance based on the latest or specified AMI
+1. Once the instance has started, create a replacement autoscaling group from the instance id
+1. Create scaling policies, metric alarms, lifecycle hooks, etc. that are copies of those assigned to the previous
+   autoscaling group.
+1. Set the desired capacity of the previous autoscaling group to 0.
+1. Upon termination of all instances in the previous autoscaling group, delete the autoscaling group and all assigned
+   resources.
+
+Roughly the same process would apply to promoting a new AMI in a canary-style roll out, except that we would be
+intentionally keeping more than one autoscaling group around for a given site-org-queue pool until the replacement is
+complete.
+
 ## Problems:
 
 ### user-data init script lifespan
