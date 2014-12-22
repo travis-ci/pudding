@@ -98,7 +98,7 @@ The actions taken for these lifecycle events are now in our control (as opposed 
 the reason why pudding exists is because we want AWS credentials and awareness to be limited so that we can leave open
 the possibility of plugging in different backends in the future.
 
-According to the AWS docs, these is the basic sequence for adding a lifecycle hook to an Auto Scaling Group:
+According to the AWS docs, this is the basic sequence for adding a lifecycle hook to an Auto Scaling Group:
 
 1. Create a notification target. A target can be either an Amazon SQS queue or an Amazon SNS topic.
 1. Create an IAM role. This role allows Auto Scaling to publish lifecycle notifications to the designated SQS queue or SNS
@@ -184,7 +184,7 @@ payload like this for each subscription (each lifecyle transition):
 
 ## Cycling out instances
 
-Given that we're definining an autoscaling group from a template instance, the "cycling" or replacement process is a bit
+Given that we're defining an autoscaling group from a template instance, the "cycling" or replacement process is a bit
 involved.  The rough steps might be:
 
 1. Get the current capacity of the existing autoscaling group
