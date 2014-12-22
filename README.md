@@ -17,7 +17,7 @@ is in a non-volatile location, you should Ask Someone &trade;
 ``` bash
 go get github.com/hamfist/deppy
 go get github.com/golang/lint/golint
-go get code.google.com/p/go.tools/cmd/cover
+go get golang.org/x/tools/cmd/cover
 ```
 
 ### build/test cycle
