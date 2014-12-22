@@ -12,19 +12,19 @@ aws autoscaling create-auto-scaling-group \
     Key=queue,Value=docker \
     Key=site,Value=org \
     Key=env,Value=staging \
-    Key=Name,Value=org-staging-docker-asg \
+    Key=Name,Value=org-staging-docker-asg-80fd91af \
   --min-size 1 \
   --max-size 3 \
   --desired-capacity 1 \
-  --auto-scaling-group-name org-staging-docker-asg
+  --auto-scaling-group-name org-staging-docker-asg-80fd91af
 ```
 
 Each autoscaling group will need both scale-in and scale-out policies, e.g. scale out:
 
 ``` bash
 aws autoscaling put-scaling-policy \
-  --policy-name org-staging-docker-sop \
-  --auto-scaling-group-name org-staging-docker-asg \
+  --policy-name org-staging-docker-sop-80fd91af \
+  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
   --adjustment-type ChangeInCapacity \
   --scaling-adjustment 1
 ```
@@ -33,8 +33,8 @@ and scale in:
 
 ``` bash
 aws autoscaling put-scaling-policy \
-  --policy-name org-staging-docker-sip \
-  --auto-scaling-group-name org-staging-docker-asg \
+  --policy-name org-staging-docker-sip-80fd91af \
+  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
   --adjustment-type ChangeInCapacity \
   --scaling-adjustment -1
 ```
@@ -43,32 +43,32 @@ The above call responds with a policy ARN which must be used when assigning the 
 
 ``` bash
 aws cloudwatch put-metric-alarm \
-  --alarm-name org-staging-docker-add-capacity \
+  --alarm-name org-staging-docker-80fd91af-add-capacity \
   --metric-name CPUUtilization \
   --namespace AWS/EC2 \
   --statistic Average \
   --period 120 \
   --threshold 95 \
   --comparison-operator GreaterThanOrEqualToThreshold \
-  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg \
+  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-80fd91af \
   --evaluation-periods 2 \
-  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:59a4e27a-0538-4edd-9fcb-dd9a6d9d5f77:autoScalingGroupName/org-staging-docker-asg:policyName/org-staging-docker-sop"
+  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:59a4e27a-0538-4edd-9fcb-dd9a6d9d5f77:autoScalingGroupName/org-staging-docker-asg-80fd91af:policyName/org-staging-docker-sop"
 ```
 
 and scale in:
 
 ``` bash
 aws cloudwatch put-metric-alarm \
-  --alarm-name org-staging-docker-remove-capacity \
+  --alarm-name org-staging-docker-80fd91af-remove-capacity \
   --metric-name CPUUtilization \
   --namespace AWS/EC2 \
   --statistic Average \
   --period 120 \
   --threshold 10 \
   --comparison-operator LessThanOrEqualToThreshold \
-  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg \
+  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-80fd91af \
   --evaluation-periods 2 \
-  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:ff543466-6f36-4d62-b41f-94601078b147:autoScalingGroupName/org-staging-docker-asg:policyName/org-staging-docker-sip"
+  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:ff543466-6f36-4d62-b41f-94601078b147:autoScalingGroupName/org-staging-docker-asg-80fd91af:policyName/org-staging-docker-sip"
 ```
 
 Because of the nature of the workload we typically run on our instances, we can't take advantage of plain autoscaling
@@ -80,15 +80,15 @@ Lifecycle hooks for both launching and terminating may be supported, e.g.:
 
 ``` bash
 aws autoscaling put-lifecycle-hook \
-  --auto-scaling-group-name org-staging-docker-asg \
-  --lifecycle-hook-name org-staging-docker-lch-launching \
+  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
+  --lifecycle-hook-name org-staging-docker-80fd91af-lch-launching \
   --lifecycle-transition autoscaling:EC2_INSTANCE_LAUNCHING \
   --notification-target-arn arn:aws:sns:us-east-1:341288657826:pudding-test-topic \
   --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
 
 aws autoscaling put-lifecycle-hook \
-  --auto-scaling-group-name org-staging-docker-asg \
-  --lifecycle-hook-name org-staging-docker-lch-terminating \
+  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
+  --lifecycle-hook-name org-staging-docker-80fd91af-lch-terminating \
   --lifecycle-transition autoscaling:EC2_INSTANCE_TERMINATING \
   --notification-target-arn arn:aws:sns:us-east-1:341288657826:pudding-test-topic \
   --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
@@ -172,8 +172,8 @@ payload like this for each subscription (each lifecyle transition):
   "Type" : "Notification",
   "MessageId" : "3edbc59a-0358-5152-aa1a-88888b0e3347",
   "TopicArn" : "arn:aws:sns:us-east-1:341288657826:pudding-test-topic",
-  "Subject" : "Auto Scaling: test notification for group \"org-staging-docker-asg\"",
-  "Message" : "{\"AutoScalingGroupName\":\"org-staging-docker-asg\",\"Service\":\"AWS Auto Scaling\",\"Time\":\"2014-12-22T20:58:56.930Z\",\"AccountId\":\"341288657826\",\"Event\":\"autoscaling:TEST_NOTIFICATION\",\"RequestId\":\"585ad5cd-8a1d-11e4-b467-4194aad3947b\",\"AutoScalingGroupARN\":\"arn:aws:autoscaling:us-east-1:341288657826:autoScalingGroup:6b164a47-9782-493c-99d0-86e5ec3a8c1a:autoScalingGroupName/org-staging-docker-asg\"}",
+  "Subject" : "Auto Scaling: test notification for group \"org-staging-docker-asg-80fd91af\"",
+  "Message" : "{\"AutoScalingGroupName\":\"org-staging-docker-asg-80fd91af\",\"Service\":\"AWS Auto Scaling\",\"Time\":\"2014-12-22T20:58:56.930Z\",\"AccountId\":\"341288657826\",\"Event\":\"autoscaling:TEST_NOTIFICATION\",\"RequestId\":\"585ad5cd-8a1d-11e4-b467-4194aad3947b\",\"AutoScalingGroupARN\":\"arn:aws:autoscaling:us-east-1:341288657826:autoScalingGroup:6b164a47-9782-493c-99d0-86e5ec3a8c1a:autoScalingGroupName/org-staging-docker-asg-80fd91af\"}",
   "Timestamp" : "2014-12-22T20:59:02.057Z",
   "SignatureVersion" : "1",
   "Signature" : "wxMkfMRjZJWAK086ehDNZcLmQ4WPkO8V/biC7FjW5ok9SLH7jWbPHMyFYhBNfGEzOA2t2tVBuSUJDlzQ/jRjQQZqRx0Sgvtuvpwn9cHpRMJNWSxXkJP6Z8sD1I9S1NdNAADzEG02DV4zOZgkUVkItoGYrJw1DYO14/xQr9kcVDLNr2r6PJk1SLxR85Y+y72ZloKLshKYGdZlXqL5hv8DWa53hlzf1vEb+gZ2BTpjuFVxRaIbvsCconIXEDdOdSWOzW/9NzP46iDTAp79eBnENo+P5WYLCTUIX072eENZ+WnzuvCSMOI4uxB4/rqsj+BnirgTILztw6r5F7GMyqOLVg==",
