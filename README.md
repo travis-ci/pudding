@@ -17,7 +17,7 @@ is in a non-volatile location, you should Ask Someone &trade;
 ``` bash
 go get github.com/hamfist/deppy
 go get github.com/golang/lint/golint
-go get code.google.com/p/go.tools/cmd/cover
+go get golang.org/x/tools/cmd/cover
 ```
 
 ### build/test cycle
@@ -115,6 +115,27 @@ key with expiry.  This is the route hit by the cloud-init
 `#include` set in EC2 instance user data when the instance is
 created.  It responds with a content type of `text/x-shellscript;
 charset=utf-8`, which is expected (but not enforced) by cloud-init.
+
+#### `GET /images` **requires auth**
+
+Provide a list of images per role, denoting which is active. Example response:
+
+``` javascript
+{
+  "images": [
+    {
+      "ami": "ami-00aabbcc",
+      "active": true,
+      "role": "web"
+    },
+    {
+      "ami": "ami-00aabbcd",
+      "active": false,
+      "role": "web"
+    }
+  ]
+}
+```
 
 ### workers
 

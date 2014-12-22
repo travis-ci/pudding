@@ -27,14 +27,35 @@ var (
 )
 
 func init() {
-	expvarplus.AddToEnvWhitelist("VERSION", "REVISION", "GENERATED", "DYNO",
-		"BUILDPACK_URL", "PORT", "DEBUG", "HOSTNAME", "PUDDING_WEB_HOSTNAME",
-		"PUDDING_INSTANCE_EXPIRY", "PUDDING_DEFAULT_SLACK_CHANNEL",
-		"PUDDING_SLACK_TEAM")
+	expvarplus.AddToEnvWhitelist("BUILDPACK_URL",
+		"DEBUG",
+		"DYNO",
+		"GENERATED",
+		"HOSTNAME",
+		"PORT",
+		"QUEUES",
+		"REVISION",
+		"VERSION",
+
+		"PUDDING_DEFAULT_SLACK_CHANNEL",
+		"PUDDING_INIT_SCRIPT_TEMPLATE",
+		"PUDDING_INSTANCE_BUILDS_QUEUE_NAME",
+		"PUDDING_INSTANCE_EXPIRY",
+		"PUDDING_INSTANCE_RSA",
+		"PUDDING_INSTANCE_TERMINATIONS_QUEUE_NAME",
+		"PUDDING_INSTANCE_YML",
+		"PUDDING_MINI_WORKER_INTERVAL",
+		"PUDDING_PROCESS_ID",
+		"PUDDING_REDIS_POOL_SIZE",
+		"PUDDING_REDIS_URL",
+		"PUDDING_SENTRY_DSN",
+		"PUDDING_SLACK_TEAM",
+		"PUDDING_TEMPORARY_INIT_EXPIRY",
+		"PUDDING_WEB_HOSTNAME")
 }
 
 type server struct {
-	addr, authToken, slackToken, slackTeam, slackChannel, sentryDSN string
+	addr, authToken, slackHookPath, slackUsername, slackIcon, slackChannel, sentryDSN string
 
 	log        *logrus.Logger
 	builder    *instanceBuilder
@@ -42,6 +63,7 @@ type server struct {
 	auther     *serverAuther
 	is         db.InitScriptGetterAuther
 	i          db.InstanceFetcherStorer
+	img        db.ImageFetcherStorer
 
 	n *negroni.Negroni
 	r *mux.Router
@@ -69,6 +91,11 @@ func newServer(cfg *Config) (*server, error) {
 		return nil, err
 	}
 
+	img, err := db.NewImages(cfg.RedisURL, log, cfg.ImageExpiry)
+	if err != nil {
+		return nil, err
+	}
+
 	is, err := db.NewInitScripts(cfg.RedisURL, log)
 	if err != nil {
 		return nil, err
@@ -84,9 +111,10 @@ func newServer(cfg *Config) (*server, error) {
 		authToken: cfg.AuthToken,
 		auther:    auther,
 
-		slackToken:   cfg.SlackToken,
-		slackTeam:    cfg.SlackTeam,
-		slackChannel: cfg.DefaultSlackChannel,
+		slackHookPath: cfg.SlackHookPath,
+		slackUsername: cfg.SlackUsername,
+		slackIcon:     cfg.SlackIcon,
+		slackChannel:  cfg.DefaultSlackChannel,
 
 		sentryDSN: cfg.SentryDSN,
 
@@ -94,6 +122,7 @@ func newServer(cfg *Config) (*server, error) {
 		terminator: terminator,
 		is:         is,
 		i:          i,
+		img:        img,
 		log:        log,
 
 		n: negroni.New(),
@@ -120,17 +149,6 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/debug/vars`, srv.ifAuth(expvarplus.HandleExpvars)).Methods("GET").Name("expvars")
 	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
 
-	srv.r.HandleFunc(`/instances`,
-		srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
-	srv.r.HandleFunc(`/instances/{instance_id}`,
-		srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
-	srv.r.HandleFunc(`/instances/{instance_id}`,
-		srv.ifAuth(srv.handleInstanceByIDTerminate)).Methods("DELETE").Name("delete-instances-by-id")
-	srv.r.HandleFunc(`/instance-builds`,
-		srv.ifAuth(srv.handleInstanceBuildsCreate)).Methods("POST").Name("instance-builds-create")
-	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`,
-		srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
-
 	srv.r.HandleFunc(`/autoscaling-groups`,
 		srv.ifAuth(srv.handleAutoscalingGroups)).Methods("GET").Name("list-autoscaling-groups")
 	srv.r.HandleFunc(`/autoscaling-groups`,
@@ -140,8 +158,13 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`,
 		srv.ifAuth(srv.handleAutoscalingGroupByNameDelete)).Methods("DELETE").Name("delete-autoscaling-group-by-name")
 
-	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`,
-		srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
+	srv.r.HandleFunc(`/instances`, srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
+	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
+	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDTerminate)).Methods("DELETE").Name("delete-instances-by-id")
+	srv.r.HandleFunc(`/instance-builds`, srv.ifAuth(srv.handleInstanceBuildsCreate)).Methods("POST").Name("instance-builds-create")
+	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`, srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
+	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
+	srv.r.HandleFunc(`/images`, srv.ifAuth(srv.handleImages)).Methods("GET").Name("images")
 }
 
 func (srv *server) setupMiddleware() {
@@ -182,7 +205,7 @@ func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {
 
 func (srv *server) handleInstances(w http.ResponseWriter, req *http.Request) {
 	f := map[string]string{}
-	for _, qv := range []string{"env", "site", "role"} {
+	for _, qv := range []string{"env", "site", "role", "queue"} {
 		v := req.FormValue(qv)
 		if v != "" {
 			f[qv] = v
@@ -293,14 +316,14 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	}
 
 	// FIXME: extract this bit for other notification types?
-	if srv.slackTeam != "" && srv.slackToken != "" && slackChannel != "" {
+	if srv.slackHookPath != "" && slackChannel != "" {
 		instanceID := req.FormValue("instance-id")
 		if instanceID == "" {
 			instanceID = "?wat?"
 		}
 
 		srv.log.Debug("sending slack notification!")
-		notifier := lib.NewSlackNotifier(srv.slackTeam, srv.slackToken)
+		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
 		err := notifier.Notify(slackChannel,
 			fmt.Sprintf("Finished starting instance `%s` for instance build *%s*", instanceID, instanceBuildID))
 		if err != nil {
@@ -308,8 +331,7 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		}
 	} else {
 		srv.log.WithFields(logrus.Fields{
-			"slack_team":  srv.slackTeam,
-			"slack_token": srv.slackToken,
+			"slack_hook_path": srv.slackHookPath,
 		}).Debug("slack fields empty?")
 	}
 
@@ -363,4 +385,24 @@ func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {
 	w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, script)
+}
+
+func (srv *server) handleImages(w http.ResponseWriter, req *http.Request) {
+	f := map[string]string{}
+	for _, qv := range []string{"active", "role"} {
+		v := req.FormValue(qv)
+		if v != "" {
+			f[qv] = v
+		}
+	}
+
+	images, err := srv.img.Fetch(f)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string][]*lib.Image{
+		"images": images,
+	}, http.StatusOK)
 }

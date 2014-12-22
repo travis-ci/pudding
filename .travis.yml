@@ -1,7 +1,7 @@
 sudo: false
 language: go
 go:
-- 1.3.3
+- 1.4
 env:
   global:
   - PATH="$HOME/gopath/bin:$HOME/bin:$PATH"
@@ -10,7 +10,7 @@ env:
 before_install:
 - go get github.com/hamfist/deppy
 - go get github.com/golang/lint/golint
-- go get code.google.com/p/go.tools/cmd/cover
+- go get golang.org/x/tools/cmd/cover
 install:
 - deppy restore
 before_script:
@@ -33,3 +33,9 @@ script:
 - git diff --cached --exit-code
 after_script:
 - cat server.log
+notifications:
+  slack:
+    rooms:
+      - secure: "yZ1p5BGWUPq7hssHbYXiS/z5q0Ojm4ip7zpAA+aqGFs+yKJnpkCCEENXDHlZX1VhbYZfkYKg8mQo40088qjbt9IAdSiXZ4PcKRTucrKJ+7NWuFryHSpmMmW4u0Xp7iTdHEDphfQHndJqtivKdbKuEFtKp02dikzQlMuaizOB36U="
+    on_success: always
+    on_failure: always

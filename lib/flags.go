@@ -50,15 +50,24 @@ var (
 		Usage:  "expiry in seconds for instance attributes",
 		EnvVar: "PUDDING_INSTANCE_EXPIRY",
 	}
-	// SlackTokenFlag is the hubot token for slack integration
-	SlackTokenFlag = cli.StringFlag{
-		Name:   "slack-token",
-		EnvVar: "PUDDING_SLACK_TOKEN",
+	// ImageExpiryFlag is the flag used to for defining the expiry
+	// used in redis when storing image metadata
+	ImageExpiryFlag = cli.IntFlag{
+		Name:   "image-expiry",
+		Value:  90,
+		Usage:  "expiry in seconds for image attributes",
+		EnvVar: "PUDDING_IMAGE_EXPIRY",
 	}
-	// SlackTeamFlag is the team name for slack integration
-	SlackTeamFlag = cli.StringFlag{
-		Name:   "slack-team",
-		EnvVar: "PUDDING_SLACK_TEAM",
+	// SlackHookPathFlag is the incoming webhook path for slack integration
+	SlackHookPathFlag = cli.StringFlag{
+		Name:   "slack-hook-path",
+		EnvVar: "PUDDING_SLACK_HOOK_PATH",
+	}
+	// SlackUsernameFlag is the username for slack integration
+	SlackUsernameFlag = cli.StringFlag{
+		Name:   "slack-username",
+		Value:  "puddingbot",
+		EnvVar: "PUDDING_SLACK_USERNAME",
 	}
 	// SlackChannelFlag is the default channel used when no channel
 	// is provided in a web request
@@ -67,6 +76,13 @@ var (
 		Usage:  "default slack channel to use if none provided with request",
 		Value:  "#general",
 		EnvVar: "PUDDING_DEFAULT_SLACK_CHANNEL",
+	}
+	// SlackIconFlag is the default channel used when no channel
+	// is provided in a web request
+	SlackIconFlag = cli.StringFlag{
+		Name:   "slack-icon",
+		Value:  ":travis:",
+		EnvVar: "PUDDING_SLACK_ICON",
 	}
 	// SentryDSNFlag is the dsn string used to initialize raven
 	// clients

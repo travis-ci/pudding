@@ -16,12 +16,17 @@ type Config struct {
 
 	InstanceRSA        string
 	InstanceYML        string
+	InstanceTagRetries int
+
 	InitScriptTemplate string
 	MiniWorkerInterval int
 	InstanceExpiry     int
+	ImageExpiry        int
+	TmpInitExpiry      int
 
-	SlackTeam  string
-	SlackToken string
+	SlackHookPath string
+	SlackUsername string
+	SlackIcon     string
 
 	SentryDSN string
 }

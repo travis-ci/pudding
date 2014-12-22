@@ -53,7 +53,7 @@ type autoscalingGroupBuilderWorker struct {
 }
 
 func newAutoscalingGroupBuilderWorker(b *lib.AutoscalingGroupBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *autoscalingGroupBuilderWorker {
-	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
+	notifier := lib.NewSlackNotifier(cfg.SlackHookPath, cfg.SlackUsername, cfg.SlackIcon)
 
 	return &autoscalingGroupBuilderWorker{
 		rc:  redisConn,

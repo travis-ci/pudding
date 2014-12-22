@@ -8,13 +8,15 @@ type Config struct {
 
 	RedisURL string
 
-	SlackToken          string
-	SlackTeam           string
+	SlackHookPath       string
+	SlackUsername       string
+	SlackIcon           string
 	DefaultSlackChannel string
 
 	SentryDSN string
 
 	InstanceExpiry int
+	ImageExpiry    int
 
 	QueueNames map[string]string
 }

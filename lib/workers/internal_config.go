@@ -15,16 +15,18 @@ type internalConfig struct {
 	RedisURL      *url.URL
 	RedisPoolSize string
 
-	SlackTeam  string
-	SlackToken string
+	SlackHookPath string
+	SlackUsername string
+	SlackIcon     string
 
 	SentryDSN string
 
 	WebHost   string
 	ProcessID string
 
-	InstanceRSA string
-	InstanceYML string
+	InstanceRSA        string
+	InstanceYML        string
+	InstanceTagRetries int
 
 	Queues             []string
 	QueueFuncs         map[string]func(*internalConfig, *workers.Msg)
@@ -32,6 +34,8 @@ type internalConfig struct {
 
 	MiniWorkerInterval  int
 	InstanceStoreExpiry int
+	ImageStoreExpiry    int
+	TmpInitExpiry       int
 
 	InitScriptTemplate *template.Template
 }

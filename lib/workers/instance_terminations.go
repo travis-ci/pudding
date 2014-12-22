@@ -47,7 +47,7 @@ type instanceTerminatorWorker struct {
 }
 
 func newInstanceTerminatorWorker(instanceID, slackChannel string, cfg *internalConfig, jid string, redisConn redis.Conn) *instanceTerminatorWorker {
-	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
+	notifier := lib.NewSlackNotifier(cfg.SlackHookPath, cfg.SlackUsername, cfg.SlackIcon)
 
 	return &instanceTerminatorWorker{
 		rc:  redisConn,

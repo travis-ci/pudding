@@ -31,6 +31,7 @@ type AutoscalingGroupBuild struct {
 	SlackChannel    string `json:"slack_channel"`
 }
 
+// NewAutoscalingGroupBuild makes a new AutoscalingGroupBuild
 func NewAutoscalingGroupBuild() *AutoscalingGroupBuild {
 	return &AutoscalingGroupBuild{}
 }
@@ -53,6 +54,7 @@ func (asgb *AutoscalingGroupBuild) Hydrate() {
 	}
 }
 
+// InstanceIDWithoutPrefix returns the instance id without the "i-"
 func (asgb *AutoscalingGroupBuild) InstanceIDWithoutPrefix() string {
 	return strings.TrimPrefix(asgb.InstanceID, "i-")
 }

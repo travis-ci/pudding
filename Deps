@@ -1,14 +1,14 @@
 {
 	"ImportPath": "github.com/travis-ci/pudding",
-	"GoVersion": "go1.3.3",
+	"GoVersion": "go1.4",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.0-5-gf92b795",
-			"Rev": "f92b7950b372b1db80bd3527e4d40e42555fe6c2"
+			"Comment": "v0.6.2-10-g51fe59a",
+			"Rev": "51fe59aca108dc5680109e7b2051cbdcfa5a253c"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
@@ -22,8 +22,8 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-26-gf7ebb76",
-			"Rev": "f7ebb761e83e21225d1d8954fde853bf8edd46c4"
+			"Comment": "1.2.0-50-ga14c5b4",
+			"Rev": "a14c5b47c7efa4ff80cc42e1079a34b4756f2311"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/negroni",
@@ -31,8 +31,12 @@
 			"Rev": "c64702ca03d0f858ab7866638b69e85f0d4c6ee7"
 		},
 		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Rev": "3235c235f38bd5b41bd9eef26edbfad396be6274"
+		},
+		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Rev": "08550c8cc5b9d419fc472629d749d33b98f1d785"
+			"Rev": "3235c235f38bd5b41bd9eef26edbfad396be6274"
 		},
 		{
 			"ImportPath": "github.com/getsentry/raven-go",
@@ -56,7 +60,7 @@
 		},
 		{
 			"ImportPath": "github.com/jrallison/go-workers",
-			"Rev": "2aae4d367bfac8d2c9267d3212300df400599717"
+			"Rev": "337a0b7bd0a4ad878d8f68e55f2208ab0889bebd"
 		},
 		{
 			"ImportPath": "github.com/meatballhat/expvarplus",
@@ -68,11 +72,11 @@
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/aws",
-			"Rev": "0f046dbd40a3a0f00c7d26d94bc441ae2a4429a0"
+			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/ec2",
-			"Rev": "0f046dbd40a3a0f00c7d26d94bc441ae2a4429a0"
+			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
 		},
 		{
 			"ImportPath": "github.com/phyber/negroni-gzip/gzip",

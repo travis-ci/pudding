@@ -69,10 +69,18 @@ func main() {
 			Usage:  "interval in seconds for the mini worker loop",
 			EnvVar: "PUDDING_MINI_WORKER_INTERVAL",
 		},
-		lib.SlackTeamFlag,
-		lib.SlackTokenFlag,
+		lib.SlackHookPathFlag,
+		lib.SlackUsernameFlag,
+		lib.SlackIconFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
+		lib.ImageExpiryFlag,
+		cli.IntFlag{
+			Name:   "X, temporary-init-expiry",
+			Value:  1200,
+			Usage:  "expiry in seconds for temporary cloud-init script and auth",
+			EnvVar: "PUDDING_TEMPORARY_INIT_EXPIRY",
+		},
 		lib.DebugFlag,
 	}
 	app.Action = runWorkers
@@ -112,12 +120,17 @@ func runWorkers(c *cli.Context) {
 
 		InstanceRSA:        instanceRSA,
 		InstanceYML:        instanceYML,
+		InstanceTagRetries: 10,
+
 		InitScriptTemplate: initScriptTemplate,
 		MiniWorkerInterval: c.Int("mini-worker-interval"),
 		InstanceExpiry:     c.Int("instance-expiry"),
+		ImageExpiry:        c.Int("image-expiry"),
+		TmpInitExpiry:      c.Int("temporary-init-expiry"),
 
-		SlackTeam:  c.String("slack-team"),
-		SlackToken: c.String("slack-token"),
+		SlackHookPath: c.String("slack-hook-path"),
+		SlackUsername: c.String("slack-username"),
+		SlackIcon:     c.String("slack-icon"),
 
 		SentryDSN: c.String("sentry-dsn"),
 	})

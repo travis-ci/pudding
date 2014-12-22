@@ -89,7 +89,7 @@ func (sa *serverAuther) Authenticate(w http.ResponseWriter, req *http.Request) b
 
 func (sa *serverAuther) hasValidTokenAuth(authHeader string) bool {
 	if authHeader == ("token "+sa.Token) || authHeader == ("token="+sa.Token) {
-		sa.log.Debug("taken auth matches yey")
+		sa.log.Debug("token auth matches yey")
 		return true
 	}
 

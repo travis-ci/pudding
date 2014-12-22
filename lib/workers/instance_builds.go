@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"text/template"
 	"time"
@@ -59,7 +60,7 @@ type instanceBuilderWorker struct {
 }
 
 func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *instanceBuilderWorker {
-	notifier := lib.NewSlackNotifier(cfg.SlackTeam, cfg.SlackToken)
+	notifier := lib.NewSlackNotifier(cfg.SlackHookPath, cfg.SlackUsername, cfg.SlackIcon)
 
 	ibw := &instanceBuilderWorker{
 		rc:  redisConn,
@@ -98,15 +99,19 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	log.WithField("jid", ibw.jid).Debug("creating security group")
-	err = ibw.createSecurityGroup()
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"jid": ibw.jid,
-			"security_group_name": ibw.sgName,
-			"err": err,
-		}).Error("failed to create security group")
-		return err
+	if ibw.b.SecurityGroupID != "" {
+		ibw.sg = &ec2.SecurityGroup{Id: ibw.b.SecurityGroupID}
+	} else {
+		log.WithField("jid", ibw.jid).Debug("creating security group")
+		err = ibw.createSecurityGroup()
+		if err != nil {
+			log.WithFields(logrus.Fields{
+				"jid": ibw.jid,
+				"security_group_name": ibw.sgName,
+				"err": err,
+			}).Error("failed to create security group")
+			return err
+		}
 	}
 
 	log.WithField("jid", ibw.jid).Debug("creating instance")
@@ -121,8 +126,15 @@ func (ibw *instanceBuilderWorker) Build() error {
 
 	ibw.b.InstanceID = ibw.i.InstanceId
 
-	log.WithField("jid", ibw.jid).Debug("tagging instance")
-	err = ibw.tagInstance()
+	for i := ibw.cfg.InstanceTagRetries; i > 0; i-- {
+		log.WithField("jid", ibw.jid).Debug("tagging instance")
+		err = ibw.tagInstance()
+		if err == nil {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
@@ -203,6 +215,7 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 		UserData:       userData,
 		InstanceType:   ibw.b.InstanceType,
 		SecurityGroups: []ec2.SecurityGroup{*ibw.sg},
+		SubnetId:       ibw.b.SubnetID,
 	})
 	if err != nil {
 		return err
@@ -258,10 +271,13 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	instanceBuildURL := webURL.String()
 
 	buf := &bytes.Buffer{}
-	w, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
+	gzw, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
 	if err != nil {
 		return nil, err
 	}
+
+	tw := &bytes.Buffer{}
+	w := io.MultiWriter(tw, gzw)
 
 	yml, err := lib.BuildInstanceSpecificYML(ibw.b.Site, ibw.b.Env, ibw.cfg.InstanceYML, ibw.b.Queue, ibw.b.Count)
 	if err != nil {
@@ -276,6 +292,11 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	err = ibw.t.Execute(w, &initScriptContext{
 		Env:              ibw.b.Env,
 		Site:             ibw.b.Site,
+		Queue:            ibw.b.Queue,
+		Role:             ibw.b.Role,
+		AMI:              ibw.b.AMI,
+		Count:            ibw.b.Count,
+		InstanceType:     ibw.b.InstanceType,
 		InstanceRSA:      ibw.cfg.InstanceRSA,
 		SlackChannel:     ibw.b.SlackChannel,
 		PapertrailSite:   yml.PapertrailSite,
@@ -287,7 +308,12 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	err = w.Close()
+	log.WithFields(logrus.Fields{
+		"jid":    ibw.jid,
+		"script": tw.String(),
+	}).Debug("rendered init script")
+
+	err = gzw.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -300,14 +326,14 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	}
 
 	scriptKey := db.InitScriptRedisKey(ibw.b.ID)
-	err = ibw.rc.Send("SETEX", scriptKey, 600, initScriptB64)
+	err = ibw.rc.Send("SETEX", scriptKey, ibw.cfg.TmpInitExpiry, initScriptB64)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err
 	}
 
 	authKey := db.AuthRedisKey(ibw.b.ID)
-	err = ibw.rc.Send("SETEX", authKey, 600, tmpAuth)
+	err = ibw.rc.Send("SETEX", authKey, ibw.cfg.TmpInitExpiry, tmpAuth)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err

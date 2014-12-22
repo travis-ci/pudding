@@ -29,11 +29,13 @@ func main() {
 			Value:  "swordfish",
 			EnvVar: "PUDDING_AUTH_TOKEN",
 		},
-		lib.SlackTeamFlag,
-		lib.SlackTokenFlag,
+		lib.SlackHookPathFlag,
+		lib.SlackUsernameFlag,
 		lib.SlackChannelFlag,
+		lib.SlackIconFlag,
 		lib.SentryDSNFlag,
 		lib.InstanceExpiryFlag,
+		lib.ImageExpiryFlag,
 		lib.DebugFlag,
 	}
 	app.Action = runServer
@@ -51,13 +53,15 @@ func runServer(c *cli.Context) {
 
 		RedisURL: c.String("redis-url"),
 
-		SlackToken:          c.String("slack-token"),
-		SlackTeam:           c.String("slack-team"),
+		SlackHookPath:       c.String("slack-hook-path"),
+		SlackUsername:       c.String("slack-username"),
+		SlackIcon:           c.String("slack-icon"),
 		DefaultSlackChannel: c.String("default-slack-channel"),
 
 		SentryDSN: c.String("sentry-dsn"),
 
 		InstanceExpiry: c.Int("instance-expiry"),
+		ImageExpiry:    c.Int("image-expiry"),
 
 		QueueNames: map[string]string{
 			"instance-builds":       c.String("instance-builds-queue-name"),

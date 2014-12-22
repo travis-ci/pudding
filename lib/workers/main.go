@@ -20,16 +20,18 @@ func Main(cfg *Config) {
 	ic := &internalConfig{
 		RedisPoolSize: cfg.RedisPoolSize,
 
-		SlackTeam:  cfg.SlackTeam,
-		SlackToken: cfg.SlackToken,
+		SlackHookPath: cfg.SlackHookPath,
+		SlackUsername: cfg.SlackUsername,
+		SlackIcon:     cfg.SlackIcon,
 
 		SentryDSN: cfg.SentryDSN,
 
 		WebHost:   cfg.WebHostname,
 		ProcessID: cfg.ProcessID,
 
-		InstanceRSA: cfg.InstanceRSA,
-		InstanceYML: cfg.InstanceYML,
+		InstanceRSA:        cfg.InstanceRSA,
+		InstanceYML:        cfg.InstanceYML,
+		InstanceTagRetries: cfg.InstanceTagRetries,
 
 		Queues:             []string{},
 		QueueConcurrencies: map[string]int{},
@@ -37,6 +39,8 @@ func Main(cfg *Config) {
 
 		MiniWorkerInterval:  cfg.MiniWorkerInterval,
 		InstanceStoreExpiry: cfg.InstanceExpiry,
+		ImageStoreExpiry:    cfg.ImageExpiry,
+		TmpInitExpiry:       cfg.TmpInitExpiry,
 
 		InitScriptTemplate: template.Must(template.New("init-script").Parse(cfg.InitScriptTemplate)),
 	}
