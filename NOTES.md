@@ -187,17 +187,19 @@ payload like this for each subscription (each lifecyle transition):
 Given that we're definining an autoscaling group from a template instance, the "cycling" or replacement process is a bit
 involved.  The rough steps might be:
 
+1. Get the current capacity of the existing autoscaling group
 1. Create a new instance based on the latest or specified AMI
-1. Once the instance has started, create a replacement autoscaling group from the instance id
-1. Create scaling policies, metric alarms, lifecycle hooks, etc. that are copies of those assigned to the previous
-   autoscaling group.
-1. Set the desired capacity of the previous autoscaling group to 0.
-1. Upon termination of all instances in the previous autoscaling group, delete the autoscaling group and all assigned
+1. Once the instance has started, create a replacement autoscaling group from the instance id, setting the desired
+   capacity to the existing autoscaling group's capacity
+1. Create scaling policies, metric alarms, lifecycle hooks, etc. for the replacement autoscaling group that are copies
+   of those assigned to the existing autoscaling group.
+1. Set the desired capacity of the existing autoscaling group to 0.
+1. Upon termination of all instances in the existing autoscaling group, delete the autoscaling group and all assigned
    resources.
 
 Roughly the same process would apply to promoting a new AMI in a canary-style roll out, except that we would be
 intentionally keeping more than one autoscaling group around for a given site-org-queue pool until the replacement is
-complete.
+complete.  Perhaps we should stick to full replacement (?)
 
 ## Problems:
 
