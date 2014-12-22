@@ -6,23 +6,70 @@ passed at autoscaling group creation time, e.g.:
 
 ``` bash
 aws autoscaling create-auto-scaling-group \
-  --instance-id i-2a32e3cb \
+  --instance-id i-80fd91af \
   --tags \
     Key=role,Value=worker \
-    Key=queue,Value=testing \
+    Key=queue,Value=docker \
     Key=site,Value=org \
     Key=env,Value=staging \
-    Key=Name,Value=travis-org-staging-testing-2a32e3cb-asg \
+    Key=Name,Value=org-staging-docker-asg \
   --min-size 1 \
   --max-size 3 \
   --desired-capacity 1 \
-  --auto-scaling-group-name 2a32e3cb-asg
+  --auto-scaling-group-name org-staging-docker-asg
 ```
 
 Because of the nature of the workload we typically run on our instances, we can't take advantage of plain autoscaling
 policies that result in scale in/out with immediate instance termination.  Instead, we use lifecycle management events
 to account for instance setup/teardown time.  Managing capacity in this way means more interactions between AWS and
 pudding, as well as between pudding and the individual instances (via consul?).
+
+Lifecycle hooks for both launching and terminating may be supported, e.g.:
+
+``` bash
+aws autoscaling put-lifecycle-hook \
+  --auto-scaling-group-name org-staging-docker-asg \
+  --lifecycle-hook-name org-staging-docker-lch-launching \
+  --lifecycle-transition autoscaling:EC2_INSTANCE_LAUNCHING \
+  --notification-target-arn arn:aws:sns:us-east-1:341288657826:pudding-test-topic \
+  --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
+
+aws autoscaling put-lifecycle-hook \
+  --auto-scaling-group-name org-staging-docker-asg \
+  --lifecycle-hook-name org-staging-docker-lch-terminating \
+  --lifecycle-transition autoscaling:EC2_INSTANCE_TERMINATING \
+  --notification-target-arn arn:aws:sns:us-east-1:341288657826:pudding-test-topic \
+  --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
+```
+
+The actions taken for these lifecycle events are now in our control (as opposed to `shutdown -h now`).  Yay!  Part of
+the reason why pudding exists is because we want AWS credentials and awareness to be limited so that we can leave open
+the possibility of plugging in different backends in the future.
+
+According to the AWS docs, these is the basic sequence for adding a lifecycle hook to an Auto Scaling Group:
+
+1. Create a notification target. A target can be either an Amazon SQS queue or an Amazon SNS topic.
+1. Create an IAM role. This role allows Auto Scaling to publish lifecycle notifications to the designated SQS queue or SNS
+topic.
+1. Create the lifecycle hook. You can create a hook that acts when instances launch or when instances terminate.
+1. If necessary, record the lifecycle action heartbeat to keep the instance in a pending state.
+1. Complete the lifecycle action.
+
+The way this sequence can be applied to pudding might go something like this:
+
+1. Upon fulfilling a request to create an autoscaling group, pudding will also:
+    * create an SNS topic specific to the autoscaling group
+    * subscribe to the SNS topic pointing back at pudding
+    * confirm the SNS subscription
+1. The IAM role is expected to already exist, and must be provided via env configuration a la `PUDDING_ROLE_ARN`
+1. Creation of the lifecycle hook(s) happens automatically during creation of the autoscaling group, with the
+   asg-specific SNS topic being specified
+1. Either have pudding repeatedly enqueue `RecordLifecycleActionHeartbeat` API calls, or perhaps set the
+   `HeartbeatTimeout` higher than the build job timeout for the site/env.
+1. During both instance launch and termination, the completion of the lifecycle will happen when the instance phones
+   home to pudding and pudding then forwards the event as a `CompleteLifecycleAction` request.  In the case of the
+launch event, this hook should probably fire when the instance is ready to begin consuming work and potentially wipe the
+hook after the first execution so that subsequent restarts don't result in failed `CompleteLifecycleAction` requests.
 
 ## SNS Topic bits
 
@@ -62,6 +109,24 @@ SNS Notifications have a body like this:
     "AWS.SNS.MOBILE.WNS.Type" : {"Type":"String","Value":"wns/badge"},
     "AWS.SNS.MOBILE.MPNS.NotificationClass" : {"Type":"String","Value":"realtime"}
   }
+}
+```
+
+When a lifecycle hook is configured for an autoscaling group, a test notification is sent to the SNS topic with a
+payload like this for each subscription (each lifecyle transition):
+
+``` javascript
+{
+  "Type" : "Notification",
+  "MessageId" : "3edbc59a-0358-5152-aa1a-88888b0e3347",
+  "TopicArn" : "arn:aws:sns:us-east-1:341288657826:pudding-test-topic",
+  "Subject" : "Auto Scaling: test notification for group \"org-staging-docker-asg\"",
+  "Message" : "{\"AutoScalingGroupName\":\"org-staging-docker-asg\",\"Service\":\"AWS Auto Scaling\",\"Time\":\"2014-12-22T20:58:56.930Z\",\"AccountId\":\"341288657826\",\"Event\":\"autoscaling:TEST_NOTIFICATION\",\"RequestId\":\"585ad5cd-8a1d-11e4-b467-4194aad3947b\",\"AutoScalingGroupARN\":\"arn:aws:autoscaling:us-east-1:341288657826:autoScalingGroup:6b164a47-9782-493c-99d0-86e5ec3a8c1a:autoScalingGroupName/org-staging-docker-asg\"}",
+  "Timestamp" : "2014-12-22T20:59:02.057Z",
+  "SignatureVersion" : "1",
+  "Signature" : "wxMkfMRjZJWAK086ehDNZcLmQ4WPkO8V/biC7FjW5ok9SLH7jWbPHMyFYhBNfGEzOA2t2tVBuSUJDlzQ/jRjQQZqRx0Sgvtuvpwn9cHpRMJNWSxXkJP6Z8sD1I9S1NdNAADzEG02DV4zOZgkUVkItoGYrJw1DYO14/xQr9kcVDLNr2r6PJk1SLxR85Y+y72ZloKLshKYGdZlXqL5hv8DWa53hlzf1vEb+gZ2BTpjuFVxRaIbvsCconIXEDdOdSWOzW/9NzP46iDTAp79eBnENo+P5WYLCTUIX072eENZ+WnzuvCSMOI4uxB4/rqsj+BnirgTILztw6r5F7GMyqOLVg==",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-d6d679a1d18e95c2f9ffcf11f4f9e198.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:341288657826:pudding-test-topic:8a210808-2c56-4f43-8411-bf23666b8625"
 }
 ```
 
