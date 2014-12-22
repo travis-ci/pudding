@@ -99,6 +99,10 @@ func FetchInstances(conn redis.Conn, f map[string]string) ([]*lib.Instance, erro
 				if inst.Role != value {
 					failedChecks++
 				}
+			case "queue":
+				if inst.Queue != value {
+					failedChecks++
+				}
 			}
 		}
 
