@@ -71,6 +71,10 @@
 			"Rev": "d5e114d7a445f7a3652cf807d3f83d5dceb8de26"
 		},
 		{
+			"ImportPath": "github.com/mitchellh/goamz/autoscaling",
+			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
+		},
+		{
 			"ImportPath": "github.com/mitchellh/goamz/aws",
 			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
 		},
