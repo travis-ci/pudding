@@ -6,25 +6,25 @@ passed at autoscaling group creation time, e.g.:
 
 ``` bash
 aws autoscaling create-auto-scaling-group \
-  --instance-id i-80fd91af \
+  --instance-id i-$INSTANCE_ID \
   --tags \
     Key=role,Value=worker \
     Key=queue,Value=docker \
     Key=site,Value=org \
     Key=env,Value=staging \
-    Key=Name,Value=org-staging-docker-asg-80fd91af \
+    Key=Name,Value=org-staging-docker-asg-$INSTANCE_ID \
   --min-size 1 \
   --max-size 3 \
   --desired-capacity 1 \
-  --auto-scaling-group-name org-staging-docker-asg-80fd91af
+  --auto-scaling-group-name org-staging-docker-asg-$INSTANCE_ID
 ```
 
 Each autoscaling group will need both scale-in and scale-out policies, e.g. scale out:
 
 ``` bash
 aws autoscaling put-scaling-policy \
-  --policy-name org-staging-docker-sop-80fd91af \
-  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
+  --policy-name org-staging-docker-sop-$INSTANCE_ID \
+  --auto-scaling-group-name org-staging-docker-asg-$INSTANCE_ID \
   --adjustment-type ChangeInCapacity \
   --scaling-adjustment 1
 ```
@@ -33,8 +33,8 @@ and scale in:
 
 ``` bash
 aws autoscaling put-scaling-policy \
-  --policy-name org-staging-docker-sip-80fd91af \
-  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
+  --policy-name org-staging-docker-sip-$INSTANCE_ID \
+  --auto-scaling-group-name org-staging-docker-asg-$INSTANCE_ID \
   --adjustment-type ChangeInCapacity \
   --scaling-adjustment -1
 ```
@@ -43,32 +43,32 @@ The above call responds with a policy ARN which must be used when assigning the 
 
 ``` bash
 aws cloudwatch put-metric-alarm \
-  --alarm-name org-staging-docker-80fd91af-add-capacity \
+  --alarm-name org-staging-docker-$INSTANCE_ID-add-capacity \
   --metric-name CPUUtilization \
   --namespace AWS/EC2 \
   --statistic Average \
   --period 120 \
   --threshold 95 \
   --comparison-operator GreaterThanOrEqualToThreshold \
-  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-80fd91af \
+  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-$INSTANCE_ID \
   --evaluation-periods 2 \
-  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:59a4e27a-0538-4edd-9fcb-dd9a6d9d5f77:autoScalingGroupName/org-staging-docker-asg-80fd91af:policyName/org-staging-docker-sop"
+  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:59a4e27a-0538-4edd-9fcb-dd9a6d9d5f77:autoScalingGroupName/org-staging-docker-asg-$INSTANCE_ID:policyName/org-staging-docker-sop"
 ```
 
 and scale in:
 
 ``` bash
 aws cloudwatch put-metric-alarm \
-  --alarm-name org-staging-docker-80fd91af-remove-capacity \
+  --alarm-name org-staging-docker-$INSTANCE_ID-remove-capacity \
   --metric-name CPUUtilization \
   --namespace AWS/EC2 \
   --statistic Average \
   --period 120 \
   --threshold 10 \
   --comparison-operator LessThanOrEqualToThreshold \
-  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-80fd91af \
+  --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-$INSTANCE_ID \
   --evaluation-periods 2 \
-  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:ff543466-6f36-4d62-b41f-94601078b147:autoScalingGroupName/org-staging-docker-asg-80fd91af:policyName/org-staging-docker-sip"
+  --alarm-actions "arn:aws:autoscaling:us-east-1:341288657826:scalingPolicy:ff543466-6f36-4d62-b41f-94601078b147:autoScalingGroupName/org-staging-docker-asg-$INSTANCE_ID:policyName/org-staging-docker-sip"
 ```
 
 Because of the nature of the workload we typically run on our instances, we can't take advantage of plain autoscaling
@@ -80,15 +80,15 @@ Lifecycle hooks for both launching and terminating may be supported, e.g.:
 
 ``` bash
 aws autoscaling put-lifecycle-hook \
-  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
-  --lifecycle-hook-name org-staging-docker-80fd91af-lch-launching \
+  --auto-scaling-group-name org-staging-docker-asg-$INSTANCE_ID \
+  --lifecycle-hook-name org-staging-docker-$INSTANCE_ID-lch-launching \
   --lifecycle-transition autoscaling:EC2_INSTANCE_LAUNCHING \
   --notification-target-arn arn:aws:sns:us-east-1:341288657826:pudding-test-topic \
   --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
 
 aws autoscaling put-lifecycle-hook \
-  --auto-scaling-group-name org-staging-docker-asg-80fd91af \
-  --lifecycle-hook-name org-staging-docker-80fd91af-lch-terminating \
+  --auto-scaling-group-name org-staging-docker-asg-$INSTANCE_ID \
+  --lifecycle-hook-name org-staging-docker-$INSTANCE_ID-lch-terminating \
   --lifecycle-transition autoscaling:EC2_INSTANCE_TERMINATING \
   --notification-target-arn arn:aws:sns:us-east-1:341288657826:pudding-test-topic \
   --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
@@ -172,11 +172,28 @@ payload like this for each subscription (each lifecyle transition):
   "Type" : "Notification",
   "MessageId" : "3edbc59a-0358-5152-aa1a-88888b0e3347",
   "TopicArn" : "arn:aws:sns:us-east-1:341288657826:pudding-test-topic",
-  "Subject" : "Auto Scaling: test notification for group \"org-staging-docker-asg-80fd91af\"",
-  "Message" : "{\"AutoScalingGroupName\":\"org-staging-docker-asg-80fd91af\",\"Service\":\"AWS Auto Scaling\",\"Time\":\"2014-12-22T20:58:56.930Z\",\"AccountId\":\"341288657826\",\"Event\":\"autoscaling:TEST_NOTIFICATION\",\"RequestId\":\"585ad5cd-8a1d-11e4-b467-4194aad3947b\",\"AutoScalingGroupARN\":\"arn:aws:autoscaling:us-east-1:341288657826:autoScalingGroup:6b164a47-9782-493c-99d0-86e5ec3a8c1a:autoScalingGroupName/org-staging-docker-asg-80fd91af\"}",
+  "Subject" : "Auto Scaling: test notification for group \"org-staging-docker-asg-$INSTANCE_ID\"",
+  "Message" : "{\"AutoScalingGroupName\":\"org-staging-docker-asg-$INSTANCE_ID\",\"Service\":\"AWS Auto Scaling\",\"Time\":\"2014-12-22T20:58:56.930Z\",\"AccountId\":\"341288657826\",\"Event\":\"autoscaling:TEST_NOTIFICATION\",\"RequestId\":\"585ad5cd-8a1d-11e4-b467-4194aad3947b\",\"AutoScalingGroupARN\":\"arn:aws:autoscaling:us-east-1:341288657826:autoScalingGroup:6b164a47-9782-493c-99d0-86e5ec3a8c1a:autoScalingGroupName/org-staging-docker-asg-$INSTANCE_ID\"}",
   "Timestamp" : "2014-12-22T20:59:02.057Z",
   "SignatureVersion" : "1",
   "Signature" : "wxMkfMRjZJWAK086ehDNZcLmQ4WPkO8V/biC7FjW5ok9SLH7jWbPHMyFYhBNfGEzOA2t2tVBuSUJDlzQ/jRjQQZqRx0Sgvtuvpwn9cHpRMJNWSxXkJP6Z8sD1I9S1NdNAADzEG02DV4zOZgkUVkItoGYrJw1DYO14/xQr9kcVDLNr2r6PJk1SLxR85Y+y72ZloKLshKYGdZlXqL5hv8DWa53hlzf1vEb+gZ2BTpjuFVxRaIbvsCconIXEDdOdSWOzW/9NzP46iDTAp79eBnENo+P5WYLCTUIX072eENZ+WnzuvCSMOI4uxB4/rqsj+BnirgTILztw6r5F7GMyqOLVg==",
+  "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-d6d679a1d18e95c2f9ffcf11f4f9e198.pem",
+  "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:341288657826:pudding-test-topic:8a210808-2c56-4f43-8411-bf23666b8625"
+}
+```
+
+The `autoscaling:EC2_INSTANCE_TERMINATING` event results in a message like this:
+
+``` javascript
+{
+  "Type" : "Notification",
+  "MessageId" : "c87337ab-c19e-51f2-8a5d-7ab80071cc4b",
+  "TopicArn" : "arn:aws:sns:us-east-1:341288657826:pudding-test-topic",
+  "Subject" : "Auto Scaling:  Lifecycle action 'TERMINATING' for instance i-4c87e963 in progress.",
+  "Message" : "{\"AutoScalingGroupName\":\"org-staging-docker-asg-$INSTANCE_ID\",\"Service\":\"AWS Auto Scaling\",\"Time\":\"2014-12-23T19:17:03.843Z\",\"AccountId\":\"341288657826\",\"LifecycleTransition\":\"autoscaling:EC2_INSTANCE_TERMINATING\",\"RequestId\":\"8fb86310-cc3f-45b6-9577-7997b4bfad0d\",\"LifecycleActionToken\":\"2f346e45-4866-4bf1-a752-f6eea23011c7\",\"EC2InstanceId\":\"i-4c87e963\",\"LifecycleHookName\":\"org-staging-docker-lch-$INSTANCE_ID-terminating\"}",
+  "Timestamp" : "2014-12-23T19:17:03.874Z",
+  "SignatureVersion" : "1",
+  "Signature" : "S0oU0BB373Z1dm8d088j+5fD90A3ZD35xWsUrL93nRarX5P4dK+h0Yxsy79Ur1MeJQcdzYCbflHxyhywHuDWWDScxEHqOv7x5PRUPBCpz5BszTK52SEsXPd1LXS/dAZKU+zHBiV9/IJxEzzXgq4JlXrPUd4WCAr0zitZJi/1nhZWdoar41UATJcWh4xKszSmK5bV3CGd4OEs2CE4zdMktfpVGKxJ5qLVGnSqeO0jL6pTOh6hXQDighRTxU6ryrY0/n8ZlMkKxOs60x/hHsmPjRkITa6TRlfUt4y4f7H/K4OB+F/bM/svJvHJi7b+vQaHO0gIgLRSM1QglekcHQihSQ==",
   "SigningCertURL" : "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-d6d679a1d18e95c2f9ffcf11f4f9e198.pem",
   "UnsubscribeURL" : "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:341288657826:pudding-test-topic:8a210808-2c56-4f43-8411-bf23666b8625"
 }
@@ -217,3 +234,52 @@ The `Name` tag for instances within an autoscaling group cannot (?) be based on 
 invocation and assign a name that ends with the root instance id and `-asg`, but then individual instances within the
 autoscaling group will not be unique.  This may require setting the system hostname dynamically during cloud init so
 that it includes the instance id fetched from the metadata API.
+
+## Putting it all together
+
+When creating an autoscaling group in pudding, the required inputs are:
+
+* an existing instance id  *REQUIRED*
+* an existing IAM role ARN for setting up SNS bits  *REQUIRED*
+* site  *REQUIRED*
+* env  *REQUIRED*
+* queue  *REQUIRED*
+* min size (default `1`)
+* max size (default `1`)
+* desired capacity (default `1`)
+* scale out metric alarm spec, which is
+  `{Namespace}:{MetricName}:{Statistic}:{ComparisonOperator}:{Threshold}:{Period}:{EvaluationPeriods}`
+(default `AWS/EC2:CPUUtilization:Average:GreaterThanOrEqualToThreshold:95:120:2`)
+* scale in metric alarm spec, which is
+  `{Namespace}:{MetricName}:{Statistic}:{ComparisonOperator}:{Threshold}:{Period}:{EvaluationPeriods}`
+(default `AWS/EC2:CPUUtilization:Average:LessThanOrEqualToThreshold:10:120:2`)
+
+**Autoscaling group name**:`"{{.Site}}-{{.Env}}-{{.Queue}}-asg-{{.InstanceID}}"`.
+
+Upon creation of the autoscaling group, the next step is to create scaling policies for scaling out and scaling in in
+adjustments of 1.
+
+**Scale out policy name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-sop-{{.InstanceID}}"`
+**Scale in policy name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-sip-{{.InstanceID}}"`
+
+The policy ARNs resulting from the creation of the scaling policies are then used to create metric alarms, the params
+for which must be supplied at autoscaling group creation time.  For the purposes of scaling instances running
+`travis-worker` and build env containers, it is unlikely we'll be able to use any of the builtin cloudwatch metrics, but
+instead we would rely on a custom cloudwatch metric shipped from elsewhere such as rabbitmq messages ready.
+
+**Scale out metric alarm name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-soma-{{.InstanceID}}"`
+**Scale in metric alarm name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-sima-{{.InstanceID}}"`
+
+Before being able to create lifecycle hooks for the autoscaling group, we'll have to create an SNS topic and subscribe
+to it via HTTP(S).
+
+**SNS topic name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-topic-{{.InstanceID}}"`
+
+Once we have the topic ARN, this is used to subscribe pudding to the topic, specifying a notification endpoint specific
+to this autoscaling group, e.g. `https://$PUDDING_HOST/autoscaling-group-notifications/$AUTOSCALING_GROUP_NAME`.
+
+As soon as this subscription is created, the expectation is that a subscription confirmation request will come to
+pudding.  The request signature should be verified, then subscription confirmed.
+
+At this point, the autoscaling group definition is complete.  The remaining work performed by pudding will be in the
+form of responding to lifecycle hook notifications and custom internal events related to instance lifecycle management.
