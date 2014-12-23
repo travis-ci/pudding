@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"net"
 	"net/url"
 
 	"github.com/Sirupsen/logrus"
@@ -102,7 +103,7 @@ func (es *ec2Syncer) fetchInstances() (map[string]ec2.Instance, error) {
 	}
 
 	switch err.(type) {
-	case *url.Error:
+	case *url.Error, *net.OpError:
 		log.WithFields(logrus.Fields{"err": err}).Warn("network error while fetching ec2 instances")
 		return nil, nil
 	default:
@@ -119,7 +120,7 @@ func (es *ec2Syncer) fetchImages() (map[string]ec2.Image, error) {
 	}
 
 	switch err.(type) {
-	case *url.Error:
+	case *url.Error, *net.OpError:
 		log.WithFields(logrus.Fields{"err": err}).Warn("network error while fetching ec2 images")
 		return nil, nil
 	default:
