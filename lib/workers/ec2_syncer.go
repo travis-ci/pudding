@@ -1,6 +1,8 @@
 package workers
 
 import (
+	"net/url"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
@@ -38,11 +40,11 @@ func newEC2Syncer(cfg *internalConfig, log *logrus.Logger) (*ec2Syncer, error) {
 func (es *ec2Syncer) Sync() error {
 	var (
 		instances map[string]ec2.Instance
+		images    map[string]ec2.Image
 		err       error
 	)
 
 	es.log.Debug("ec2 syncer fetching instances")
-
 	for i := 3; i > 0; i-- {
 		instances, err = es.fetchInstances()
 		if err == nil {
@@ -66,11 +68,20 @@ func (es *ec2Syncer) Sync() error {
 	}
 
 	es.log.Debug("ec2 syncer fetching images")
-	f := ec2.NewFilter()
-	f.Add("tag-key", "role")
-	images, err := lib.GetImagesWithFilter(es.ec2, f)
+	for i := 3; i > 0; i-- {
+		images, err = es.fetchImages()
+		if err == nil {
+			break
+		}
+	}
+
 	if err != nil {
 		panic(err)
+	}
+
+	if images == nil {
+		es.log.Debug("ec2 syncer failed to get any images; assuming temporary network error")
+		return nil
 	}
 
 	es.log.Debug("ec2 syncer storing images")
@@ -90,5 +101,28 @@ func (es *ec2Syncer) fetchInstances() (map[string]ec2.Instance, error) {
 		return instances, nil
 	}
 
-	return nil, nil
+	switch err.(type) {
+	case *url.Error:
+		log.WithFields(logrus.Fields{"err": err}).Warn("network error while fetching ec2 instances")
+		return nil, nil
+	default:
+		return nil, err
+	}
+}
+
+func (es *ec2Syncer) fetchImages() (map[string]ec2.Image, error) {
+	f := ec2.NewFilter()
+	f.Add("tag-key", "role")
+	images, err := lib.GetImagesWithFilter(es.ec2, f)
+	if err == nil {
+		return images, nil
+	}
+
+	switch err.(type) {
+	case *url.Error:
+		log.WithFields(logrus.Fields{"err": err}).Warn("network error while fetching ec2 images")
+		return nil, nil
+	default:
+		return nil, err
+	}
 }
