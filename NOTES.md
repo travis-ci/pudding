@@ -260,6 +260,7 @@ Upon creation of the autoscaling group, the next step is to create scaling polic
 adjustments of 1.
 
 **Scale out policy name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-sop-{{.InstanceID}}"`
+
 **Scale in policy name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-sip-{{.InstanceID}}"`
 
 The policy ARNs resulting from the creation of the scaling policies are then used to create metric alarms, the params
@@ -268,6 +269,7 @@ for which must be supplied at autoscaling group creation time.  For the purposes
 instead we would rely on a custom cloudwatch metric shipped from elsewhere such as rabbitmq messages ready.
 
 **Scale out metric alarm name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-soma-{{.InstanceID}}"`
+
 **Scale in metric alarm name**: `"{{.Site}}-{{.Env}}-{{.Queue}}-sima-{{.InstanceID}}"`
 
 Before being able to create lifecycle hooks for the autoscaling group, we'll have to create an SNS topic and subscribe
