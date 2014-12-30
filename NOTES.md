@@ -44,11 +44,11 @@ The above call responds with a policy ARN which must be used when assigning the 
 ``` bash
 aws cloudwatch put-metric-alarm \
   --alarm-name org-staging-docker-$INSTANCE_ID-add-capacity \
-  --metric-name CPUUtilization \
-  --namespace AWS/EC2 \
-  --statistic Average \
+  --metric-name 'v1.travis.rabbitmq.queues.builds.docker.messages_ready' \
+  --namespace Travis/org \
+  --statistic Maximum \
   --period 120 \
-  --threshold 95 \
+  --threshold 1 \
   --comparison-operator GreaterThanOrEqualToThreshold \
   --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-$INSTANCE_ID \
   --evaluation-periods 2 \
@@ -60,11 +60,11 @@ and scale in:
 ``` bash
 aws cloudwatch put-metric-alarm \
   --alarm-name org-staging-docker-$INSTANCE_ID-remove-capacity \
-  --metric-name CPUUtilization \
-  --namespace AWS/EC2 \
-  --statistic Average \
+  --metric-name 'v1.travis.rabbitmq.queues.builds.docker.messages_ready' \
+  --namespace Travis/org \
+  --statistic Maximum \
   --period 120 \
-  --threshold 10 \
+  --threshold 1 \
   --comparison-operator LessThanOrEqualToThreshold \
   --dimensions Name=AutoScalingGroupName,Value=org-staging-docker-asg-$INSTANCE_ID \
   --evaluation-periods 2 \
@@ -94,9 +94,7 @@ aws autoscaling put-lifecycle-hook \
   --role-arn arn:aws:iam::341288657826:role/pudding-sns-test
 ```
 
-The actions taken for these lifecycle events are now in our control (as opposed to `shutdown -h now`).  Yay!  Part of
-the reason why pudding exists is because we want AWS credentials and awareness to be limited so that we can leave open
-the possibility of plugging in different backends in the future.
+The actions taken for these lifecycle events are now in our control (as opposed to `shutdown -h now`).  Yay!
 
 According to the AWS docs, this is the basic sequence for adding a lifecycle hook to an Auto Scaling Group:
 
@@ -239,20 +237,20 @@ that it includes the instance id fetched from the metadata API.
 
 When creating an autoscaling group in pudding, the required inputs are:
 
-* an existing instance id  *REQUIRED*
+* an existing instance id OR an existing autoscaling group name *REQUIRED*
 * an existing IAM role ARN for setting up SNS bits  *REQUIRED*
 * site  *REQUIRED*
 * env  *REQUIRED*
 * queue  *REQUIRED*
-* min size (default `1`)
+* min size (default `0`)
 * max size (default `1`)
 * desired capacity (default `1`)
 * scale out metric alarm spec, which is
-  `{Namespace}:{MetricName}:{Statistic}:{ComparisonOperator}:{Threshold}:{Period}:{EvaluationPeriods}`
-(default `AWS/EC2:CPUUtilization:Average:GreaterThanOrEqualToThreshold:95:120:2`)
+  `{"namespace":"<namespace>","metric_name":"<metric-name>","statistic":"<statistic>","op":"<comparison-operator>","threshold":"<threshold>","period":"<period>","evaluation_periods":"<evaluation-periods>"}`
+(default `{"namespace":"AWS/EC2","metric_name":"CPUUtilization","statistic":"Average","op":"GreaterThanOrEqualToThreshold","threshold":"95","period":"120","evaluation_periods":"2"}`)
 * scale in metric alarm spec, which is
-  `{Namespace}:{MetricName}:{Statistic}:{ComparisonOperator}:{Threshold}:{Period}:{EvaluationPeriods}`
-(default `AWS/EC2:CPUUtilization:Average:LessThanOrEqualToThreshold:10:120:2`)
+  `{"namespace":"<namespace>","metric_name":"<metric-name>","statistic":"<statistic>","op":"<comparison-operator>","threshold":"<threshold>","period":"<period>","evaluation_periods":"<evaluation-periods>"}`
+(default `{"namespace":"AWS/EC2","metric_name":"CPUUtilization","statistic":"Average","op":"LessThanOrEqualToThreshold","threshold":"10","period":"120","evaluation_periods":"2"}`)
 
 **Autoscaling group name**:`"{{.Site}}-{{.Env}}-{{.Queue}}-asg-{{.InstanceID}}"`.
 
