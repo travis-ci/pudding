@@ -59,6 +59,7 @@ type server struct {
 
 	log        *logrus.Logger
 	builder    *instanceBuilder
+	snsHandler *snsHandler
 	terminator *instanceTerminator
 	auther     *serverAuther
 	is         db.InitScriptGetterAuther
@@ -77,6 +78,11 @@ func newServer(cfg *Config) (*server, error) {
 	}
 
 	builder, err := newInstanceBuilder(cfg.RedisURL, cfg.QueueNames["instance-builds"])
+	if err != nil {
+		return nil, err
+	}
+
+	snsHandler, err := newSNSHandler(cfg.RedisURL, cfg.QueueNames["sns-messages"])
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +125,7 @@ func newServer(cfg *Config) (*server, error) {
 		sentryDSN: cfg.SentryDSN,
 
 		builder:    builder,
+		snsHandler: snsHandler,
 		terminator: terminator,
 		is:         is,
 		i:          i,
@@ -166,6 +173,8 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/instance-terminations`, srv.ifAuth(srv.handleInstanceTerminationsCreate)).Methods("POST").Name("instance-terminations-create")
 
 	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
+
+	srv.r.HandleFunc(`/sns-messages`, srv.handleSNSMessages).Name("sns-messages")
 
 	srv.r.HandleFunc(`/images`, srv.ifAuth(srv.handleImages)).Methods("GET").Name("images")
 }
@@ -396,6 +405,26 @@ func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {
 	w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, script)
+}
+
+func (srv *server) handleSNSMessages(w http.ResponseWriter, req *http.Request) {
+	msg := &lib.SNSMessage{}
+
+	err := json.NewDecoder(req.Body).Decode(&msg)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusBadRequest)
+		return
+	}
+
+	_, err = srv.snsHandler.Handle(msg)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string][]*lib.SNSMessage{
+		"sns_messages": []*lib.SNSMessage{msg},
+	}, http.StatusOK)
 }
 
 func (srv *server) handleImages(w http.ResponseWriter, req *http.Request) {

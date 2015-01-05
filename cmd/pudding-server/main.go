@@ -25,6 +25,11 @@ func main() {
 			EnvVar: "PUDDING_INSTANCE_TERMINATIONS_QUEUE_NAME",
 		},
 		cli.StringFlag{
+			Name:   "sns-messages-queue-name",
+			Value:  "sns-messages",
+			EnvVar: "PUDDING_SNS_MESSAGES_QUEUE_NAME",
+		},
+		cli.StringFlag{
 			Name:   "A, auth-token",
 			Value:  "swordfish",
 			EnvVar: "PUDDING_AUTH_TOKEN",
@@ -66,6 +71,7 @@ func runServer(c *cli.Context) {
 		QueueNames: map[string]string{
 			"instance-builds":       c.String("instance-builds-queue-name"),
 			"instance-terminations": c.String("instance-terminations-queue-name"),
+			"sns-messages":          c.String("sns-messages-queue-name"),
 		},
 	})
 }
