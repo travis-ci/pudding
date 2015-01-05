@@ -21,9 +21,7 @@ func init() {
 func autoscalingGroupBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 	buildPayloadJSON := []byte(msg.OriginalJson())
 	buildPayload := &lib.AutoscalingGroupBuildPayload{
-		Args: []*lib.AutoscalingGroupBuild{
-			lib.NewAutoscalingGroupBuild(),
-		},
+		Args: []*lib.AutoscalingGroupBuild{},
 	}
 
 	err := json.Unmarshal(buildPayloadJSON, buildPayload)
@@ -41,15 +39,15 @@ func autoscalingGroupBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 }
 
 type autoscalingGroupBuilderWorker struct {
-	rc  redis.Conn
-	n   []lib.Notifier
-	jid string
-	cfg *internalConfig
-	ec2 *ec2.EC2
-	as  *autoscaling.AutoScaling
-	b   *lib.AutoscalingGroupBuild
-	sop string
-	sip string
+	rc     redis.Conn
+	n      []lib.Notifier
+	jid    string
+	cfg    *internalConfig
+	ec2    *ec2.EC2
+	as     *autoscaling.AutoScaling
+	b      *lib.AutoscalingGroupBuild
+	sopARN string
+	sipARN string
 }
 
 func newAutoscalingGroupBuilderWorker(b *lib.AutoscalingGroupBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *autoscalingGroupBuilderWorker {
@@ -76,7 +74,7 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 		return err
 	}
 
-	sop, err := asgbw.createScaleOutPolicy()
+	sopARN, err := asgbw.createScaleOutPolicy()
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err":  err,
@@ -86,9 +84,9 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 		return err
 	}
 
-	asgbw.sop = sop
+	asgbw.sopARN = sopARN
 
-	sip, err := asgbw.createScaleInPolicy()
+	sipARN, err := asgbw.createScaleInPolicy()
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err":  err,
@@ -98,7 +96,7 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 		return err
 	}
 
-	asgbw.sip = sip
+	asgbw.sipARN = sipARN
 
 	err = asgbw.createScaleOutMetricAlarm()
 	if err != nil {
@@ -117,6 +115,26 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 			"name": asg.Name,
 			"jid":  asgbw.jid,
 		}).Error("failed to create scale in metric alarm")
+		return err
+	}
+
+	err = asgbw.createLaunchingLifecycleHook()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":  err,
+			"name": asg.Name,
+			"jid":  asgbw.jid,
+		}).Error("failed to create launching lifecycle hook")
+		return err
+	}
+
+	err = asgbw.createTerminatingLifecycleHook()
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":  err,
+			"name": asg.Name,
+			"jid":  asgbw.jid,
+		}).Error("failed to create terminating lifecycle hook")
 		return err
 	}
 
@@ -195,5 +213,13 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleOutMetricAlarm() error {
 }
 
 func (asgbw *autoscalingGroupBuilderWorker) createScaleInMetricAlarm() error {
+	return nil
+}
+
+func (asgbw *autoscalingGroupBuilderWorker) createLaunchingLifecycleHook() error {
+	return nil
+}
+
+func (asgbw *autoscalingGroupBuilderWorker) createTerminatingLifecycleHook() error {
 	return nil
 }

@@ -59,6 +59,7 @@ type server struct {
 
 	log        *logrus.Logger
 	builder    *instanceBuilder
+	asgBuilder *autoscalingGroupBuilder
 	snsHandler *snsHandler
 	terminator *instanceTerminator
 	auther     *serverAuther
@@ -78,6 +79,11 @@ func newServer(cfg *Config) (*server, error) {
 	}
 
 	builder, err := newInstanceBuilder(cfg.RedisURL, cfg.QueueNames["instance-builds"])
+	if err != nil {
+		return nil, err
+	}
+
+	asgBuilder, err := newAutoscalingGroupBuilder(cfg.RedisURL, cfg.QueueNames["autoscaling-group-builds"])
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +131,7 @@ func newServer(cfg *Config) (*server, error) {
 		sentryDSN: cfg.SentryDSN,
 
 		builder:    builder,
+		asgBuilder: asgBuilder,
 		snsHandler: snsHandler,
 		terminator: terminator,
 		is:         is,
@@ -157,9 +164,10 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
 
 	srv.r.HandleFunc(`/autoscaling-groups`, srv.ifAuth(srv.handleAutoscalingGroups)).Methods("GET").Name("list-autoscaling-groups")
-	srv.r.HandleFunc(`/autoscaling-groups`, srv.ifAuth(srv.handleAutoscalingGroupsCreate)).Methods("POST").Name("create-autoscaling-group")
 	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`, srv.ifAuth(srv.handleAutoscalingGroupByNameFetch)).Methods("GET").Name("fetch-autoscaling-groups-by-name")
 	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`, srv.ifAuth(srv.handleAutoscalingGroupByNameDelete)).Methods("DELETE").Name("delete-autoscaling-group-by-name")
+
+	srv.r.HandleFunc(`/autoscaling-group-builds`, srv.ifAuth(srv.handleAutoscalingGroupBuildsCreate)).Methods("POST").Name("create-autoscaling-group-build")
 
 	srv.r.HandleFunc(`/instances`, srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
@@ -360,16 +368,50 @@ func (srv *server) handleAutoscalingGroups(w http.ResponseWriter, req *http.Requ
 	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
 }
 
-func (srv *server) handleAutoscalingGroupsCreate(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
-}
-
 func (srv *server) handleAutoscalingGroupByNameFetch(w http.ResponseWriter, req *http.Request) {
 	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
 }
 
 func (srv *server) handleAutoscalingGroupByNameDelete(w http.ResponseWriter, req *http.Request) {
 	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
+}
+
+func (srv *server) handleAutoscalingGroupBuildsCreate(w http.ResponseWriter, req *http.Request) {
+	payload := &lib.AutoscalingGroupBuildsCollectionSingular{}
+	err := json.NewDecoder(req.Body).Decode(payload)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusBadRequest)
+		return
+	}
+
+	build := payload.AutoscalingGroupBuilds
+	if build.ID == "" {
+		build.ID = feeds.NewUUID().String()
+	}
+
+	if v := req.FormValue("slack-channel"); v != "" {
+		build.SlackChannel = v
+	}
+
+	if build.SlackChannel == "" {
+		build.SlackChannel = srv.slackChannel
+	}
+
+	validationErrors := build.Validate()
+	if len(validationErrors) > 0 {
+		jsonapi.Errors(w, validationErrors, http.StatusBadRequest)
+		return
+	}
+
+	build, err = srv.asgBuilder.Build(build)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, &lib.AutoscalingGroupBuildsCollection{
+		AutoscalingGroupBuilds: []*lib.AutoscalingGroupBuild{build},
+	}, http.StatusAccepted)
 }
 
 func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http.Request) {

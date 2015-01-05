@@ -25,6 +25,11 @@ func main() {
 			EnvVar: "PUDDING_INSTANCE_TERMINATIONS_QUEUE_NAME",
 		},
 		cli.StringFlag{
+			Name:   "autoscaling-group-builds-queue-name",
+			Value:  "auotscaling-group-builds",
+			EnvVar: "PUDDING_AUTOSCALING_GROUP_BUILDS_QUEUE_NAME",
+		},
+		cli.StringFlag{
 			Name:   "sns-messages-queue-name",
 			Value:  "sns-messages",
 			EnvVar: "PUDDING_SNS_MESSAGES_QUEUE_NAME",
@@ -69,9 +74,10 @@ func runServer(c *cli.Context) {
 		ImageExpiry:    c.Int("image-expiry"),
 
 		QueueNames: map[string]string{
-			"instance-builds":       c.String("instance-builds-queue-name"),
-			"instance-terminations": c.String("instance-terminations-queue-name"),
-			"sns-messages":          c.String("sns-messages-queue-name"),
+			"instance-builds":          c.String("instance-builds-queue-name"),
+			"instance-terminations":    c.String("instance-terminations-queue-name"),
+			"autoscaling-group-builds": c.String("autoscaling-group-builds-queue-name"),
+			"sns-messages":             c.String("sns-messages-queue-name"),
 		},
 	})
 }

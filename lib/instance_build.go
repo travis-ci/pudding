@@ -1,21 +1,9 @@
 package lib
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gorilla/feeds"
-)
-
-var (
-	errEmptySite            = fmt.Errorf("empty \"site\" param")
-	errInvalidSite          = fmt.Errorf("site must be either org or com")
-	errEmptyEnv             = fmt.Errorf("empty \"env\" param")
-	errInvalidEnv           = fmt.Errorf("env must be prod, staging, or test")
-	errInvalidInstanceCount = fmt.Errorf("count must be more than 0")
-	errInvalidState         = fmt.Errorf("state must be pending, started, or finished")
-	errEmptyQueue           = fmt.Errorf("empty \"queue\" param")
-	errEmptyInstanceType    = fmt.Errorf("empty \"instance_type\" param")
 )
 
 // InstanceBuildsCollectionSingular is the singular representation
@@ -81,17 +69,14 @@ func (b *InstanceBuild) Validate() []error {
 	if b.Site == "" {
 		errors = append(errors, errEmptySite)
 	}
-	if b.Site != "org" && b.Site != "com" {
-		errors = append(errors, errInvalidSite)
-	}
 	if b.Env == "" {
 		errors = append(errors, errEmptyEnv)
 	}
-	if b.Env != "prod" && b.Env != "staging" && b.Env != "test" {
-		errors = append(errors, errInvalidEnv)
-	}
 	if b.Queue == "" {
 		errors = append(errors, errEmptyQueue)
+	}
+	if b.Role == "" {
+		errors = append(errors, errEmptyRole)
 	}
 	if b.InstanceType == "" {
 		errors = append(errors, errEmptyInstanceType)
