@@ -35,7 +35,7 @@ type internalConfig struct {
 	MiniWorkerInterval  int
 	InstanceStoreExpiry int
 	ImageStoreExpiry    int
-	TmpInitExpiry       int
+	CloudInitExpiry     int
 
 	InitScriptTemplate *template.Template
 }

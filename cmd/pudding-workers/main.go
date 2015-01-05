@@ -126,7 +126,7 @@ func runWorkers(c *cli.Context) {
 		MiniWorkerInterval: c.Int("mini-worker-interval"),
 		InstanceExpiry:     c.Int("instance-expiry"),
 		ImageExpiry:        c.Int("image-expiry"),
-		TmpInitExpiry:      c.Int("temporary-init-expiry"),
+		CloudInitExpiry:    c.Int("cloud-init-expiry"),
 
 		SlackHookPath: c.String("slack-hook-path"),
 		SlackUsername: c.String("slack-username"),

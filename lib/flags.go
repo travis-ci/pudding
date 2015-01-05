@@ -42,15 +42,24 @@ var (
 		}(),
 		EnvVar: "PUDDING_REDIS_URL",
 	}
-	// InstanceExpiryFlag is the flag used to for defining the expiry
-	// used in redis when storing instance metadat
+	// CloudInitExpiryFlag is the flag used for defining the expiry
+	// used in redis when storing the cloud init script and its
+	// associated basic auth
+	CloudInitExpiryFlag = cli.IntFlag{
+		Name:   "cloud-init-expiry",
+		Value:  31536000,
+		Usage:  "expiry in seconds for cloud init scripts and auth",
+		EnvVar: "PUDDING_CLOUD_INIT_EXPIRY",
+	}
+	// InstanceExpiryFlag is the flag used for defining the expiry
+	// used in redis when storing instance metadata
 	InstanceExpiryFlag = cli.IntFlag{
 		Name:   "E, instance-expiry",
 		Value:  90,
 		Usage:  "expiry in seconds for instance attributes",
 		EnvVar: "PUDDING_INSTANCE_EXPIRY",
 	}
-	// ImageExpiryFlag is the flag used to for defining the expiry
+	// ImageExpiryFlag is the flag used for defining the expiry
 	// used in redis when storing image metadata
 	ImageExpiryFlag = cli.IntFlag{
 		Name:   "image-expiry",
