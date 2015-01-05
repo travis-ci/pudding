@@ -149,21 +149,24 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/debug/vars`, srv.ifAuth(expvarplus.HandleExpvars)).Methods("GET").Name("expvars")
 	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
 
-	srv.r.HandleFunc(`/autoscaling-groups`,
-		srv.ifAuth(srv.handleAutoscalingGroups)).Methods("GET").Name("list-autoscaling-groups")
-	srv.r.HandleFunc(`/autoscaling-groups`,
-		srv.ifAuth(srv.handleAutoscalingGroupsCreate)).Methods("POST").Name("create-autoscaling-group")
-	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`,
-		srv.ifAuth(srv.handleAutoscalingGroupByNameFetch)).Methods("GET").Name("fetch-autoscaling-groups-by-name")
-	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`,
-		srv.ifAuth(srv.handleAutoscalingGroupByNameDelete)).Methods("DELETE").Name("delete-autoscaling-group-by-name")
+	srv.r.HandleFunc(`/autoscaling-groups`, srv.ifAuth(srv.handleAutoscalingGroups)).Methods("GET").Name("list-autoscaling-groups")
+	srv.r.HandleFunc(`/autoscaling-groups`, srv.ifAuth(srv.handleAutoscalingGroupsCreate)).Methods("POST").Name("create-autoscaling-group")
+	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`, srv.ifAuth(srv.handleAutoscalingGroupByNameFetch)).Methods("GET").Name("fetch-autoscaling-groups-by-name")
+	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`, srv.ifAuth(srv.handleAutoscalingGroupByNameDelete)).Methods("DELETE").Name("delete-autoscaling-group-by-name")
 
 	srv.r.HandleFunc(`/instances`, srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
 	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDTerminate)).Methods("DELETE").Name("delete-instances-by-id")
+
 	srv.r.HandleFunc(`/instance-builds`, srv.ifAuth(srv.handleInstanceBuildsCreate)).Methods("POST").Name("instance-builds-create")
 	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`, srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
+
+	srv.r.HandleFunc(`/instance-launches`, srv.ifAuth(srv.handleInstanceLaunchesCreate)).Methods("POST").Name("instance-launches-create")
+
+	srv.r.HandleFunc(`/instance-terminations`, srv.ifAuth(srv.handleInstanceTerminationsCreate)).Methods("POST").Name("instance-terminations-create")
+
 	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
+
 	srv.r.HandleFunc(`/images`, srv.ifAuth(srv.handleImages)).Methods("GET").Name("images")
 }
 
@@ -357,6 +360,14 @@ func (srv *server) handleAutoscalingGroupByNameFetch(w http.ResponseWriter, req 
 }
 
 func (srv *server) handleAutoscalingGroupByNameDelete(w http.ResponseWriter, req *http.Request) {
+	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
+}
+
+func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http.Request) {
+	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
+}
+
+func (srv *server) handleInstanceTerminationsCreate(w http.ResponseWriter, req *http.Request) {
 	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
 }
 

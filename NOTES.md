@@ -107,11 +107,10 @@ topic.
 
 The way this sequence can be applied to pudding might go something like this:
 
-1. Upon fulfilling a request to create an autoscaling group, pudding will also:
-    * create an SNS topic specific to the autoscaling group
-    * subscribe to the SNS topic pointing back at pudding
-    * confirm the SNS subscription
-1. The IAM role is expected to already exist, and must be provided via env configuration a la `PUDDING_ROLE_ARN`
+1. The SNS topic is expected to already exist, along with a confirmed subscription with an endpoint URL pointing back at
+   pudding over https.  The topic ARN must be provided via env configuration a la `PUDDING_SNS_TOPIC_ARN`.
+1. The IAM role is expected to already exist, and must be provided via env configuration a la `PUDDING_ROLE_ARN`.  The
+   role must have a policy that allows for publishing to the sns topic.
 1. Creation of the lifecycle hook(s) happens automatically during creation of the autoscaling group, with the
    asg-specific SNS topic being specified
 1. Either have pudding repeatedly enqueue `RecordLifecycleActionHeartbeat` API calls, or perhaps set the
