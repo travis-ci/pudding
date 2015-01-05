@@ -408,7 +408,7 @@ func (srv *server) sendInitScript(w http.ResponseWriter, ID string) {
 }
 
 func (srv *server) handleSNSMessages(w http.ResponseWriter, req *http.Request) {
-	msg := &lib.SNSMessage{}
+	msg := lib.NewSNSMessage()
 
 	err := json.NewDecoder(req.Body).Decode(&msg)
 	if err != nil {

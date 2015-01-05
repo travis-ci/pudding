@@ -26,9 +26,7 @@ func init() {
 func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 	snsMessagePayloadJSON := []byte(msg.OriginalJson())
 	snsMessagePayload := &lib.SNSMessagePayload{
-		Args: []*lib.SNSMessage{
-			&lib.SNSMessage{},
-		},
+		Args: []*lib.SNSMessage{},
 	}
 
 	err := json.Unmarshal(snsMessagePayloadJSON, snsMessagePayload)
