@@ -31,6 +31,18 @@
 			"Rev": "1dd3ab0ff59e13f5b73dcbf70703710aebe50d2f"
 		},
 		{
+			"ImportPath": "github.com/feyeleanor/raw",
+			"Rev": "724aedf6e1a5d8971aafec384b6bde3d5608fba4"
+		},
+		{
+			"ImportPath": "github.com/feyeleanor/sets",
+			"Rev": "6c54cb57ea406ff6354256a4847e37298194478f"
+		},
+		{
+			"ImportPath": "github.com/feyeleanor/slices",
+			"Rev": "bb44bb2e4817fe71ba7082d351fd582e7d40e3ea"
+		},
+		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
 			"Rev": "61e2910408efd40dafb3c7d856a4cf8aeb5fb1c6"
 		},
@@ -48,6 +60,10 @@
 		},
 		{
 			"ImportPath": "github.com/goamz/goamz/aws",
+			"Rev": "81968a44aabd7d7b117ffe4337626b1c03594560"
+		},
+		{
+			"ImportPath": "github.com/goamz/goamz/cloudwatch",
 			"Rev": "81968a44aabd7d7b117ffe4337626b1c03594560"
 		},
 		{
