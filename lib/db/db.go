@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/mitchellh/goamz/ec2"
+	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 )
 
@@ -146,9 +146,9 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 			"instance_id", inst.InstanceId,
 			"instance_type", inst.InstanceType,
 			"image_id", inst.ImageId,
-			"ip", inst.PublicIpAddress,
-			"private_ip", inst.PrivateIpAddress,
-			"launch_time", inst.LaunchTime.Format(time.RFC3339),
+			"ip", inst.IPAddress,
+			"private_ip", inst.PrivateIPAddress,
+			"launch_time", inst.LaunchTime,
 		}
 
 		for _, tag := range inst.Tags {

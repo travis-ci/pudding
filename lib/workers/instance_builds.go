@@ -13,9 +13,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/goamz/goamz/ec2"
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
-	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 	"github.com/travis-ci/pudding/lib/db"
 )
@@ -210,7 +210,7 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 		return err
 	}
 
-	resp, err := ibw.ec2.RunInstances(&ec2.RunInstances{
+	resp, err := ibw.ec2.RunInstances(&ec2.RunInstancesOptions{
 		ImageId:        ibw.ami.Id,
 		UserData:       userData,
 		InstanceType:   ibw.b.InstanceType,

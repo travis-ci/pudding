@@ -7,8 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.2-10-g51fe59a",
-			"Rev": "51fe59aca108dc5680109e7b2051cbdcfa5a253c"
+			"Comment": "v0.6.2-15-gd2f9ffa",
+			"Rev": "d2f9ffa1d9cf25b25191b221229effac1b6de526"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
@@ -27,24 +27,36 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/negroni",
-			"Comment": "v0.1-32-gc64702c",
-			"Rev": "c64702ca03d0f858ab7866638b69e85f0d4c6ee7"
+			"Comment": "v0.1-55-g1dd3ab0",
+			"Rev": "1dd3ab0ff59e13f5b73dcbf70703710aebe50d2f"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
-			"Rev": "3235c235f38bd5b41bd9eef26edbfad396be6274"
+			"Rev": "61e2910408efd40dafb3c7d856a4cf8aeb5fb1c6"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Rev": "3235c235f38bd5b41bd9eef26edbfad396be6274"
+			"Rev": "61e2910408efd40dafb3c7d856a4cf8aeb5fb1c6"
 		},
 		{
 			"ImportPath": "github.com/getsentry/raven-go",
-			"Rev": "1ae8a89da90a71ca1bb7648919bb30928acaab46"
+			"Rev": "3fd636ed242c26c0f55bc9ee1fe47e1d6d2d77f7"
+		},
+		{
+			"ImportPath": "github.com/goamz/goamz/autoscaling",
+			"Rev": "81968a44aabd7d7b117ffe4337626b1c03594560"
+		},
+		{
+			"ImportPath": "github.com/goamz/goamz/aws",
+			"Rev": "81968a44aabd7d7b117ffe4337626b1c03594560"
+		},
+		{
+			"ImportPath": "github.com/goamz/goamz/ec2",
+			"Rev": "81968a44aabd7d7b117ffe4337626b1c03594560"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
-			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
 			"ImportPath": "github.com/gorilla/feeds",
@@ -71,24 +83,8 @@
 			"Rev": "d5e114d7a445f7a3652cf807d3f83d5dceb8de26"
 		},
 		{
-			"ImportPath": "github.com/mitchellh/goamz/autoscaling",
-			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
-		},
-		{
-			"ImportPath": "github.com/mitchellh/goamz/aws",
-			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
-		},
-		{
-			"ImportPath": "github.com/mitchellh/goamz/ec2",
-			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
-		},
-		{
 			"ImportPath": "github.com/phyber/negroni-gzip/gzip",
-			"Rev": "0b2752a07f05079c716e4409134b1f4c385f63ea"
-		},
-		{
-			"ImportPath": "github.com/vaughan0/go-ini",
-			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+			"Rev": "48f82605778a579cb8172122897f589e4023b537"
 		}
 	]
 }

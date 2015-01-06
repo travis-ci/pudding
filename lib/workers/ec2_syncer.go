@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/mitchellh/goamz/ec2"
+	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 	"github.com/travis-ci/pudding/lib/db"
 )

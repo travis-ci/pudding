@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mitchellh/goamz/ec2"
+	"github.com/goamz/goamz/ec2"
 )
 
 var (
@@ -62,7 +62,7 @@ func FetchLatestAMIWithFilter(conn *ec2.EC2, f *ec2.Filter) (*ec2.Image, error) 
 // GetInstancesWithFilter fetches all instances that match the
 // given filter
 func GetInstancesWithFilter(conn *ec2.EC2, f *ec2.Filter) (map[string]ec2.Instance, error) {
-	resp, err := conn.Instances([]string{}, f)
+	resp, err := conn.DescribeInstances([]string{}, f)
 
 	if err != nil {
 		return nil, err

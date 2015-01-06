@@ -6,8 +6,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/goamz/goamz/ec2"
 	"github.com/jrallison/go-workers"
-	"github.com/mitchellh/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 	"github.com/travis-ci/pudding/lib/db"
 )

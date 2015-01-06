@@ -6,9 +6,10 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/mitchellh/goamz/aws"
+	"github.com/goamz/goamz/aws"
 )
 
 // Main is the whole shebang
@@ -45,7 +46,7 @@ func Main(cfg *Config) {
 		InitScriptTemplate: template.Must(template.New("init-script").Parse(cfg.InitScriptTemplate)),
 	}
 
-	auth, err := aws.GetAuth(cfg.AWSKey, cfg.AWSSecret)
+	auth, err := aws.GetAuth(cfg.AWSKey, cfg.AWSSecret, "", time.Now().UTC().Add(8766*time.Hour))
 	if err != nil {
 		log.WithField("err", err).Fatal("failed to load aws auth")
 		os.Exit(1)

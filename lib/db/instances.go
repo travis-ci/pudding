@@ -3,7 +3,7 @@ package db
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
-	"github.com/mitchellh/goamz/ec2"
+	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 )
 

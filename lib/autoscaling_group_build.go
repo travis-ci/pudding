@@ -35,6 +35,26 @@ type AutoscalingGroupBuild struct {
 	DesiredCapacity int    `json:"desired_capacity" redis:"desired_capacity"`
 	SlackChannel    string `json:"slack_channel"`
 	Timestamp       int64  `json:"timestamp"`
+
+	ScaleOutCooldown                 int     `json:"scale_out_cooldown,omitempty"`
+	ScaleOutAdjustment               int     `json:"scale_out_adjustment,omitempty"`
+	ScaleOutMetricName               string  `json:"scale_out_metric_name,omitempty"`
+	ScaleOutMetricNamespace          string  `json:"scale_out_metric_namespace,omitempty"`
+	ScaleOutMetricStatistic          string  `json:"scale_out_metric_statistic,omitempty"`
+	ScaleOutMetricPeriod             int     `json:"scale_out_metric_period,omitempty"`
+	ScaleOutMetricEvaluationPeriods  int     `json:"scale_out_metric_evaluation_periods,omitempty"`
+	ScaleOutMetricThreshold          float64 `json:"scale_out_metric_threshold,omitempty"`
+	ScaleOutMetricComparisonOperator string  `json:"scale_out_metric_comparison_operator,omitempty"`
+
+	ScaleInCooldown                 int     `json:"scale_in_cooldown,omitempty"`
+	ScaleInAdjustment               int     `json:"scale_in_adjustment,omitempty"`
+	ScaleInMetricName               string  `json:"scale_in_metric_name,omitempty"`
+	ScaleInMetricNamespace          string  `json:"scale_in_metric_namespace,omitempty"`
+	ScaleInMetricStatistic          string  `json:"scale_in_metric_statistic,omitempty"`
+	ScaleInMetricPeriod             int     `json:"scale_in_metric_period,omitempty"`
+	ScaleInMetricEvaluationPeriods  int     `json:"scale_in_metric_evaluation_periods,omitempty"`
+	ScaleInMetricThreshold          float64 `json:"scale_in_metric_threshold,omitempty"`
+	ScaleInMetricComparisonOperator string  `json:"scale_in_metric_comparison_operator,omitempty"`
 }
 
 // NewAutoscalingGroupBuild makes a new AutoscalingGroupBuild
@@ -51,6 +71,78 @@ func (b *AutoscalingGroupBuild) Hydrate() {
 
 	if b.Timestamp == 0 {
 		b.Timestamp = time.Now().UTC().Unix()
+	}
+
+	if b.ScaleOutCooldown == 0 {
+		b.ScaleOutCooldown = 300
+	}
+
+	if b.ScaleInCooldown == 0 {
+		b.ScaleInCooldown = 300
+	}
+
+	if b.ScaleOutAdjustment == 0 {
+		b.ScaleOutAdjustment = 1
+	}
+
+	if b.ScaleInAdjustment == 0 {
+		b.ScaleInAdjustment = -1
+	}
+
+	if b.ScaleOutMetricName == "" {
+		b.ScaleOutMetricName = "CPUUtilization"
+	}
+
+	if b.ScaleOutMetricNamespace == "" {
+		b.ScaleOutMetricNamespace = "AWS/EC2"
+	}
+
+	if b.ScaleOutMetricStatistic == "" {
+		b.ScaleOutMetricStatistic = "Average"
+	}
+
+	if b.ScaleOutMetricPeriod == 0 {
+		b.ScaleOutMetricPeriod = 120
+	}
+
+	if b.ScaleOutMetricEvaluationPeriods == 0 {
+		b.ScaleOutMetricEvaluationPeriods = 2
+	}
+
+	if b.ScaleOutMetricThreshold == float64(0) {
+		b.ScaleOutMetricThreshold = float64(90)
+	}
+
+	if b.ScaleOutMetricComparisonOperator == "" {
+		b.ScaleOutMetricComparisonOperator = "GreaterThanOrEqualToThreshold"
+	}
+
+	if b.ScaleInMetricName == "" {
+		b.ScaleInMetricName = "CPUUtilization"
+	}
+
+	if b.ScaleInMetricNamespace == "" {
+		b.ScaleInMetricNamespace = "AWS/EC2"
+	}
+
+	if b.ScaleInMetricStatistic == "" {
+		b.ScaleInMetricStatistic = "Average"
+	}
+
+	if b.ScaleInMetricPeriod == 0 {
+		b.ScaleInMetricPeriod = 120
+	}
+
+	if b.ScaleInMetricEvaluationPeriods == 0 {
+		b.ScaleInMetricEvaluationPeriods = 2
+	}
+
+	if b.ScaleInMetricThreshold == float64(0) {
+		b.ScaleInMetricThreshold = float64(10)
+	}
+
+	if b.ScaleInMetricComparisonOperator == "" {
+		b.ScaleInMetricComparisonOperator = "LessThanThreshold"
 	}
 }
 

@@ -4,8 +4,8 @@ import (
 	"net/url"
 	"text/template"
 
+	"github.com/goamz/goamz/aws"
 	"github.com/jrallison/go-workers"
-	"github.com/mitchellh/goamz/aws"
 )
 
 type internalConfig struct {
