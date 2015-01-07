@@ -16,6 +16,7 @@ case "$1" in
           \"site\": \"org\",
           \"env\": \"test\",
           \"queue\": \"docker\",
+          \"role\": \"worker\",
           \"instance_type\": \"c3.4xlarge\"
         }
       }" \
