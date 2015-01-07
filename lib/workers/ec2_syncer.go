@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/garyburd/redigo/redis"
 	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
 	"github.com/travis-ci/pudding/lib/db"
@@ -18,13 +19,13 @@ type ec2Syncer struct {
 	img db.ImageFetcherStorer
 }
 
-func newEC2Syncer(cfg *internalConfig, log *logrus.Logger) (*ec2Syncer, error) {
-	i, err := db.NewInstances(cfg.RedisURL.String(), log, cfg.InstanceStoreExpiry)
+func newEC2Syncer(cfg *internalConfig, r *redis.Pool, log *logrus.Logger) (*ec2Syncer, error) {
+	i, err := db.NewInstances(r, log, cfg.InstanceStoreExpiry)
 	if err != nil {
 		return nil, err
 	}
 
-	img, err := db.NewImages(cfg.RedisURL.String(), log, cfg.ImageStoreExpiry)
+	img, err := db.NewImages(r, log, cfg.ImageStoreExpiry)
 	if err != nil {
 		return nil, err
 	}

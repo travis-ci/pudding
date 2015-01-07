@@ -14,12 +14,7 @@ type instanceBuilder struct {
 	r         *redis.Pool
 }
 
-func newInstanceBuilder(redisURL, queueName string) (*instanceBuilder, error) {
-	r, err := db.BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func newInstanceBuilder(r *redis.Pool, queueName string) (*instanceBuilder, error) {
 	return &instanceBuilder{
 		QueueName: queueName,
 

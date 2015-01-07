@@ -26,13 +26,18 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "autoscaling-group-builds-queue-name",
-			Value:  "auotscaling-group-builds",
+			Value:  "autoscaling-group-builds",
 			EnvVar: "PUDDING_AUTOSCALING_GROUP_BUILDS_QUEUE_NAME",
 		},
 		cli.StringFlag{
 			Name:   "sns-messages-queue-name",
 			Value:  "sns-messages",
 			EnvVar: "PUDDING_SNS_MESSAGES_QUEUE_NAME",
+		},
+		cli.StringFlag{
+			Name:   "instance-lifecycle-transitions-queue-name",
+			Value:  "instance-lifecycle-transitions",
+			EnvVar: "PUDDING_INSTANCE_LIFECYCLE_TRANSITIONS_QUEUE_NAME",
 		},
 		cli.StringFlag{
 			Name:   "A, auth-token",
@@ -74,10 +79,11 @@ func runServer(c *cli.Context) {
 		ImageExpiry:    c.Int("image-expiry"),
 
 		QueueNames: map[string]string{
-			"instance-builds":          c.String("instance-builds-queue-name"),
-			"instance-terminations":    c.String("instance-terminations-queue-name"),
-			"autoscaling-group-builds": c.String("autoscaling-group-builds-queue-name"),
-			"sns-messages":             c.String("sns-messages-queue-name"),
+			"instance-builds":                c.String("instance-builds-queue-name"),
+			"instance-terminations":          c.String("instance-terminations-queue-name"),
+			"autoscaling-group-builds":       c.String("autoscaling-group-builds-queue-name"),
+			"sns-messages":                   c.String("sns-messages-queue-name"),
+			"instance-lifecycle-transitions": c.String("instance-lifecycle-transitions-queue-name"),
 		},
 	})
 }

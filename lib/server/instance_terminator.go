@@ -13,12 +13,7 @@ type instanceTerminator struct {
 	r         *redis.Pool
 }
 
-func newInstanceTerminator(redisURL, queueName string) (*instanceTerminator, error) {
-	r, err := db.BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func newInstanceTerminator(r *redis.Pool, queueName string) (*instanceTerminator, error) {
 	return &instanceTerminator{
 		QueueName: queueName,
 

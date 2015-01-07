@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding/lib/db"
 )
 
 var (
 	errMissingSNSMessage = fmt.Errorf("missing sns message")
-	snsMessageHandlers   = map[string]func(*lib.SNSMessage) error{
-		"SubscriptionConfirmation": func(msg *lib.SNSMessage) error {
+	snsMessageHandlers   = map[string]func(redis.Conn, *lib.SNSMessage) error{
+		"SubscriptionConfirmation": func(rc redis.Conn, msg *lib.SNSMessage) error {
 			log.WithField("msg", msg).Info("subscription confirmation not really being handled")
 			return nil
 		},
@@ -37,6 +39,7 @@ func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 	snsMsg := snsMessagePayload.SNSMessage()
 	if snsMsg == nil {
 		log.WithField("err", errMissingSNSMessage).Panic("no sns message available")
+		return
 	}
 
 	handlerFunc, ok := snsMessageHandlers[snsMsg.Type]
@@ -45,13 +48,13 @@ func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 		return
 	}
 
-	err = handlerFunc(snsMsg)
+	err = handlerFunc(workers.Config.Pool.Get(), snsMsg)
 	if err != nil {
 		log.WithField("err", err).Panic("sns handler returned an error")
 	}
 }
 
-func handleSNSNotification(msg *lib.SNSMessage) error {
+func handleSNSNotification(rc redis.Conn, msg *lib.SNSMessage) error {
 	log.WithField("msg", msg).Info("received an SNS notification")
 
 	a, err := msg.AutoscalingLifecycleAction()
@@ -61,21 +64,11 @@ func handleSNSNotification(msg *lib.SNSMessage) error {
 	}
 
 	switch a.LifecycleTransition {
-	case "autoscaling:EC2_INSTANCE_LAUNCHING":
-		return handleSNSLifecycleTransitionLaunching(a)
-	case "autoscaling:EC2_INSTANCE_TERMINATING":
-		return handleSNSLifecycleTransitionTerminating(a)
+	case "autoscaling:EC2_INSTANCE_LAUNCHING", "autoscaling:EC2_INSTANCE_TERMINATING":
+		return db.StoreInstanceLifecycleAction(rc, a)
 	default:
 		log.WithField("action", a).Warn("unable to handle unknown lifecycle transition")
 	}
 
-	return nil
-}
-
-func handleSNSLifecycleTransitionLaunching(a *lib.AutoscalingLifecycleAction) error {
-	return nil
-}
-
-func handleSNSLifecycleTransitionTerminating(a *lib.AutoscalingLifecycleAction) error {
 	return nil
 }

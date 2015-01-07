@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
 )
 
@@ -41,17 +42,17 @@ func runWorkers(cfg *internalConfig, log *logrus.Logger) error {
 		}, cfg.QueueConcurrencies[queue])
 	}
 
-	go setupMiniWorkers(cfg, log, rm).Run()
+	go setupMiniWorkers(cfg, workers.Config.Pool, log, rm).Run()
 
 	log.Info("starting go-workers")
 	workers.Run()
 	return nil
 }
 
-func setupMiniWorkers(cfg *internalConfig, log *logrus.Logger, rm *MiddlewareRaven) *miniWorkers {
+func setupMiniWorkers(cfg *internalConfig, r *redis.Pool, log *logrus.Logger, rm *MiddlewareRaven) *miniWorkers {
 	mw := newMiniWorkers(cfg, log, rm)
 	mw.Register("ec2-sync", func() error {
-		syncer, err := newEC2Syncer(cfg, log)
+		syncer, err := newEC2Syncer(cfg, r, log)
 		if err != nil {
 			log.WithField("err", err).Error("failed to build syncer")
 			return err

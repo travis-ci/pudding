@@ -13,13 +13,13 @@ package lib
 //   "LifecycleHookName":"name string"
 // }
 type AutoscalingLifecycleAction struct {
-	AutoScalingGroupName string
+	AutoScalingGroupName string `redis:"auto_scaling_group_name"`
 	Service              string
 	Time                 string
 	AccountID            string `json:"AccountId"`
 	LifecycleTransition  string
 	RequestID            string `json:"RequestId"`
-	LifecycleActionToken string
+	LifecycleActionToken string `redis:"lifecycle_action_token"`
 	EC2InstanceID        string `json:"EC2InstanceId"`
-	LifecycleHookName    string
+	LifecycleHookName    string `redis:"lifecycle_hook_name"`
 }

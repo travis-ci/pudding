@@ -32,12 +32,7 @@ type InitScripts struct {
 }
 
 // NewInitScripts creates a new *InitScripts
-func NewInitScripts(redisURL string, log *logrus.Logger) (*InitScripts, error) {
-	r, err := BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func NewInitScripts(r *redis.Pool, log *logrus.Logger) (*InitScripts, error) {
 	return &InitScripts{
 		r:   r,
 		log: log,

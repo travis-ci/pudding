@@ -14,12 +14,7 @@ type snsHandler struct {
 	r         *redis.Pool
 }
 
-func newSNSHandler(redisURL, queueName string) (*snsHandler, error) {
-	r, err := db.BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func newSNSHandler(r *redis.Pool, queueName string) (*snsHandler, error) {
 	return &snsHandler{
 		QueueName: queueName,
 		r:         r,

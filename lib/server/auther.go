@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/feeds"
 	"github.com/gorilla/mux"
 	"github.com/travis-ci/pudding/lib/db"
@@ -22,22 +23,20 @@ var (
 )
 
 type serverAuther struct {
-	Token    string
-	redisURL string
-	is       db.InstanceBuildAuther
-	log      *logrus.Logger
-	rt       string
+	Token string
+	is    db.InstanceBuildAuther
+	log   *logrus.Logger
+	rt    string
 }
 
-func newServerAuther(token, redisURL string, log *logrus.Logger) (*serverAuther, error) {
+func newServerAuther(token string, r *redis.Pool, log *logrus.Logger) (*serverAuther, error) {
 	sa := &serverAuther{
-		Token:    token,
-		redisURL: redisURL,
-		log:      log,
-		rt:       feeds.NewUUID().String(),
+		Token: token,
+		log:   log,
+		rt:    feeds.NewUUID().String(),
 	}
 
-	is, err := db.NewInitScripts(redisURL, log)
+	is, err := db.NewInitScripts(r, log)
 	if err != nil {
 		return nil, err
 	}

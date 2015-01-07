@@ -22,12 +22,7 @@ type Instances struct {
 }
 
 // NewInstances creates a new Instances collection
-func NewInstances(redisURL string, log *logrus.Logger, expiry int) (*Instances, error) {
-	r, err := BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func NewInstances(r *redis.Pool, log *logrus.Logger, expiry int) (*Instances, error) {
 	return &Instances{
 		Expiry: expiry,
 		r:      r,

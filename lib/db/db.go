@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -338,6 +339,40 @@ func RemoveImages(conn redis.Conn, IDs []string) error {
 			conn.Do("DISCARD")
 			return err
 		}
+	}
+
+	_, err = conn.Do("EXEC")
+	return err
+}
+
+// StoreInstanceLifecycleAction stores a lib.AutoscalingLifecycleAction in a transition-specific set and hash
+func StoreInstanceLifecycleAction(conn redis.Conn, a *lib.AutoscalingLifecycleAction) error {
+	err := conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
+
+	transition := strings.ToLower(strings.Replace(a.LifecycleTransition, "autoscaling:EC2_INSTANCE_", "", 1))
+	instSetKey := fmt.Sprintf("%s:instance_%s", lib.RedisNamespace, transition)
+	hashKey := fmt.Sprintf("%s:instance_%s:%s", lib.RedisNamespace, transition, a.EC2InstanceID)
+
+	err = conn.Send("SADD", instSetKey, a.EC2InstanceID)
+	if err != nil {
+		conn.Do("DISCARD")
+		return err
+	}
+
+	hmSet := []interface{}{
+		hashKey,
+		"lifecycle_action_token", a.LifecycleActionToken,
+		"auto_scaling_group_name", a.AutoScalingGroupName,
+		"lifecycle_hook_name", a.LifecycleHookName,
+	}
+
+	err = conn.Send("HMSET", hmSet...)
+	if err != nil {
+		conn.Do("DISCARD")
+		return err
 	}
 
 	_, err = conn.Do("EXEC")

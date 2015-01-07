@@ -22,12 +22,7 @@ type Images struct {
 }
 
 // NewImages creates a new Images collection
-func NewImages(redisURL string, log *logrus.Logger, expiry int) (*Images, error) {
-	r, err := BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func NewImages(r *redis.Pool, log *logrus.Logger, expiry int) (*Images, error) {
 	return &Images{
 		Expiry: expiry,
 		r:      r,

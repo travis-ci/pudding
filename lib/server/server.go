@@ -61,6 +61,7 @@ type server struct {
 	builder    *instanceBuilder
 	asgBuilder *autoscalingGroupBuilder
 	snsHandler *snsHandler
+	iltHandler *instanceLifecycleTransitionHandler
 	terminator *instanceTerminator
 	auther     *serverAuther
 	is         db.InitScriptGetterAuther
@@ -78,42 +79,52 @@ func newServer(cfg *Config) (*server, error) {
 		log.Level = logrus.DebugLevel
 	}
 
-	builder, err := newInstanceBuilder(cfg.RedisURL, cfg.QueueNames["instance-builds"])
+	r, err := db.BuildRedisPool(cfg.RedisURL)
 	if err != nil {
 		return nil, err
 	}
 
-	asgBuilder, err := newAutoscalingGroupBuilder(cfg.RedisURL, cfg.QueueNames["autoscaling-group-builds"])
+	builder, err := newInstanceBuilder(r, cfg.QueueNames["instance-builds"])
 	if err != nil {
 		return nil, err
 	}
 
-	snsHandler, err := newSNSHandler(cfg.RedisURL, cfg.QueueNames["sns-messages"])
+	asgBuilder, err := newAutoscalingGroupBuilder(r, cfg.QueueNames["autoscaling-group-builds"])
 	if err != nil {
 		return nil, err
 	}
 
-	terminator, err := newInstanceTerminator(cfg.RedisURL, cfg.QueueNames["instance-terminations"])
+	snsHandler, err := newSNSHandler(r, cfg.QueueNames["sns-messages"])
 	if err != nil {
 		return nil, err
 	}
 
-	i, err := db.NewInstances(cfg.RedisURL, log, cfg.InstanceExpiry)
+	iltHandler, err := newInstanceLifecycleTransitionHandler(r, cfg.QueueNames["instance-lifecycle-transitions"])
 	if err != nil {
 		return nil, err
 	}
 
-	img, err := db.NewImages(cfg.RedisURL, log, cfg.ImageExpiry)
+	terminator, err := newInstanceTerminator(r, cfg.QueueNames["instance-terminations"])
 	if err != nil {
 		return nil, err
 	}
 
-	is, err := db.NewInitScripts(cfg.RedisURL, log)
+	i, err := db.NewInstances(r, log, cfg.InstanceExpiry)
 	if err != nil {
 		return nil, err
 	}
 
-	auther, err := newServerAuther(cfg.AuthToken, cfg.RedisURL, log)
+	img, err := db.NewImages(r, log, cfg.ImageExpiry)
+	if err != nil {
+		return nil, err
+	}
+
+	is, err := db.NewInitScripts(r, log)
+	if err != nil {
+		return nil, err
+	}
+
+	auther, err := newServerAuther(cfg.AuthToken, r, log)
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +144,7 @@ func newServer(cfg *Config) (*server, error) {
 		builder:    builder,
 		asgBuilder: asgBuilder,
 		snsHandler: snsHandler,
+		iltHandler: iltHandler,
 		terminator: terminator,
 		is:         is,
 		i:          i,
@@ -415,7 +427,23 @@ func (srv *server) handleAutoscalingGroupBuildsCreate(w http.ResponseWriter, req
 }
 
 func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
+	t := &lib.InstanceLifecycleTransition{}
+
+	err := json.NewDecoder(req.Body).Decode(t)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusBadRequest)
+		return
+	}
+
+	t.Transition = "launching"
+
+	_, err = srv.iltHandler.Handle(t)
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	jsonapi.Respond(w, map[string]string{"yay": t.InstanceID}, http.StatusOK)
 }
 
 func (srv *server) handleInstanceTerminationsCreate(w http.ResponseWriter, req *http.Request) {

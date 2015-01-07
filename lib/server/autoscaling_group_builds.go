@@ -14,12 +14,7 @@ type autoscalingGroupBuilder struct {
 	r         *redis.Pool
 }
 
-func newAutoscalingGroupBuilder(redisURL, queueName string) (*autoscalingGroupBuilder, error) {
-	r, err := db.BuildRedisPool(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
+func newAutoscalingGroupBuilder(r *redis.Pool, queueName string) (*autoscalingGroupBuilder, error) {
 	return &autoscalingGroupBuilder{
 		QueueName: queueName,
 
