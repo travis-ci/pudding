@@ -53,5 +53,29 @@ func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 
 func handleSNSNotification(msg *lib.SNSMessage) error {
 	log.WithField("msg", msg).Info("received an SNS notification")
+
+	a, err := msg.AutoscalingLifecycleAction()
+	if err != nil {
+		log.WithField("err", err).Warn("unable to handle notification")
+		return nil
+	}
+
+	switch a.LifecycleTransition {
+	case "autoscaling:EC2_INSTANCE_LAUNCHING":
+		return handleSNSLifecycleTransitionLaunching(a)
+	case "autoscaling:EC2_INSTANCE_TERMINATING":
+		return handleSNSLifecycleTransitionTerminating(a)
+	default:
+		log.WithField("action", a).Warn("unable to handle unknown lifecycle transition")
+	}
+
+	return nil
+}
+
+func handleSNSLifecycleTransitionLaunching(a *lib.AutoscalingLifecycleAction) error {
+	return nil
+}
+
+func handleSNSLifecycleTransitionTerminating(a *lib.AutoscalingLifecycleAction) error {
 	return nil
 }

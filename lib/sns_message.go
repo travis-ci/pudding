@@ -1,5 +1,7 @@
 package lib
 
+import "encoding/json"
+
 // SNSMessage is totally an SNS message, eh
 type SNSMessage struct {
 	Message           string
@@ -28,4 +30,15 @@ func NewSNSMessage() *SNSMessage {
 	return &SNSMessage{
 		MessageAttributes: map[string]*SNSMessageAttribute{},
 	}
+}
+
+// AutoscalingLifecycleAction attempts to unmarshal the message payload into an *AutoscalingLifecycleAction
+func (m *SNSMessage) AutoscalingLifecycleAction() (*AutoscalingLifecycleAction, error) {
+	a := &AutoscalingLifecycleAction{}
+	err := json.Unmarshal([]byte(m.Message), a)
+	if err != nil {
+		return nil, err
+	}
+
+	return a, nil
 }
