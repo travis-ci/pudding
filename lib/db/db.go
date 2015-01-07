@@ -378,3 +378,54 @@ func StoreInstanceLifecycleAction(conn redis.Conn, a *lib.AutoscalingLifecycleAc
 	_, err = conn.Do("EXEC")
 	return err
 }
+
+// FetchInstanceLifecycleAction retrieves a lib.AutoscalingLifecycleAction
+func FetchInstanceLifecycleAction(conn redis.Conn, transition, instanceID string) (*lib.AutoscalingLifecycleAction, error) {
+	exists, err := redis.Bool(conn.Do("SISMEMBER", fmt.Sprintf("%s:instance_%s", lib.RedisNamespace, transition), instanceID))
+	if !exists {
+		return nil, nil
+	}
+
+	err = conn.Send("MULTI")
+	if err != nil {
+		return nil, err
+	}
+
+	attrs, err := redis.Values(conn.Do("HGETALL", fmt.Sprintf("%s:instance_%s:%s", lib.RedisNamespace, transition, instanceID)))
+	if err != nil {
+		conn.Do("DISCARD")
+		return nil, err
+	}
+
+	ala := &lib.AutoscalingLifecycleAction{}
+	err = redis.ScanStruct(attrs, ala)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = conn.Do("EXEC")
+	return ala, err
+}
+
+// WipeInstanceLifecycleAction cleans up the keys for a given lifecycle action
+func WipeInstanceLifecycleAction(conn redis.Conn, transition, instanceID string) error {
+	err := conn.Send("MULTI")
+	if err != nil {
+		return err
+	}
+
+	err = conn.Send("SREM", fmt.Sprintf("%s:instance_%s", lib.RedisNamespace, transition), instanceID)
+	if err != nil {
+		conn.Do("DISCARD")
+		return err
+	}
+
+	err = conn.Send("DEL", fmt.Sprintf("%s:instance_%s:%s", lib.RedisNamespace, transition, instanceID))
+	if err != nil {
+		conn.Do("DISCARD")
+		return err
+	}
+
+	_, err = conn.Do("EXEC")
+	return err
+}

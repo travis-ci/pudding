@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/goamz/goamz/autoscaling"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding/lib/db"
 )
 
 var (
@@ -34,13 +37,13 @@ func instanceLifecycleTransitionsMain(cfg *internalConfig, msg *workers.Msg) {
 		return
 	}
 
-	err = handleInstanceLifecycleTransition(workers.Config.Pool.Get(), ilt)
+	err = handleInstanceLifecycleTransition(cfg, workers.Config.Pool.Get(), msg.Jid(), ilt)
 	if err != nil {
 		log.WithField("err", err).Panic("instance lifecycle transition handler returned an error")
 	}
 }
 
-func handleInstanceLifecycleTransition(rc redis.Conn, ilt *lib.InstanceLifecycleTransition) error {
+func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid string, ilt *lib.InstanceLifecycleTransition) error {
 	// if instance transition set contains instance id
 	//   complete lifecycle action with stored action token and hook name
 	//   remove instance id from set
@@ -48,6 +51,38 @@ func handleInstanceLifecycleTransition(rc redis.Conn, ilt *lib.InstanceLifecycle
 	// else
 	//   short circuit with log message
 
-	log.WithField("ilt", ilt).Info("NOT REALLY handling instance lifecycle transition")
+	ala, err := db.FetchInstanceLifecycleAction(rc, ilt.Transition, ilt.InstanceID)
+	if err != nil {
+		return err
+	}
+
+	if ala == nil {
+		log.WithFields(logrus.Fields{
+			"jid":        jid,
+			"transition": ilt.Transition,
+			"instance":   ilt.InstanceID,
+		}).Warn("discarding unknown lifecycle transition")
+		return nil
+	}
+
+	as := autoscaling.New(cfg.AWSAuth, cfg.AWSRegion)
+
+	cla := &autoscaling.CompleteLifecycleActionParams{
+		AutoScalingGroupName:  ala.AutoScalingGroupName,
+		LifecycleActionResult: "CONTINUE",
+		LifecycleActionToken:  ala.LifecycleActionToken,
+		LifecycleHookName:     ala.LifecycleHookName,
+	}
+
+	_, err = as.CompleteLifecycleAction(cla)
+	if err != nil {
+		return err
+	}
+
+	err = db.WipeInstanceLifecycleAction(rc, ilt.Transition, ilt.InstanceID)
+	if err != nil {
+		log.WithField("err", err).Warn("failed to clean up lifecycle action bits")
+	}
+
 	return nil
 }
