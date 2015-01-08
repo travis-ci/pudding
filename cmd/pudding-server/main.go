@@ -10,7 +10,11 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Usage = "Serving up the pudding"
+	app.Author = "Travis CI"
+	app.Email = "contact+pudding-server@travis-ci.org"
 	app.Version = lib.VersionString
+	app.Compiled = lib.GeneratedTime()
 	app.Flags = []cli.Flag{
 		lib.AddrFlag,
 		lib.RedisURLFlag,

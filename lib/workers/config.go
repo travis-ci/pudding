@@ -22,7 +22,6 @@ type Config struct {
 	MiniWorkerInterval int
 	InstanceExpiry     int
 	ImageExpiry        int
-	CloudInitExpiry    int
 
 	SlackHookPath string
 	SlackUsername string

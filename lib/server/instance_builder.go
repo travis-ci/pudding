@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -53,13 +54,13 @@ func (ib *instanceBuilder) Wipe(ID string) error {
 		return err
 	}
 
-	err = conn.Send("DEL", db.InitScriptRedisKey(ID))
+	err = conn.Send("HDEL", fmt.Sprintf("%s:init-scripts", lib.RedisNamespace), ID)
 	if err != nil {
 		conn.Send("DISCARD")
 		return err
 	}
 
-	err = conn.Send("DEL", db.AuthRedisKey(ID))
+	err = conn.Send("HDEL", fmt.Sprintf("%s:auths", lib.RedisNamespace), ID)
 	if err != nil {
 		conn.Send("DISCARD")
 		return err

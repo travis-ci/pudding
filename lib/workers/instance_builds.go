@@ -17,7 +17,6 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding/lib"
-	"github.com/travis-ci/pudding/lib/db"
 )
 
 func init() {
@@ -261,8 +260,8 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	tmpAuth := feeds.NewUUID().String()
-	webURL.User = url.UserPassword("x", tmpAuth)
+	instAuth := feeds.NewUUID().String()
+	webURL.User = url.UserPassword("x", instAuth)
 
 	webURL.Path = "/instance-launches"
 	instanceLaunchURL := webURL.String()
@@ -329,15 +328,13 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	scriptKey := db.InitScriptRedisKey(ibw.b.ID)
-	err = ibw.rc.Send("SETEX", scriptKey, ibw.cfg.CloudInitExpiry, initScriptB64)
+	err = ibw.rc.Send("HSET", fmt.Sprintf("%s:init-scripts", lib.RedisNamespace), ibw.b.ID, initScriptB64)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err
 	}
 
-	authKey := db.AuthRedisKey(ibw.b.ID)
-	err = ibw.rc.Send("SETEX", authKey, ibw.cfg.CloudInitExpiry, tmpAuth)
+	err = ibw.rc.Send("HSET", fmt.Sprintf("%s:auths", lib.RedisNamespace), ibw.b.ID, instAuth)
 	if err != nil {
 		ibw.rc.Send("DISCARD")
 		return nil, err

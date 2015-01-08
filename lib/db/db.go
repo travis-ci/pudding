@@ -11,17 +11,6 @@ import (
 	"github.com/travis-ci/pudding/lib"
 )
 
-// InitScriptRedisKey provides the key for an init script given the
-// instance build id
-func InitScriptRedisKey(instanceBuildID string) string {
-	return fmt.Sprintf("%s:init-script:%s", lib.RedisNamespace, instanceBuildID)
-}
-
-// AuthRedisKey provides the auth key given an instance build id
-func AuthRedisKey(instanceBuildID string) string {
-	return fmt.Sprintf("%s:auth:%s", lib.RedisNamespace, instanceBuildID)
-}
-
 // BuildRedisPool builds a *redis.Pool given a redis URL yey ☃
 func BuildRedisPool(redisURL string) (*redis.Pool, error) {
 	u, err := url.Parse(redisURL)

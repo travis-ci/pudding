@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/travis-ci/pudding/lib"
 )
 
 // InstanceBuildAuther is the interface used to authenticate
@@ -45,7 +47,7 @@ func (is *InitScripts) Get(ID string) (string, error) {
 	conn := is.r.Get()
 	defer conn.Close()
 
-	b64Script, err := redis.String(conn.Do("GET", InitScriptRedisKey(ID)))
+	b64Script, err := redis.String(conn.Do("HGET", fmt.Sprintf("%s:init-scripts", lib.RedisNamespace), ID))
 	if err != nil {
 		return "", err
 	}
@@ -75,12 +77,11 @@ func (is *InitScripts) HasValidAuth(ID, auth string) bool {
 	conn := is.r.Get()
 	defer conn.Close()
 
-	redisKey := AuthRedisKey(ID)
-	dbAuth, err := redis.String(conn.Do("GET", redisKey))
+	dbAuth, err := redis.String(conn.Do("HGET", fmt.Sprintf("%s:auths", lib.RedisNamespace), ID))
 	if err != nil {
 		is.log.WithFields(logrus.Fields{
 			"err": err,
-			"key": redisKey,
+			"key": ID,
 		}).Error("failed to fetch auth from database")
 		return false
 	}
