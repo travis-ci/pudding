@@ -33,6 +33,7 @@ func customVersionPrinter(c *cli.Context) {
 		c.App.Name, c.App.Version, RevisionString, c.App.Compiled.Format(generatedTimeFormat))
 }
 
+// GeneratedTime returns the parsed GeneratedString if it isn't `?`
 func GeneratedTime() time.Time {
 	if GeneratedString != "?" {
 		t, err := time.Parse(generatedTimeFormat, GeneratedString)
