@@ -443,6 +443,21 @@ func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http
 		return
 	}
 
+	slackChannel := req.FormValue("slack-channel")
+	if slackChannel == "" {
+		slackChannel = srv.slackChannel
+	}
+
+	if srv.slackHookPath != "" && slackChannel != "" {
+		srv.log.Debug("sending slack notification!")
+		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
+		err := notifier.Notify(slackChannel,
+			fmt.Sprintf("Instance `%s` is in service", t.InstanceID))
+		if err != nil {
+			srv.log.WithField("err", err).Error("failed to send slack notification")
+		}
+	}
+
 	jsonapi.Respond(w, map[string]string{"yay": t.InstanceID}, http.StatusOK)
 }
 
