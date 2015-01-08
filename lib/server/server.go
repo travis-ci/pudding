@@ -186,13 +186,13 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDTerminate)).Methods("DELETE").Name("delete-instances-by-id")
 
 	srv.r.HandleFunc(`/instance-builds`, srv.ifAuth(srv.handleInstanceBuildsCreate)).Methods("POST").Name("instance-builds-create")
-	srv.r.HandleFunc(`/instance-builds/{instance_build_id}`, srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
+	srv.r.HandleFunc(`/instance-builds/{uuid}`, srv.ifAuth(srv.handleInstanceBuildUpdateByID)).Methods("PATCH").Name("instance-builds-update-by-id")
 
-	srv.r.HandleFunc(`/instance-launches`, srv.ifAuth(srv.handleInstanceLaunchesCreate)).Methods("POST").Name("instance-launches-create")
+	srv.r.HandleFunc(`/instance-launches/{uuid}`, srv.ifAuth(srv.handleInstanceLaunchesCreate)).Methods("POST").Name("instance-launches-create")
 
-	srv.r.HandleFunc(`/instance-terminations`, srv.ifAuth(srv.handleInstanceTerminationsCreate)).Methods("POST").Name("instance-terminations-create")
+	srv.r.HandleFunc(`/instance-terminations/{uuid}`, srv.ifAuth(srv.handleInstanceTerminationsCreate)).Methods("POST").Name("instance-terminations-create")
 
-	srv.r.HandleFunc(`/init-scripts/{instance_build_id}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
+	srv.r.HandleFunc(`/init-scripts/{uuid}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
 
 	srv.r.HandleFunc(`/sns-messages`, srv.handleSNSMessages).Name("sns-messages")
 
@@ -329,7 +329,7 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	instanceBuildID, ok := vars["instance_build_id"]
+	instanceBuildID, ok := vars["uuid"]
 	if !ok {
 		jsonapi.Error(w, errMissingInstanceBuildID, http.StatusBadRequest)
 		return
@@ -452,7 +452,7 @@ func (srv *server) handleInstanceTerminationsCreate(w http.ResponseWriter, req *
 
 func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	instanceBuildID, ok := vars["instance_build_id"]
+	instanceBuildID, ok := vars["uuid"]
 	if !ok {
 		jsonapi.Error(w, errMissingInstanceBuildID, http.StatusBadRequest)
 		return

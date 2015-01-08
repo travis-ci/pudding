@@ -263,7 +263,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	instAuth := feeds.NewUUID().String()
 	webURL.User = url.UserPassword("x", instAuth)
 
-	webURL.Path = "/instance-launches"
+	webURL.Path = fmt.Sprintf("/instance-launches/%s", ibw.b.ID)
 	instanceLaunchURL := webURL.String()
 
 	webURL.Path = fmt.Sprintf("/init-scripts/%s", ibw.b.ID)

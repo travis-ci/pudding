@@ -19,7 +19,7 @@ const (
 
 var (
 	basicAuthValueRegexp = regexp.MustCompile("(?i:^basic[= ])")
-	instanceBuildRegexp  = regexp.MustCompile("(?:instance-builds|init-scripts)/(.*)")
+	uuidPathRegexp       = regexp.MustCompile("(?:instance-builds|instance-launches|instance-terminations|init-scripts)/(.*)")
 )
 
 type serverAuther struct {
@@ -53,9 +53,9 @@ func (sa *serverAuther) Authenticate(w http.ResponseWriter, req *http.Request) b
 		"vars": vars,
 	}).Debug("extracting instance build id if present")
 
-	instanceBuildID, ok := vars["instance_build_id"]
+	instanceBuildID, ok := vars["uuid"]
 	if !ok {
-		matches := instanceBuildRegexp.FindStringSubmatch(req.URL.Path)
+		matches := uuidPathRegexp.FindStringSubmatch(req.URL.Path)
 		if len(matches) > 1 {
 			instanceBuildID = matches[1]
 		}
