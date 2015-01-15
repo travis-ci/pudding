@@ -7,8 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.3",
-			"Rev": "c6a969a0de65e41b666c5dd015b3988b47cd940b"
+			"Comment": "v0.6.2-15-gd2f9ffa",
+			"Rev": "d2f9ffa1d9cf25b25191b221229effac1b6de526"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
