@@ -290,11 +290,14 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	webURL.Path = fmt.Sprintf("/instance-terminations/%s", ibw.b.ID)
 	instanceTerminateURL := webURL.String()
 
+	webURL.Path = fmt.Sprintf("/instance-builds/%s", ibw.b.ID)
+	instanceBuildURL := webURL.String()
+
 	webURL.Path = fmt.Sprintf("/init-scripts/%s", ibw.b.ID)
 	initScriptURL := webURL.String()
 
-	webURL.Path = fmt.Sprintf("/instance-builds/%s", ibw.b.ID)
-	instanceBuildURL := webURL.String()
+	webURL.Path = fmt.Sprintf("/instance-heartbeats/%s", ibw.b.ID)
+	instanceHeartbeatURL := webURL.String()
 
 	buf := &bytes.Buffer{}
 	gzw, err := gzip.NewWriterLevel(buf, gzip.BestCompression)
@@ -328,6 +331,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		InstanceBuildURL:     instanceBuildURL,
 		InstanceLaunchURL:    instanceLaunchURL,
 		InstanceTerminateURL: instanceTerminateURL,
+		InstanceHeartbeatURL: instanceHeartbeatURL,
 
 		// TODO: extract InstanceRSA key via `env` func
 		InstanceRSA: ibw.cfg.InstanceRSA,

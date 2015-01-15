@@ -16,4 +16,5 @@ type initScriptContext struct {
 	InstanceBuildURL     string
 	InstanceLaunchURL    string
 	InstanceTerminateURL string
+	InstanceHeartbeatURL string
 }

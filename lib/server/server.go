@@ -24,6 +24,7 @@ var (
 	errMissingInstanceID      = fmt.Errorf("missing instance id")
 	errKaboom                 = fmt.Errorf("simulated kaboom ʕノ•ᴥ•ʔノ ︵ ┻━┻")
 	errNotImplemented         = fmt.Errorf("not implemented nope nope nope")
+	errUnknownInstance        = fmt.Errorf("unknown instance")
 )
 
 func init() {
@@ -192,6 +193,8 @@ func (srv *server) setupRoutes() {
 
 	srv.r.HandleFunc(`/instance-terminations/{uuid}`, srv.ifAuth(srv.handleInstanceTerminationsCreate)).Methods("POST").Name("instance-terminations-create")
 
+	srv.r.HandleFunc(`/instance-heartbeats/{uuid}`, srv.ifAuth(srv.handleInstanceHeartbeat)).Methods("POST").Name("instance-heartbeats")
+
 	srv.r.HandleFunc(`/init-scripts/{uuid}`, srv.ifAuth(srv.handleInitScripts)).Methods("GET").Name("init-scripts")
 
 	srv.r.HandleFunc(`/sns-messages`, srv.handleSNSMessages).Name("sns-messages")
@@ -325,6 +328,33 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 	jsonapi.Respond(w, &lib.InstanceBuildsCollection{
 		InstanceBuilds: []*lib.InstanceBuild{build},
 	}, http.StatusAccepted)
+}
+
+func (srv *server) handleInstanceHeartbeat(w http.ResponseWriter, req *http.Request) {
+	instanceID := req.FormValue("instance-id")
+	if instanceID == "" {
+		jsonapi.Error(w, errMissingInstanceID, http.StatusBadRequest)
+		return
+	}
+
+	instances, err := srv.i.Fetch(map[string]string{"instance_id": instanceID})
+	if err != nil {
+		jsonapi.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	if len(instances) < 1 {
+		jsonapi.Error(w, errUnknownInstance, http.StatusNotFound)
+		return
+	}
+
+	instance := instances[0]
+
+	if instance.ExpectedState == "" {
+		instance.ExpectedState = "up"
+	}
+
+	jsonapi.Respond(w, map[string]*lib.Instance{"instance_heartbeats": instance}, http.StatusOK)
 }
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {

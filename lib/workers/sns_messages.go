@@ -64,7 +64,13 @@ func handleSNSNotification(rc redis.Conn, msg *lib.SNSMessage) error {
 	}
 
 	switch a.LifecycleTransition {
-	case "autoscaling:EC2_INSTANCE_LAUNCHING", "autoscaling:EC2_INSTANCE_TERMINATING":
+	case "autoscaling:EC2_INSTANCE_LAUNCHING":
+		return db.StoreInstanceLifecycleAction(rc, a)
+	case "autoscaling:EC2_INSTANCE_TERMINATING":
+		err = db.SetInstanceAttributes(rc, a.EC2InstanceID, map[string]string{"expected_state": "down"})
+		if err != nil {
+			return err
+		}
 		return db.StoreInstanceLifecycleAction(rc, a)
 	default:
 		log.WithField("action", a).Warn("unable to handle unknown lifecycle transition")

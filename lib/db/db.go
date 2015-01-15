@@ -104,6 +104,19 @@ func FetchInstances(conn redis.Conn, f map[string]string) ([]*lib.Instance, erro
 	return instances, nil
 }
 
+// SetInstanceAttributes sets key-value pair attributes on the
+// given instance's hash
+func SetInstanceAttributes(conn redis.Conn, instanceID string, attrs map[string]string) error {
+	instanceAttrsKey := fmt.Sprintf("%s:instance:%s", lib.RedisNamespace, instanceID)
+	hmSet := []interface{}{instanceAttrsKey}
+	for key, value := range attrs {
+		hmSet = append(hmSet, key, value)
+	}
+
+	_, err := conn.Do("HMSET", hmSet...)
+	return err
+}
+
 // StoreInstances stores the ec2 representation of an instance
 // given a redis conn and slice of ec2 instances, as well as an
 // expiry integer that is used to to run EXPIRE on all sets and
