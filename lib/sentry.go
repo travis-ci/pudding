@@ -5,7 +5,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
-	"github.com/travis-ci/worker/lib"
 )
 
 var (
@@ -16,8 +15,8 @@ var (
 		"logger":   "root",
 		"dyno":     os.Getenv("DYNO"),
 		"hostname": os.Getenv("HOSTNAME"),
-		"revision": lib.RevisionString,
-		"version":  lib.VersionString,
+		"revision": RevisionString,
+		"version":  VersionString,
 	}
 )
 
