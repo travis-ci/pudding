@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -44,4 +46,18 @@ func Decompress(b64gz string) (string, error) {
 	}
 
 	return string(b), nil
+}
+
+// MakeTemplateUncompressFunc creates a func suitable for use in a template
+// Execute with errors logged to the injected logger
+func MakeTemplateUncompressFunc(log *logrus.Logger) func(string) string {
+	return func(b64gz string) string {
+		s, err := Decompress(b64gz)
+		if err != nil {
+			log.WithFields(logrus.Fields{
+				"err": err,
+			}).Warn("failed to decompress string")
+		}
+		return s
+	}
 }

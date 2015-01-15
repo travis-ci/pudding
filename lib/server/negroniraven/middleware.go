@@ -16,7 +16,7 @@ type Middleware struct {
 }
 
 func NewMiddleware(sentryDSN string) (*Middleware, error) {
-	cl, err := raven.NewClient(sentryDSN, nil)
+	cl, err := raven.NewClient(sentryDSN, lib.SentryTags)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,6 @@ func NewMiddleware(sentryDSN string) (*Middleware, error) {
 func (mw *Middleware) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	defer func() {
 		var packet *raven.Packet
-		tags := map[string]string{"level": "panic"}
 
 		p := recover()
 		switch rval := p.(type) {
@@ -52,7 +51,7 @@ func (mw *Middleware) ServeHTTP(w http.ResponseWriter, req *http.Request, next h
 			packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)), raven.NewHttp(req))
 		}
 
-		lib.SendRavenPacket(packet, mw.cl, mw.log, tags)
+		lib.SendRavenPacket(packet, mw.cl, mw.log, nil)
 		panic(p)
 	}()
 

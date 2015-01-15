@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"text/template"
 	"time"
 
@@ -66,15 +67,14 @@ type instanceBuilderWorker struct {
 }
 
 func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid string, redisConn redis.Conn) (*instanceBuilderWorker, error) {
+	var err error
 	notifier := lib.NewSlackNotifier(cfg.SlackHookPath, cfg.SlackUsername, cfg.SlackIcon)
 
-	t, err := cfg.InitScriptTemplate.Clone()
-	if err != nil {
-		return nil, err
-	}
-
+	t := template.New("init-script")
 	t.Funcs(template.FuncMap{
-		"env_for": lib.MakeInstanceBuildEnvForFunc(b),
+		"env_for":    lib.MakeInstanceBuildEnvForFunc(b),
+		"env":        os.Getenv,
+		"uncompress": lib.MakeTemplateUncompressFunc(log),
 	})
 
 	t, err = t.Parse(cfg.InitScriptTemplateString)

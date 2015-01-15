@@ -5,12 +5,10 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/goamz/goamz/aws"
-	"github.com/travis-ci/pudding/lib"
 )
 
 // Main is the whole shebang
@@ -43,22 +41,8 @@ func Main(cfg *Config) {
 		InstanceStoreExpiry: cfg.InstanceExpiry,
 		ImageStoreExpiry:    cfg.ImageExpiry,
 
-		InitScriptTemplate:       template.New("init-script"),
 		InitScriptTemplateString: cfg.InitScriptTemplate,
 	}
-
-	ic.InitScriptTemplate.Funcs(template.FuncMap{
-		"env": os.Getenv,
-		"uncompress": func(b64gz string) string {
-			s, err := lib.Decompress(b64gz)
-			if err != nil {
-				log.WithFields(logrus.Fields{
-					"err": err,
-				}).Warn("failed to decompress string")
-			}
-			return s
-		},
-	})
 
 	auth, err := aws.GetAuth(cfg.AWSKey, cfg.AWSSecret, "", time.Now().UTC().Add(8766*time.Hour))
 	if err != nil {

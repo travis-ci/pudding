@@ -2,7 +2,6 @@ package workers
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
@@ -98,12 +97,7 @@ func (r *MiddlewareRaven) Do(fn func() error) error {
 
 // NewMiddlewareRaven builds a *MiddlewareRaven given a sentry DSN
 func NewMiddlewareRaven(sentryDSN string) (*MiddlewareRaven, error) {
-	cl, err := raven.NewClient(sentryDSN, map[string]string{
-		"level":    "panic",
-		"logger":   "root",
-		"dyno":     os.Getenv("DYNO"),
-		"hostname": os.Getenv("HOSTNAME"),
-	})
+	cl, err := raven.NewClient(sentryDSN, lib.SentryTags)
 	if err != nil {
 		return nil, err
 	}

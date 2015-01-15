@@ -1,8 +1,24 @@
 package lib
 
 import (
+	"os"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
+	"github.com/travis-ci/worker/lib"
+)
+
+var (
+	// SentryTags are the tags provided to each sentry client and are applied to
+	// each packet sent to sentry
+	SentryTags = map[string]string{
+		"level":    "panic",
+		"logger":   "root",
+		"dyno":     os.Getenv("DYNO"),
+		"hostname": os.Getenv("HOSTNAME"),
+		"revision": lib.RevisionString,
+		"version":  lib.VersionString,
+	}
 )
 
 // SendRavenPacket encapsulates the raven packet send, plus logging
