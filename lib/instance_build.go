@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gorilla/feeds"
@@ -94,4 +96,31 @@ func (b *InstanceBuild) Validate() []error {
 // InstanceIDWithoutPrefix returns the InstanceID without "i-"
 func (b *InstanceBuild) InstanceIDWithoutPrefix() string {
 	return strings.TrimPrefix(b.InstanceID, "i-")
+}
+
+// MakeInstanceBuildEnvForFunc creates a function that provides a func suitable for template.Funcs that looks up an env var *for*
+// something or somethings, e.g.: {{ env_for `API_HOSTNAME` `site` `env` }} => os.Getenv(`API_HOSTNAME_ORG_PROD`)
+func MakeInstanceBuildEnvForFunc(b *InstanceBuild) func(string, ...string) string {
+	return func(key string, filters ...string) string {
+		for _, filter := range filters {
+			v := ""
+			switch filter {
+			case "site":
+				v = b.Site
+			case "env":
+				v = b.Env
+			case "queue":
+				v = b.Queue
+			case "role":
+				v = b.Role
+			}
+
+			if v == "" {
+				continue
+			}
+
+			key = fmt.Sprintf("%s_%s", key, strings.ToUpper(v))
+		}
+		return os.Getenv(key)
+	}
 }

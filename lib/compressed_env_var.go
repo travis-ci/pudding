@@ -23,7 +23,12 @@ func GetCompressedEnvVar(key string) (string, error) {
 		return "", ErrMissingEnvVar
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(value)
+	return Decompress(value)
+}
+
+// Decompress takes a string and base64-decodes and gunzips it
+func Decompress(b64gz string) (string, error) {
+	decoded, err := base64.StdEncoding.DecodeString(b64gz)
 	if err != nil {
 		return "", err
 	}

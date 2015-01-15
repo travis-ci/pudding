@@ -36,5 +36,6 @@ type internalConfig struct {
 	InstanceStoreExpiry int
 	ImageStoreExpiry    int
 
-	InitScriptTemplate *template.Template
+	InitScriptTemplate       *template.Template
+	InitScriptTemplateString string
 }

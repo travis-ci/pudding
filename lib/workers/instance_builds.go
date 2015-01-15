@@ -38,7 +38,14 @@ func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 
 	b := buildPayload.InstanceBuild()
 	b.Hydrate()
-	err = newInstanceBuilderWorker(b, cfg, msg.Jid(), workers.Config.Pool.Get()).Build()
+
+	ibw, err := newInstanceBuilderWorker(b, cfg, msg.Jid(), workers.Config.Pool.Get())
+	if err != nil {
+		log.WithField("err", err).Panic("failed to make an instance build worker")
+	}
+
+	ibw.Build()
+
 	if err != nil {
 		log.WithField("err", err).Panic("instance build failed")
 	}
@@ -58,8 +65,22 @@ type instanceBuilderWorker struct {
 	t      *template.Template
 }
 
-func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid string, redisConn redis.Conn) *instanceBuilderWorker {
+func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid string, redisConn redis.Conn) (*instanceBuilderWorker, error) {
 	notifier := lib.NewSlackNotifier(cfg.SlackHookPath, cfg.SlackUsername, cfg.SlackIcon)
+
+	t, err := cfg.InitScriptTemplate.Clone()
+	if err != nil {
+		return nil, err
+	}
+
+	t.Funcs(template.FuncMap{
+		"env_for": lib.MakeInstanceBuildEnvForFunc(b),
+	})
+
+	t, err = t.Parse(cfg.InitScriptTemplateString)
+	if err != nil {
+		return nil, err
+	}
 
 	ibw := &instanceBuilderWorker{
 		rc:  redisConn,
@@ -68,11 +89,11 @@ func newInstanceBuilderWorker(b *lib.InstanceBuild, cfg *internalConfig, jid str
 		n:   []lib.Notifier{notifier},
 		b:   b,
 		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
-		t:   cfg.InitScriptTemplate,
+		t:   t,
 	}
 
 	ibw.sgName = fmt.Sprintf("pudding-%d-%p", time.Now().UTC().Unix(), ibw)
-	return ibw
+	return ibw, nil
 }
 
 func (ibw *instanceBuilderWorker) Build() error {
@@ -298,14 +319,18 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		Role:              ibw.b.Role,
 		AMI:               ibw.b.AMI,
 		Count:             ibw.b.Count,
-		InstanceType:      ibw.b.InstanceType,
-		InstanceRSA:       ibw.cfg.InstanceRSA,
 		SlackChannel:      ibw.b.SlackChannel,
-		PapertrailSite:    yml.PapertrailSite,
-		InstanceYML:       ymlString,
+		InstanceType:      ibw.b.InstanceType,
 		InstanceBuildID:   ibw.b.ID,
 		InstanceBuildURL:  instanceBuildURL,
 		InstanceLaunchURL: instanceLaunchURL,
+
+		// TODO: extract InstanceRSA key via `env` func
+		InstanceRSA: ibw.cfg.InstanceRSA,
+		// TODO: extract PapertrailSite key via `instance_env` func
+		PapertrailSite: yml.PapertrailSite,
+		// TODO: extract InstanceYML key via an `instance_env` func
+		InstanceYML: ymlString,
 	})
 	if err != nil {
 		return nil, err
