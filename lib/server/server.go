@@ -427,6 +427,14 @@ func (srv *server) handleAutoscalingGroupBuildsCreate(w http.ResponseWriter, req
 }
 
 func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http.Request) {
+	srv.handleInstanceLifecycleTransition("launching", w, req)
+}
+
+func (srv *server) handleInstanceTerminationsCreate(w http.ResponseWriter, req *http.Request) {
+	srv.handleInstanceLifecycleTransition("terminating", w, req)
+}
+
+func (srv *server) handleInstanceLifecycleTransition(transition string, w http.ResponseWriter, req *http.Request) {
 	t := &lib.InstanceLifecycleTransition{}
 
 	err := json.NewDecoder(req.Body).Decode(t)
@@ -435,7 +443,7 @@ func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http
 		return
 	}
 
-	t.Transition = "launching"
+	t.Transition = transition
 
 	_, err = srv.iltHandler.Handle(t)
 	if err != nil {
@@ -451,18 +459,20 @@ func (srv *server) handleInstanceLaunchesCreate(w http.ResponseWriter, req *http
 	if srv.slackHookPath != "" && slackChannel != "" {
 		srv.log.Debug("sending slack notification!")
 		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
-		err := notifier.Notify(slackChannel,
-			fmt.Sprintf("Instance `%s` is in service", t.InstanceID))
+		msg := ""
+		switch transition {
+		case "terminating":
+			msg = fmt.Sprintf("Instance `%s` is out of service :arrow_down:", t.InstanceID)
+		case "launching":
+			msg = fmt.Sprintf("Instance `%s` is in service :arrow_up:", t.InstanceID)
+		}
+		err := notifier.Notify(slackChannel, msg)
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}
 	}
 
 	jsonapi.Respond(w, map[string]string{"yay": t.InstanceID}, http.StatusOK)
-}
-
-func (srv *server) handleInstanceTerminationsCreate(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
 }
 
 func (srv *server) handleInitScripts(w http.ResponseWriter, req *http.Request) {
