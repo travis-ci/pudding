@@ -266,6 +266,9 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	webURL.Path = fmt.Sprintf("/instance-launches/%s", ibw.b.ID)
 	instanceLaunchURL := webURL.String()
 
+	webURL.Path = fmt.Sprintf("/instance-terminations/%s", ibw.b.ID)
+	instanceTerminateURL := webURL.String()
+
 	webURL.Path = fmt.Sprintf("/init-scripts/%s", ibw.b.ID)
 	initScriptURL := webURL.String()
 
@@ -292,20 +295,21 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 	}
 
 	err = ibw.t.Execute(w, &initScriptContext{
-		Env:               ibw.b.Env,
-		Site:              ibw.b.Site,
-		Queue:             ibw.b.Queue,
-		Role:              ibw.b.Role,
-		AMI:               ibw.b.AMI,
-		Count:             ibw.b.Count,
-		InstanceType:      ibw.b.InstanceType,
-		InstanceRSA:       ibw.cfg.InstanceRSA,
-		SlackChannel:      ibw.b.SlackChannel,
-		PapertrailSite:    yml.PapertrailSite,
-		InstanceYML:       ymlString,
-		InstanceBuildID:   ibw.b.ID,
-		InstanceBuildURL:  instanceBuildURL,
-		InstanceLaunchURL: instanceLaunchURL,
+		Env:                  ibw.b.Env,
+		Site:                 ibw.b.Site,
+		Queue:                ibw.b.Queue,
+		Role:                 ibw.b.Role,
+		AMI:                  ibw.b.AMI,
+		Count:                ibw.b.Count,
+		InstanceType:         ibw.b.InstanceType,
+		InstanceRSA:          ibw.cfg.InstanceRSA,
+		SlackChannel:         ibw.b.SlackChannel,
+		PapertrailSite:       yml.PapertrailSite,
+		InstanceYML:          ymlString,
+		InstanceBuildID:      ibw.b.ID,
+		InstanceBuildURL:     instanceBuildURL,
+		InstanceLaunchURL:    instanceLaunchURL,
+		InstanceTerminateURL: instanceTerminateURL,
 	})
 	if err != nil {
 		return nil, err
