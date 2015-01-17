@@ -179,9 +179,10 @@ func BuildInstanceSpecificYML(site, env, rawYML, queue string, count int) (*Inst
 			Librato:           librato,
 			LanguageMappings: map[string]string{
 				"clojure": "jvm",
-				"scala":   "jvm",
+				"elixir":  "erlang",
 				"groovy":  "jvm",
 				"java":    "jvm",
+				"scala":   "jvm",
 			},
 			CacheOptions: cache,
 			Timeouts: &timeoutsConfig{
