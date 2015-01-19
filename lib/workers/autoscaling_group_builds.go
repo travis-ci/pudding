@@ -196,7 +196,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscali
 	}
 
 	asg := &autoscaling.CreateAutoScalingGroupParams{
-		AutoScalingGroupName: b.Name,
+		AutoScalingGroupName: asgbw.name,
 		InstanceId:           b.InstanceID,
 		MinSize:              b.MinSize,
 		MaxSize:              b.MaxSize,
@@ -216,7 +216,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscali
 func (asgbw *autoscalingGroupBuilderWorker) createScaleOutPolicy() (string, error) {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
-		"name": asgbw.b.Name,
+		"name": asgbw.name,
 	}).Debug("creating scale out policy")
 
 	sop := &autoscaling.PutScalingPolicyParams{
@@ -238,7 +238,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleOutPolicy() (string, erro
 func (asgbw *autoscalingGroupBuilderWorker) createScaleInPolicy() (string, error) {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
-		"name": asgbw.b.Name,
+		"name": asgbw.name,
 	}).Debug("creating scale in policy")
 
 	sip := &autoscaling.PutScalingPolicyParams{
@@ -260,7 +260,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleInPolicy() (string, error
 func (asgbw *autoscalingGroupBuilderWorker) createScaleOutMetricAlarm() error {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
-		"name": asgbw.b.Name,
+		"name": asgbw.name,
 	}).Debug("creating scale out metric alarm")
 
 	ma := &cloudwatch.MetricAlarm{
@@ -292,7 +292,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleOutMetricAlarm() error {
 func (asgbw *autoscalingGroupBuilderWorker) createScaleInMetricAlarm() error {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
-		"name": asgbw.b.Name,
+		"name": asgbw.name,
 	}).Debug("creating scale in metric alarm")
 
 	ma := &cloudwatch.MetricAlarm{
@@ -324,7 +324,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleInMetricAlarm() error {
 func (asgbw *autoscalingGroupBuilderWorker) createLaunchingLifecycleHook() error {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
-		"name": asgbw.b.Name,
+		"name": asgbw.name,
 	}).Debug("creating launching lifecycle hook")
 
 	llch := &autoscaling.PutLifecycleHookParams{
@@ -342,7 +342,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createLaunchingLifecycleHook() error
 func (asgbw *autoscalingGroupBuilderWorker) createTerminatingLifecycleHook() error {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
-		"name": asgbw.b.Name,
+		"name": asgbw.name,
 	}).Debug("creating terminating lifecycle hook")
 
 	tlch := &autoscaling.PutLifecycleHookParams{

@@ -20,8 +20,10 @@ type AutoscalingGroupBuildsCollection struct {
 // AutoscalingGroupBuild contains everything needed by a background worker
 // to build the autoscaling group
 type AutoscalingGroupBuild struct {
+	// Name is generated via the NameTemplate and will be overridden at creation time
+	Name string `json:"name" redis:"name"`
+
 	ID              string `json:"id,omitempty"`
-	Name            string `json:"name" redis:"name"`
 	InstanceID      string `json:"instance_id,omitempty"`
 	RoleARN         string `json:"role_arn,omitempty"`
 	TopicARN        string `json:"topic_arn,omitempty"`
