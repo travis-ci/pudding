@@ -354,7 +354,9 @@ func (srv *server) handleInstanceHeartbeat(w http.ResponseWriter, req *http.Requ
 		instance.ExpectedState = "up"
 	}
 
-	jsonapi.Respond(w, map[string]*lib.Instance{"instance_heartbeats": instance}, http.StatusOK)
+	// XXX: the response format isn't really jsonapi, but I don't want the remote to have specific knowledge of
+	// "instances" (grumble)
+	jsonapi.Respond(w, instance, http.StatusOK)
 }
 
 func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *http.Request) {
