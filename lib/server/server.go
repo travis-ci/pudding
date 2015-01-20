@@ -399,12 +399,6 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		}).Debug("slack fields empty?")
 	}
 
-	err := srv.builder.Wipe(instanceBuildID)
-	if err != nil {
-		jsonapi.Error(w, err, http.StatusInternalServerError)
-		return
-	}
-
 	jsonapi.Respond(w, map[string]string{"sure": "why not"}, http.StatusOK)
 }
 

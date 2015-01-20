@@ -77,11 +77,13 @@ func (is *InitScripts) HasValidAuth(ID, auth string) bool {
 	conn := is.r.Get()
 	defer conn.Close()
 
-	dbAuth, err := redis.String(conn.Do("HGET", fmt.Sprintf("%s:auths", lib.RedisNamespace), ID))
+	hKey := fmt.Sprintf("%s:auths", lib.RedisNamespace)
+	dbAuth, err := redis.String(conn.Do("HGET", hKey, ID))
 	if err != nil {
 		is.log.WithFields(logrus.Fields{
-			"err": err,
-			"key": ID,
+			"err":  err,
+			"hash": hKey,
+			"key":  ID,
 		}).Error("failed to fetch auth from database")
 		return false
 	}

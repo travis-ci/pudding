@@ -63,6 +63,11 @@ func handleSNSNotification(rc redis.Conn, msg *lib.SNSMessage) error {
 		return nil
 	}
 
+	if a.Event == "autoscaling:TEST_NOTIFICATION" {
+		log.WithField("event", a.Event).Info("ignoring")
+		return nil
+	}
+
 	switch a.LifecycleTransition {
 	case "autoscaling:EC2_INSTANCE_LAUNCHING":
 		return db.StoreInstanceLifecycleAction(rc, a)

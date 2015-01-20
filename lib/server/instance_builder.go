@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -42,29 +41,4 @@ func (ib *instanceBuilder) Build(b *lib.InstanceBuild) (*lib.InstanceBuild, erro
 
 	err = db.EnqueueJob(conn, ib.QueueName, string(buildPayloadJSON))
 	return b, err
-}
-
-func (ib *instanceBuilder) Wipe(ID string) error {
-	conn := ib.r.Get()
-	defer conn.Close()
-
-	err := conn.Send("MULTI")
-	if err != nil {
-		conn.Send("DISCARD")
-		return err
-	}
-
-	err = conn.Send("HDEL", fmt.Sprintf("%s:init-scripts", lib.RedisNamespace), ID)
-	if err != nil {
-		conn.Send("DISCARD")
-		return err
-	}
-
-	err = conn.Send("HDEL", fmt.Sprintf("%s:auths", lib.RedisNamespace), ID)
-	if err != nil {
-		conn.Send("DISCARD")
-		return err
-	}
-
-	return nil
 }

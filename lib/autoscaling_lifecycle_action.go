@@ -13,6 +13,7 @@ package lib
 //   "LifecycleHookName":"name string"
 // }
 type AutoscalingLifecycleAction struct {
+	Event                string
 	AutoScalingGroupName string `redis:"auto_scaling_group_name"`
 	Service              string
 	Time                 string

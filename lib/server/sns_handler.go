@@ -28,6 +28,7 @@ func (sh *snsHandler) Handle(msg *lib.SNSMessage) (*lib.SNSMessage, error) {
 	messagePayload := &lib.SNSMessagePayload{
 		Args:       []*lib.SNSMessage{msg},
 		Queue:      sh.QueueName,
+		JID:        msg.MessageID,
 		Retry:      true,
 		EnqueuedAt: float64(time.Now().UTC().Unix()),
 	}

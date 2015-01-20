@@ -1,0 +1,12 @@
+{
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricAlarm",
+        "iam:PassRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
