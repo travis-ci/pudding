@@ -30,7 +30,7 @@ func (asgb *autoscalingGroupBuilder) Build(b *lib.AutoscalingGroupBuild) (*lib.A
 		Args:       []*lib.AutoscalingGroupBuild{b},
 		Queue:      asgb.QueueName,
 		JID:        b.ID,
-		Retry:      true,
+		Retry:      false,
 		EnqueuedAt: float64(time.Now().UTC().Unix()),
 	}
 
