@@ -33,14 +33,15 @@ case "$1" in
       -X POST \
       -d "{
             \"autoscaling_group_builds\": {
-              \"site\": \"org\",
-              \"env\": \"test\",
-              \"queue\": \"docker\",
-              \"role\": \"worker\",
+              \"site\": \"${SITE:-org}\",
+              \"env\": \"${ENV:-staging}\",
+              \"queue\": \"${QUEUE:-docker}\",
+              \"role\": \"${ROLE:-worker}\",
               \"instance_id\": \"$2\",
               \"role_arn\": \"$3\",
               \"topic_arn\": \"$4\",
-              \"instance_type\": \"c3.4xlarge\"
+              \"instance_type\": \"${INST:-c3.2xlarge}\",
+              \"slack_channel\": \"${SLACK_CHANNEL:-#general}\"
             }
           }" \
       ${HOST}:${PORT}/autoscaling-group-builds
