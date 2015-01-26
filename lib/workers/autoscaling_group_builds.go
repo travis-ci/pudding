@@ -174,24 +174,19 @@ func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscali
 
 	tags := []autoscaling.Tag{
 		autoscaling.Tag{
-			Key:   "role",
-			Value: b.Role,
+			Key: "role", Value: b.Role, PropagateAtLaunch: true,
 		},
 		autoscaling.Tag{
-			Key:   "queue",
-			Value: b.Queue,
+			Key: "queue", Value: b.Queue, PropagateAtLaunch: true,
 		},
 		autoscaling.Tag{
-			Key:   "site",
-			Value: b.Site,
+			Key: "site", Value: b.Site, PropagateAtLaunch: true,
 		},
 		autoscaling.Tag{
-			Key:   "env",
-			Value: b.Env,
+			Key: "env", Value: b.Env, PropagateAtLaunch: true,
 		},
 		autoscaling.Tag{
-			Key:   "Name",
-			Value: asgbw.name,
+			Key: "Name", Value: asgbw.name, PropagateAtLaunch: true,
 		},
 	}
 
