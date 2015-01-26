@@ -53,6 +53,12 @@ func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid s
 
 	ala, err := db.FetchInstanceLifecycleAction(rc, ilt.Transition, ilt.InstanceID)
 	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":        err,
+			"jid":        jid,
+			"transition": ilt.Transition,
+			"instance":   ilt.InstanceID,
+		}).Error("failed to fetch instance lifecycle action")
 		return err
 	}
 
@@ -76,6 +82,12 @@ func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid s
 
 	_, err = as.CompleteLifecycleAction(cla)
 	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err":        err,
+			"jid":        jid,
+			"transition": ilt.Transition,
+			"instance":   ilt.InstanceID,
+		}).Error("failed to complete lifecycle action")
 		return err
 	}
 
