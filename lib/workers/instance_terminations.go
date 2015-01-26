@@ -32,7 +32,7 @@ func instanceTerminationsMain(cfg *internalConfig, msg *workers.Msg) {
 	err = newInstanceTerminatorWorker(buildPayload.InstanceID, buildPayload.SlackChannel,
 		cfg, msg.Jid(), workers.Config.Pool.Get()).Terminate()
 	if err != nil {
-		log.WithField("err", err).Panic("instance build failed")
+		log.WithField("err", err).Panic("instance termination failed")
 	}
 }
 
