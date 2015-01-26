@@ -44,13 +44,6 @@ func instanceLifecycleTransitionsMain(cfg *internalConfig, msg *workers.Msg) {
 }
 
 func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid string, ilt *lib.InstanceLifecycleTransition) error {
-	// if instance transition set contains instance id
-	//   complete lifecycle action with stored action token and hook name
-	//   remove instance id from set
-	//   remove instance id hash
-	// else
-	//   short circuit with log message
-
 	ala, err := db.FetchInstanceLifecycleAction(rc, ilt.Transition, ilt.InstanceID)
 	if err != nil {
 		log.WithFields(logrus.Fields{

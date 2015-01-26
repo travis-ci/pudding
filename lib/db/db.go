@@ -388,24 +388,13 @@ func FetchInstanceLifecycleAction(conn redis.Conn, transition, instanceID string
 		return nil, nil
 	}
 
-	err = conn.Send("MULTI")
-	if err != nil {
-		return nil, err
-	}
-
 	attrs, err := redis.Values(conn.Do("HGETALL", fmt.Sprintf("%s:instance_%s:%s", lib.RedisNamespace, transition, instanceID)))
 	if err != nil {
-		conn.Do("DISCARD")
 		return nil, err
 	}
 
 	ala := &lib.AutoscalingLifecycleAction{}
 	err = redis.ScanStruct(attrs, ala)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = conn.Do("EXEC")
 	return ala, err
 }
 
