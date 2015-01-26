@@ -272,12 +272,12 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleOutMetricAlarm() error {
 				ARN: asgbw.sopARN,
 			},
 		},
-		Dimensions: []cloudwatch.Dimension{
-			cloudwatch.Dimension{
-				Name:  "AutoScalingGroupName",
-				Value: asgbw.name,
-			},
-		},
+		//		Dimensions: []cloudwatch.Dimension{
+		//			cloudwatch.Dimension{
+		//				Name:  "AutoScalingGroupName",
+		//				Value: asgbw.name,
+		//			},
+		//		},
 	}
 
 	_, err := asgbw.cw.PutMetricAlarm(ma)
@@ -304,12 +304,12 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleInMetricAlarm() error {
 				ARN: asgbw.sipARN,
 			},
 		},
-		Dimensions: []cloudwatch.Dimension{
-			cloudwatch.Dimension{
-				Name:  "AutoScalingGroupName",
-				Value: asgbw.name,
-			},
-		},
+		//		Dimensions: []cloudwatch.Dimension{
+		//			cloudwatch.Dimension{
+		//				Name:  "AutoScalingGroupName",
+		//				Value: asgbw.name,
+		//			},
+		//		},
 	}
 
 	_, err := asgbw.cw.PutMetricAlarm(ma)
