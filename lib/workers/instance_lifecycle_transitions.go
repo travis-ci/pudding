@@ -73,6 +73,13 @@ func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid s
 		LifecycleHookName:     ala.LifecycleHookName,
 	}
 
+	log.WithFields(logrus.Fields{
+		"jid":        jid,
+		"transition": ilt.Transition,
+		"instance":   ilt.InstanceID,
+		"params":     fmt.Sprintf("%#v", cla),
+	}).Info("completing lifecycle action")
+
 	_, err = as.CompleteLifecycleAction(cla)
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -80,6 +87,7 @@ func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid s
 			"jid":        jid,
 			"transition": ilt.Transition,
 			"instance":   ilt.InstanceID,
+			"params":     fmt.Sprintf("%#v", cla),
 		}).Error("failed to complete lifecycle action")
 		return err
 	}
