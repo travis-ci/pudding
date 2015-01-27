@@ -28,6 +28,7 @@ func (th *instanceLifecycleTransitionHandler) Handle(t *lib.InstanceLifecycleTra
 	messagePayload := &lib.InstanceLifecycleTransitionPayload{
 		Args:       []*lib.InstanceLifecycleTransition{t},
 		Queue:      th.QueueName,
+		JID:        t.ID,
 		Retry:      true,
 		EnqueuedAt: float64(time.Now().UTC().Unix()),
 	}

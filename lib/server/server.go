@@ -470,6 +470,7 @@ func (srv *server) handleInstanceLifecycleTransition(transition string, w http.R
 	}
 
 	t.Transition = transition
+	t.ID = feeds.NewUUID().String()
 
 	_, err = srv.iltHandler.Handle(t)
 	if err != nil {
