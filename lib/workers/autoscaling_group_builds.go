@@ -324,6 +324,8 @@ func (asgbw *autoscalingGroupBuilderWorker) createLaunchingLifecycleHook() error
 
 	llch := &autoscaling.PutLifecycleHookParams{
 		AutoScalingGroupName:  asgbw.name,
+		DefaultResult:         asgbw.b.LifecycleDefaultResult,
+		HeartbeatTimeout:      asgbw.b.LifecycleHeartbeatTimeout,
 		LifecycleHookName:     fmt.Sprintf("%s-lch-launching", asgbw.name),
 		LifecycleTransition:   "autoscaling:EC2_INSTANCE_LAUNCHING",
 		NotificationTargetARN: asgbw.b.TopicARN,
@@ -342,6 +344,8 @@ func (asgbw *autoscalingGroupBuilderWorker) createTerminatingLifecycleHook() err
 
 	tlch := &autoscaling.PutLifecycleHookParams{
 		AutoScalingGroupName:  asgbw.name,
+		DefaultResult:         asgbw.b.LifecycleDefaultResult,
+		HeartbeatTimeout:      asgbw.b.LifecycleHeartbeatTimeout,
 		LifecycleHookName:     fmt.Sprintf("%s-lch-terminating", asgbw.name),
 		LifecycleTransition:   "autoscaling:EC2_INSTANCE_TERMINATING",
 		NotificationTargetARN: asgbw.b.TopicARN,

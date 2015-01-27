@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/gorilla/feeds"
 	"github.com/travis-ci/pudding/lib"
 	"github.com/travis-ci/pudding/lib/db"
 )
@@ -26,6 +27,8 @@ func (it *instanceTerminator) Terminate(instanceID, slackChannel string) error {
 	defer conn.Close()
 
 	buildPayload := &lib.InstanceTerminationPayload{
+		JID:          feeds.NewUUID().String(),
+		Retry:        true,
 		InstanceID:   instanceID,
 		SlackChannel: slackChannel,
 	}

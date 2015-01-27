@@ -38,6 +38,9 @@ type AutoscalingGroupBuild struct {
 	SlackChannel    string `json:"slack_channel"`
 	Timestamp       int64  `json:"timestamp"`
 
+	LifecycleDefaultResult    string `json:"lifecycle_default_result,omitempty"`
+	LifecycleHeartbeatTimeout int    `json:"lifecycle_heartbeat_timeout,omitempty"`
+
 	ScaleOutCooldown                 int     `json:"scale_out_cooldown,omitempty"`
 	ScaleOutAdjustment               int     `json:"scale_out_adjustment,omitempty"`
 	ScaleOutMetricName               string  `json:"scale_out_metric_name,omitempty"`
@@ -73,6 +76,14 @@ func (b *AutoscalingGroupBuild) Hydrate() {
 
 	if b.Timestamp == 0 {
 		b.Timestamp = time.Now().UTC().Unix()
+	}
+
+	if b.LifecycleDefaultResult == "" {
+		b.LifecycleDefaultResult = "CONTINUE"
+	}
+
+	if b.LifecycleHeartbeatTimeout == 0 {
+		b.LifecycleHeartbeatTimeout = 900
 	}
 
 	if b.ScaleOutCooldown == 0 {
