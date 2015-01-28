@@ -196,6 +196,7 @@ func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscali
 		MinSize:              b.MinSize,
 		MaxSize:              b.MaxSize,
 		DesiredCapacity:      b.DesiredCapacity,
+		DefaultCooldown:      b.DefaultCooldown,
 		Tags:                 tags,
 	}
 

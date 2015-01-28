@@ -35,6 +35,7 @@ type AutoscalingGroupBuild struct {
 	MinSize         int    `json:"min_size" redis:"min_size"`
 	MaxSize         int    `json:"max_size" redis:"max_size"`
 	DesiredCapacity int    `json:"desired_capacity" redis:"desired_capacity"`
+	DefaultCooldown int    `json:"default_cooldown" redis"default_cooldown"`
 	SlackChannel    string `json:"slack_channel"`
 	Timestamp       int64  `json:"timestamp"`
 
@@ -76,6 +77,10 @@ func (b *AutoscalingGroupBuild) Hydrate() {
 
 	if b.Timestamp == 0 {
 		b.Timestamp = time.Now().UTC().Unix()
+	}
+
+	if b.DefaultCooldown == 0 {
+		b.DefaultCooldown = 300
 	}
 
 	if b.LifecycleDefaultResult == "" {
