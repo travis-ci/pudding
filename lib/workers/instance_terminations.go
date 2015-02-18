@@ -66,16 +66,25 @@ func (itw *instanceTerminatorWorker) Terminate() error {
 		return err
 	}
 
+	instances, _ := db.FetchInstances(itw.rc, map[string]string{"instance_id": itw.iid})
+
 	err = db.RemoveInstances(itw.rc, []string{itw.iid})
-	if err != nil {
+	if err != nil && instances != nil && len(instances) > 0 {
+		inst := instances[0]
 		for _, notifier := range itw.n {
-			notifier.Notify(itw.nc, fmt.Sprintf("Failed to terminate *%s* :scream_cat: _(%s)_", itw.iid, err))
+			notifier.Notify(itw.nc,
+				fmt.Sprintf("Failed to terminate *%s* :scream_cat: _(%s)_ %s",
+					itw.iid, err, lib.NotificationInstanceSummary(inst)))
 		}
 		return err
 	}
 
-	for _, notifier := range itw.n {
-		notifier.Notify(itw.nc, fmt.Sprintf("Terminating *%s* :boom:", itw.iid))
+	if instances != nil && len(instances) > 0 {
+		inst := instances[0]
+		for _, notifier := range itw.n {
+			notifier.Notify(itw.nc, fmt.Sprintf("Terminating *%s* :boom: %s",
+				itw.iid, lib.NotificationInstanceSummary(inst)))
+		}
 	}
 	return nil
 }

@@ -12,6 +12,10 @@ var (
 	errBadSlackResponse = fmt.Errorf("received a response status > 299 from slack")
 )
 
+const (
+	instSummaryFmt = "_(site=*%s* env=*%s* queue=*%s* role=*%s*)_"
+)
+
 // SlackNotifier notifies on slack omgeeeee! ☃
 type SlackNotifier struct {
 	hookPath, username, icon string
@@ -62,4 +66,24 @@ func (sn *SlackNotifier) Notify(channel, msg string) error {
 	}
 
 	return nil
+}
+
+// NotificationInstanceSummary returns either an empty string or a summary of relevant bits for use in a
+// notification
+func NotificationInstanceSummary(inst *Instance) string {
+	if inst.Site == "" && inst.Env == "" && inst.Queue == "" && inst.Role == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(instSummaryFmt, inst.Site, inst.Env, inst.Queue, inst.Role)
+}
+
+// NotificationInstanceBuildSummary returns either an empty string or a summary of relevant bits for use in a
+// notification
+func NotificationInstanceBuildSummary(ib *InstanceBuild) string {
+	if ib.Site == "" && ib.Env == "" && ib.Queue == "" && ib.Role == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(instSummaryFmt, ib.Site, ib.Env, ib.Queue, ib.Role)
 }

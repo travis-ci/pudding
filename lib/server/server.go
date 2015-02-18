@@ -402,8 +402,8 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 
 		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
 		err := notifier.Notify(slackChannel,
-			fmt.Sprintf("Finished starting instance `%s` for instance build *%s* _(site=%s env=%s queue=%s role=%s)_",
-				instanceID, instanceBuildID, inst.Site, inst.Env, inst.Queue, inst.Role))
+			fmt.Sprintf("Finished starting instance `%s` for instance build *%s* %s",
+				instanceID, instanceBuildID, lib.NotificationInstanceSummary(inst)))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}
@@ -511,8 +511,8 @@ func (srv *server) handleInstanceLifecycleTransition(transition string, w http.R
 			stateMsg = stateInServiceMsg
 		}
 		if stateMsg != "" {
-			err := notifier.Notify(slackChannel, fmt.Sprintf("Instance `%s` is %s _(site=%s env=%s queue=%s role=%s)_",
-				t.InstanceID, stateMsg, inst.Site, inst.Env, inst.Queue, inst.Role))
+			err := notifier.Notify(slackChannel, fmt.Sprintf("Instance `%s` is %s %s",
+				t.InstanceID, stateMsg, lib.NotificationInstanceSummary(inst)))
 			if err != nil {
 				srv.log.WithField("err", err).Error("failed to send slack notification")
 			}
