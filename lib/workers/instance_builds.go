@@ -384,6 +384,7 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 func (ibw *instanceBuilderWorker) notifyInstanceLaunched() {
 	for _, notifier := range ibw.n {
 		notifier.Notify(ibw.b.SlackChannel,
-			fmt.Sprintf("Started instance `%s` for instance build *%s*", ibw.i.InstanceId, ibw.b.ID))
+			fmt.Sprintf("Started instance `%s` for instance build *%s* _(site=%s env=%s queue=%s role=%s)_",
+				ibw.i.InstanceId, ibw.b.ID, ibw.b.Site, ibw.b.Env, ibw.b.Queue, ibw.b.Role))
 	}
 }
