@@ -27,6 +27,11 @@ var (
 	errUnknownInstance        = fmt.Errorf("unknown instance")
 )
 
+const (
+	stateOutOfServiceMsg = "is out of service :arrow_down:"
+	stateInServiceMsg    = "is in service :arrow_up:"
+)
+
 func init() {
 	expvarplus.AddToEnvWhitelist("BUILDPACK_URL",
 		"DEBUG",
@@ -379,24 +384,33 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 		slackChannel = srv.slackChannel
 	}
 
-	// FIXME: extract this bit for other notification types?
-	if srv.slackHookPath != "" && slackChannel != "" {
-		instanceID := req.FormValue("instance-id")
-		if instanceID == "" {
-			instanceID = "?wat?"
-		}
+	instanceID := req.FormValue("instance-id")
+	instances, err := srv.i.Fetch(map[string]string{"instance_id": instanceID})
+	if err != nil {
+		srv.log.WithFields(logrus.Fields{
+			"err":         err,
+			"instance_id": instanceID,
+		}).Error("failed to fetch instance details")
+		jsonapi.Error(w, errUnknownInstance, http.StatusNotFound)
+		return
+	}
 
+	// FIXME: extract this bit for other notification types?
+	if srv.slackHookPath != "" && slackChannel != "" && len(instances) > 0 {
 		srv.log.Debug("sending slack notification!")
+		inst := instances[0]
+
 		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
 		err := notifier.Notify(slackChannel,
-			fmt.Sprintf("Finished starting instance `%s` for instance build *%s*", instanceID, instanceBuildID))
+			fmt.Sprintf("Finished starting instance `%s` for instance build *%s* _(site=%s env=%s queue=%s role=%s)_",
+				instanceID, instanceBuildID, inst.Site, inst.Env, inst.Queue, inst.Role))
 		if err != nil {
 			srv.log.WithField("err", err).Error("failed to send slack notification")
 		}
 	} else {
 		srv.log.WithFields(logrus.Fields{
 			"slack_hook_path": srv.slackHookPath,
-		}).Debug("slack fields empty?")
+		}).Debug("slack fields empty or no matching instances?")
 	}
 
 	jsonapi.Respond(w, map[string]string{"sure": "why not"}, http.StatusOK)
@@ -483,19 +497,25 @@ func (srv *server) handleInstanceLifecycleTransition(transition string, w http.R
 		slackChannel = srv.slackChannel
 	}
 
-	if srv.slackHookPath != "" && slackChannel != "" {
+	instances, _ := srv.i.Fetch(map[string]string{"instance_id": t.InstanceID})
+
+	if srv.slackHookPath != "" && slackChannel != "" && instances != nil && len(instances) > 0 {
 		srv.log.Debug("sending slack notification!")
+		inst := instances[0]
 		notifier := lib.NewSlackNotifier(srv.slackHookPath, srv.slackUsername, srv.slackIcon)
-		msg := ""
+		stateMsg := ""
 		switch transition {
 		case "terminating":
-			msg = fmt.Sprintf("Instance `%s` is out of service :arrow_down:", t.InstanceID)
+			stateMsg = stateOutOfServiceMsg
 		case "launching":
-			msg = fmt.Sprintf("Instance `%s` is in service :arrow_up:", t.InstanceID)
+			stateMsg = stateInServiceMsg
 		}
-		err := notifier.Notify(slackChannel, msg)
-		if err != nil {
-			srv.log.WithField("err", err).Error("failed to send slack notification")
+		if stateMsg != "" {
+			err := notifier.Notify(slackChannel, fmt.Sprintf("Instance `%s` is %s _(site=%s env=%s queue=%s role=%s)_",
+				t.InstanceID, stateMsg, inst.Site, inst.Env, inst.Queue, inst.Role))
+			if err != nil {
+				srv.log.WithField("err", err).Error("failed to send slack notification")
+			}
 		}
 	}
 
