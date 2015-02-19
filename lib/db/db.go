@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 
@@ -96,7 +97,7 @@ func FetchInstances(conn redis.Conn, f map[string]string) ([]*lib.Instance, erro
 			}
 		}
 
-		if failedChecks == 0 {
+		if failedChecks == 0 && !reflect.DeepEqual(inst, &lib.Instance{}) {
 			instances = append(instances, inst)
 		}
 	}

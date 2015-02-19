@@ -267,6 +267,10 @@ func (srv *server) handleInstanceByIDFetch(w http.ResponseWriter, req *http.Requ
 	vars := mux.Vars(req)
 	instances, err := srv.i.Fetch(map[string]string{"instance_id": vars["instance_id"]})
 	if err != nil {
+		srv.log.WithFields(logrus.Fields{
+			"err":         err,
+			"instance_id": vars["instance_id"],
+		}).Error("failed to fetch instance")
 		jsonapi.Error(w, err, http.StatusInternalServerError)
 		return
 	}

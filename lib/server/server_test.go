@@ -6,14 +6,20 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/garyburd/redigo/redis"
+	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding/lib/db"
 )
 
 var (
-	defaultTestAuthToken = "swordfish"
+	defaultTestAuthToken  = "swordfish"
+	defaultTestInstanceID = "i-abcd123"
 )
 
 func init() {
@@ -35,6 +41,42 @@ func buildTestConfig() *Config {
 	}
 }
 
+func collapsedJSON(s string) string {
+	out := []string{}
+	for _, part := range strings.Split(s, "\n") {
+		for _, subpart := range strings.Split(part, " ") {
+			out = append(out, strings.TrimSpace(subpart))
+		}
+	}
+	return strings.Join(out, "")
+}
+
+func ensureExampleDataPresent(redisURL string) {
+	u, err := url.Parse(redisURL)
+	if err != nil {
+		panic(err)
+	}
+
+	conn, err := redis.Dial("tcp", u.Host)
+	if err != nil {
+		panic(err)
+	}
+
+	err = db.StoreInstances(conn, map[string]ec2.Instance{
+		defaultTestInstanceID: ec2.Instance{
+			InstanceId:       defaultTestInstanceID,
+			InstanceType:     "c3.2xlarge",
+			ImageId:          "ami-abcd123",
+			IPAddress:        "",
+			PrivateIPAddress: "10.0.0.1",
+			LaunchTime:       "1955-11-05T21:30:19+0800",
+		},
+	}, 300)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func buildTestServer(cfg *Config) *server {
 	if cfg == nil {
 		cfg = buildTestConfig()
@@ -46,6 +88,8 @@ func buildTestServer(cfg *Config) *server {
 	}
 
 	srv.Setup()
+
+	ensureExampleDataPresent(cfg.RedisURL)
 	return srv
 }
 
@@ -112,6 +156,12 @@ func assertBody(t *testing.T, expected, actual string) {
 	}
 }
 
+func assertNotBody(t *testing.T, notExpected, actual string) {
+	if actual == notExpected {
+		t.Errorf("response body %q == %q", actual, notExpected)
+	}
+}
+
 func TestGetOhai(t *testing.T) {
 	w := makeRequest("GET", "/", nil)
 	assertStatus(t, 200, w.Code)
@@ -143,4 +193,20 @@ func TestCreateAutoscalingGroupBuild(t *testing.T) {
 
 	w = makeAuthenticatedRequest("POST", "/autoscaling-group-builds", makeTestAutoscalingGroupBuildRequest())
 	assertStatus(t, 202, w.Code)
+}
+
+func TestGetInstances(t *testing.T) {
+	w := makeAuthenticatedRequest("GET", "/instances", nil)
+	assertStatus(t, 200, w.Code)
+	assertNotBody(t, `{"instances":[]}`, collapsedJSON(w.Body.String()))
+}
+
+func TestGetInstanceByID(t *testing.T) {
+	w := makeAuthenticatedRequest("GET", "/instances/i-bogus123", nil)
+	assertStatus(t, 200, w.Code)
+	assertBody(t, `{"instances":[]}`, collapsedJSON(w.Body.String()))
+
+	w = makeAuthenticatedRequest("GET", fmt.Sprintf("/instances/%s", defaultTestInstanceID), nil)
+	assertStatus(t, 200, w.Code)
+	assertNotBody(t, `{"instances":[]}`, collapsedJSON(w.Body.String()))
 }
