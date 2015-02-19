@@ -175,15 +175,15 @@ func (srv *server) Run() {
 	srv.s.ListenAndServe(srv.addr, srv.n)
 }
 
+func (srv *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	srv.r.ServeHTTP(w, req)
+}
+
 func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/`, srv.handleGetRoot).Methods("GET").Name("ohai")
 	srv.r.HandleFunc(`/`, srv.ifAuth(srv.handleDeleteRoot)).Methods("DELETE").Name("shutdown")
 	srv.r.HandleFunc(`/debug/vars`, srv.ifAuth(expvarplus.HandleExpvars)).Methods("GET").Name("expvars")
 	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
-
-	srv.r.HandleFunc(`/autoscaling-groups`, srv.ifAuth(srv.handleAutoscalingGroups)).Methods("GET").Name("list-autoscaling-groups")
-	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`, srv.ifAuth(srv.handleAutoscalingGroupByNameFetch)).Methods("GET").Name("fetch-autoscaling-groups-by-name")
-	srv.r.HandleFunc(`/autoscaling-groups/{group_name}`, srv.ifAuth(srv.handleAutoscalingGroupByNameDelete)).Methods("DELETE").Name("delete-autoscaling-group-by-name")
 
 	srv.r.HandleFunc(`/autoscaling-group-builds`, srv.ifAuth(srv.handleAutoscalingGroupBuildsCreate)).Methods("POST").Name("create-autoscaling-group-build")
 
@@ -414,18 +414,6 @@ func (srv *server) handleInstanceBuildUpdateByID(w http.ResponseWriter, req *htt
 	}
 
 	jsonapi.Respond(w, map[string]string{"sure": "why not"}, http.StatusOK)
-}
-
-func (srv *server) handleAutoscalingGroups(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
-}
-
-func (srv *server) handleAutoscalingGroupByNameFetch(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
-}
-
-func (srv *server) handleAutoscalingGroupByNameDelete(w http.ResponseWriter, req *http.Request) {
-	jsonapi.Error(w, errNotImplemented, http.StatusNotImplemented)
 }
 
 func (srv *server) handleAutoscalingGroupBuildsCreate(w http.ResponseWriter, req *http.Request) {
