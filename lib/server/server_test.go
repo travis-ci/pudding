@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -243,9 +244,43 @@ func TestDeleteInstanceByID(t *testing.T) {
 }
 
 func TestInstanceBuildsCreate(t *testing.T) {
-	w := makeAuthenticatedRequest("POST", "/instance-builds", makeTestInstanceBuildsRequest())
+	w := makeAuthenticatedRequest("POST", "/instance-builds", nil)
+	assertStatus(t, 400, w.Code)
+
+	w = makeAuthenticatedRequest("POST", "/instance-builds", makeTestInstanceBuildsRequest())
 	assertStatus(t, 202, w.Code)
 	assertBodyMatches(t, `^{"instance_builds":\[{"role":"worker","site":"org","env":"test","ami":"",`+
 		`"instance_type":"c3.4xlarge","slack_channel":"","count":1,"queue":"docker",`+
 		`"state":"pending","id":"[^"]{36}"}\]}$`, collapsedJSON(w.Body.String()))
+}
+
+func TestInstancebuildsUpdate(t *testing.T) {
+	w := makeAuthenticatedRequest("POST", "/instance-builds", makeTestInstanceBuildsRequest())
+	assertStatus(t, 202, w.Code)
+	body := w.Body.String()
+	assertBodyMatches(t, `^{"instance_builds":\[{"role":"worker","site":"org","env":"test","ami":"",`+
+		`"instance_type":"c3.4xlarge","slack_channel":"","count":1,"queue":"docker",`+
+		`"state":"pending","id":"[^"]{36}"}\]}$`, collapsedJSON(body))
+
+	bodyMap := map[string][]map[string]interface{}{}
+	err := json.Unmarshal([]byte(body), &bodyMap)
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Fprintf(os.Stderr, "%#v\n", bodyMap)
+	id := bodyMap["instance_builds"][0]["id"].(string)
+
+	basePath := fmt.Sprintf("/instance-builds/%s?instance_id=%s&state=", id, defaultTestInstanceID)
+	w = makeAuthenticatedRequest("PATCH", basePath+"started", nil)
+	assertStatus(t, 200, w.Code)
+	assertBody(t, `{"no":"op"}`, collapsedJSON(w.Body.String()))
+
+	w = makeAuthenticatedRequest("PATCH", basePath+"almost-there", nil)
+	assertStatus(t, 200, w.Code)
+	assertBody(t, `{"no":"op"}`, collapsedJSON(w.Body.String()))
+
+	w = makeAuthenticatedRequest("PATCH", basePath+"finished", nil)
+	assertStatus(t, 200, w.Code)
+	assertBody(t, `{"sure":"whynot"}`, collapsedJSON(w.Body.String()))
 }
