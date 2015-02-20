@@ -210,3 +210,9 @@ func TestGetInstanceByID(t *testing.T) {
 	assertStatus(t, 200, w.Code)
 	assertNotBody(t, `{"instances":[]}`, collapsedJSON(w.Body.String()))
 }
+
+func TestDeleteInstanceByID(t *testing.T) {
+	w := makeAuthenticatedRequest("DELETE", "/instances/i-bogus123", nil)
+	assertStatus(t, 202, w.Code)
+	assertBody(t, `{"ok":"workingonthat"}`, collapsedJSON(w.Body.String()))
+}
