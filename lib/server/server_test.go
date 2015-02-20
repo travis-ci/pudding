@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -126,7 +127,7 @@ func makeRequestWithHeaders(method, path string, body io.Reader, headers map[str
 }
 
 func makeTestAutoscalingGroupBuildRequest() io.Reader {
-	return bytes.NewReader([]byte(`{
+	return strings.NewReader(`{
     "autoscaling_group_builds": {
       "site": "com",
       "env": "prod",
@@ -141,7 +142,20 @@ func makeTestAutoscalingGroupBuildRequest() io.Reader {
       "default_cooldown": 1200,
       "instance_type": "c3.4xlarge"
     }
-  }`))
+  }`)
+}
+
+func makeTestInstanceBuildsRequest() io.Reader {
+	return strings.NewReader(`{
+    "instance_builds": {
+      "count": 1,
+      "site": "org",
+      "env": "test",
+      "queue": "docker",
+      "role": "worker",
+      "instance_type": "c3.4xlarge"
+    }
+  }`)
 }
 
 func assertStatus(t *testing.T, expected, actual int) {
@@ -153,6 +167,13 @@ func assertStatus(t *testing.T, expected, actual int) {
 func assertBody(t *testing.T, expected, actual string) {
 	if actual != expected {
 		t.Errorf("response body %q != %q", actual, expected)
+	}
+}
+
+func assertBodyMatches(t *testing.T, expected, actual string) {
+	re := regexp.MustCompile(expected)
+	if !re.MatchString(actual) {
+		t.Errorf("response body %q !~ %q", expected, actual)
 	}
 }
 
@@ -215,4 +236,16 @@ func TestDeleteInstanceByID(t *testing.T) {
 	w := makeAuthenticatedRequest("DELETE", "/instances/i-bogus123", nil)
 	assertStatus(t, 202, w.Code)
 	assertBody(t, `{"ok":"workingonthat"}`, collapsedJSON(w.Body.String()))
+
+	w = makeAuthenticatedRequest("DELETE", fmt.Sprintf("/instances/%s", defaultTestInstanceID), nil)
+	assertStatus(t, 202, w.Code)
+	assertBody(t, `{"ok":"workingonthat"}`, collapsedJSON(w.Body.String()))
+}
+
+func TestInstanceBuildsCreate(t *testing.T) {
+	w := makeAuthenticatedRequest("POST", "/instance-builds", makeTestInstanceBuildsRequest())
+	assertStatus(t, 202, w.Code)
+	assertBodyMatches(t, `^{"instance_builds":\[{"role":"worker","site":"org","env":"test","ami":"",`+
+		`"instance_type":"c3.4xlarge","slack_channel":"","count":1,"queue":"docker",`+
+		`"state":"pending","id":"[^"]{36}"}\]}$`, collapsedJSON(w.Body.String()))
 }

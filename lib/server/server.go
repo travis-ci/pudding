@@ -185,7 +185,7 @@ func (srv *server) setupRoutes() {
 	srv.r.HandleFunc(`/debug/vars`, srv.ifAuth(expvarplus.HandleExpvars)).Methods("GET").Name("expvars")
 	srv.r.HandleFunc(`/kaboom`, srv.ifAuth(srv.handleKaboom)).Methods("POST").Name("kaboom")
 
-	srv.r.HandleFunc(`/autoscaling-group-builds`, srv.ifAuth(srv.handleAutoscalingGroupBuildsCreate)).Methods("POST").Name("create-autoscaling-group-build")
+	srv.r.HandleFunc(`/autoscaling-group-builds`, srv.ifAuth(srv.handleAutoscalingGroupBuildsCreate)).Methods("POST").Name("autoscaling-group-builds-create")
 
 	srv.r.HandleFunc(`/instances`, srv.ifAuth(srv.handleInstances)).Methods("GET").Name("instances")
 	srv.r.HandleFunc(`/instances/{instance_id}`, srv.ifAuth(srv.handleInstanceByIDFetch)).Methods("GET").Name("instances-by-id")
