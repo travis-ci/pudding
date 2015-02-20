@@ -20,8 +20,10 @@ import (
 )
 
 var (
-	defaultTestAuthToken  = "swordfish"
-	defaultTestInstanceID = "i-abcd123"
+	defaultTestAuthToken         = "swordfish"
+	defaultTestInstanceID        = "i-abcd123"
+	defaultTestInstanceBuildUUID = "abcd1234-abcd-abcd-abcd-abcd12345678"
+	defaultTestInstanceBuildAuth = "swordfish-9000"
 )
 
 func init() {
@@ -74,6 +76,11 @@ func ensureExampleDataPresent(redisURL string) {
 			LaunchTime:       "1955-11-05T21:30:19+0800",
 		},
 	}, 300)
+	if err != nil {
+		panic(err)
+	}
+
+	err = conn.Send("HSET", fmt.Sprintf("%s:auths", lib.RedisNamespace), defaultTestInstanceBuildUUID, defaultTestInstanceBuildAuth)
 	if err != nil {
 		panic(err)
 	}
@@ -143,7 +150,7 @@ func makeTestAutoscalingGroupBuildRequest() io.Reader {
       "default_cooldown": 1200,
       "instance_type": "c3.4xlarge"
     }
-  }`)
+}`)
 }
 
 func makeTestInstanceBuildsRequest() io.Reader {
@@ -156,7 +163,23 @@ func makeTestInstanceBuildsRequest() io.Reader {
       "role": "worker",
       "instance_type": "c3.4xlarge"
     }
-  }`)
+}`)
+}
+
+func makeTestInstanceLaunchesRequest() io.Reader {
+	return strings.NewReader(fmt.Sprintf(`{
+  "id": "whatever",
+  "instance_id": "%s",
+  "transition": "launching"
+}`, defaultTestInstanceID))
+}
+
+func makeTestInstanceTerminationsRequest() io.Reader {
+	return strings.NewReader(fmt.Sprintf(`{
+  "id": "whatever",
+  "instance_id": "%s",
+  "transition": "terminating"
+}`, defaultTestInstanceID))
 }
 
 func assertStatus(t *testing.T, expected, actual int) {
@@ -283,4 +306,24 @@ func TestInstancebuildsUpdate(t *testing.T) {
 	w = makeAuthenticatedRequest("PATCH", basePath+"finished", nil)
 	assertStatus(t, 200, w.Code)
 	assertBody(t, `{"sure":"whynot"}`, collapsedJSON(w.Body.String()))
+}
+
+func TestInstanceLaunchesCreate(t *testing.T) {
+	w := makeAuthenticatedRequest("POST", fmt.Sprintf("/instance-launches/%s", defaultTestInstanceBuildUUID), strings.NewReader("{"))
+	assertStatus(t, 400, w.Code)
+
+	w = makeAuthenticatedRequest("POST", fmt.Sprintf("/instance-launches/%s", defaultTestInstanceBuildUUID),
+		makeTestInstanceLaunchesRequest())
+	assertStatus(t, 200, w.Code)
+	assertBody(t, fmt.Sprintf(`{"yay":"%s"}`, defaultTestInstanceID), collapsedJSON(w.Body.String()))
+}
+
+func TestInstanceTerminationsCreate(t *testing.T) {
+	w := makeAuthenticatedRequest("POST", fmt.Sprintf("/instance-terminations/%s", defaultTestInstanceBuildUUID), strings.NewReader("{"))
+	assertStatus(t, 400, w.Code)
+
+	w = makeAuthenticatedRequest("POST", fmt.Sprintf("/instance-terminations/%s", defaultTestInstanceBuildUUID),
+		makeTestInstanceTerminationsRequest())
+	assertStatus(t, 200, w.Code)
+	assertBody(t, fmt.Sprintf(`{"yay":"%s"}`, defaultTestInstanceID), collapsedJSON(w.Body.String()))
 }
