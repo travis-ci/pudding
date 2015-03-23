@@ -4,7 +4,7 @@ set -e
 
 PACKAGE=${PACKAGE:-github.com/travis-ci/pudding}
 
-golint "${PACKAGE}"
+gometalinter -D structcheck -D errcheck "${PACKAGE}"
 for pkg in lib lib/server lib/server/jsonapi lib/db lib/workers ; do
-  golint "${PACKAGE}/${pkg}"
+  gometalinter -D structcheck -D errcheck "${PACKAGE}/${pkg}"
 done

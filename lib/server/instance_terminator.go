@@ -24,7 +24,7 @@ func newInstanceTerminator(r *redis.Pool, queueName string) (*instanceTerminator
 
 func (it *instanceTerminator) Terminate(instanceID, slackChannel string) error {
 	conn := it.r.Get()
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	buildPayload := &lib.InstanceTerminationPayload{
 		JID:          feeds.NewUUID().String(),

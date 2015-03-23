@@ -23,7 +23,7 @@ func newSNSHandler(r *redis.Pool, queueName string) (*snsHandler, error) {
 
 func (sh *snsHandler) Handle(msg *lib.SNSMessage) (*lib.SNSMessage, error) {
 	conn := sh.r.Get()
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	messagePayload := &lib.SNSMessagePayload{
 		Args:       []*lib.SNSMessage{msg},

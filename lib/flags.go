@@ -113,7 +113,7 @@ func WriteFlagsToEnv(c *cli.Context) {
 			v := c.String(names[0])
 			envVar := flVal.EnvVar
 			if v != "" && envVar != "" {
-				os.Setenv(envVar, v)
+				_ = os.Setenv(envVar, v)
 			}
 		case cli.IntFlag:
 			names := strings.Split(flVal.Name, ",")
@@ -124,7 +124,7 @@ func WriteFlagsToEnv(c *cli.Context) {
 			v := c.Int(names[0])
 			envVar := flVal.EnvVar
 			if envVar != "" {
-				os.Setenv(envVar, fmt.Sprintf("%d", v))
+				_ = os.Setenv(envVar, fmt.Sprintf("%d", v))
 			}
 		case cli.BoolFlag:
 			names := strings.Split(flVal.Name, ",")
@@ -135,7 +135,7 @@ func WriteFlagsToEnv(c *cli.Context) {
 			v := c.Bool(names[0])
 			envVar := flVal.EnvVar
 			if envVar != "" {
-				os.Setenv(envVar, fmt.Sprintf("%v", v))
+				_ = os.Setenv(envVar, fmt.Sprintf("%v", v))
 			}
 		}
 	}

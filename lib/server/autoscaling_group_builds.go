@@ -24,7 +24,7 @@ func newAutoscalingGroupBuilder(r *redis.Pool, queueName string) (*autoscalingGr
 
 func (asgb *autoscalingGroupBuilder) Build(b *lib.AutoscalingGroupBuild) (*lib.AutoscalingGroupBuild, error) {
 	conn := asgb.r.Get()
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	buildPayload := &lib.AutoscalingGroupBuildPayload{
 		Args:       []*lib.AutoscalingGroupBuild{b},

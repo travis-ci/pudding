@@ -9,9 +9,10 @@ env:
   - REDIS_URL="redis://localhost:$REDIS_PORT/0"
 before_install:
 - go get github.com/hamfist/deppy
-- go get github.com/golang/lint/golint
+- go get github.com/alecthomas/gometalinter
 - go get golang.org/x/tools/cmd/cover
 install:
+- gometalinter --install
 - deppy restore
 before_script:
 - redis-server --port 16379 > redis-server.log 2>&1 &

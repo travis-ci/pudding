@@ -24,7 +24,7 @@ func newInstanceBuilder(r *redis.Pool, queueName string) (*instanceBuilder, erro
 
 func (ib *instanceBuilder) Build(b *lib.InstanceBuild) (*lib.InstanceBuild, error) {
 	conn := ib.r.Get()
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	buildPayload := &lib.InstanceBuildPayload{
 		Args:       []*lib.InstanceBuild{b},

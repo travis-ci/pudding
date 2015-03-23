@@ -35,7 +35,7 @@ type AutoscalingGroupBuild struct {
 	MinSize         int    `json:"min_size" redis:"min_size"`
 	MaxSize         int    `json:"max_size" redis:"max_size"`
 	DesiredCapacity int    `json:"desired_capacity" redis:"desired_capacity"`
-	DefaultCooldown int    `json:"default_cooldown" redis"default_cooldown"`
+	DefaultCooldown int    `json:"default_cooldown" redis:"default_cooldown"`
 	SlackChannel    string `json:"slack_channel"`
 	Timestamp       int64  `json:"timestamp"`
 

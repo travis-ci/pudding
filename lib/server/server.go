@@ -23,8 +23,8 @@ var (
 	errMissingInstanceBuildID = fmt.Errorf("missing instance build id")
 	errMissingInstanceID      = fmt.Errorf("missing instance id")
 	errKaboom                 = fmt.Errorf("simulated kaboom ʕノ•ᴥ•ʔノ ︵ ┻━┻")
-	errNotImplemented         = fmt.Errorf("not implemented nope nope nope")
-	errUnknownInstance        = fmt.Errorf("unknown instance")
+	// errNotImplemented         = fmt.Errorf("not implemented nope nope nope")
+	errUnknownInstance = fmt.Errorf("unknown instance")
 )
 
 const (
@@ -172,7 +172,7 @@ func (srv *server) Setup() {
 
 func (srv *server) Run() {
 	srv.log.WithField("addr", srv.addr).Info("Listening")
-	srv.s.ListenAndServe(srv.addr, srv.n)
+	_ = srv.s.ListenAndServe(srv.addr, srv.n)
 }
 
 func (srv *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {

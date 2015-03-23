@@ -23,7 +23,7 @@ func newInstanceLifecycleTransitionHandler(r *redis.Pool, queueName string) (*in
 
 func (th *instanceLifecycleTransitionHandler) Handle(t *lib.InstanceLifecycleTransition) (*lib.InstanceLifecycleTransition, error) {
 	conn := th.r.Get()
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	messagePayload := &lib.InstanceLifecycleTransitionPayload{
 		Args:       []*lib.InstanceLifecycleTransition{t},
