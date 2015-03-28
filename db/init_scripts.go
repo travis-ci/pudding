@@ -10,7 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
-	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding"
 )
 
 // InstanceBuildAuther is the interface used to authenticate

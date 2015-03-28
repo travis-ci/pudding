@@ -17,7 +17,7 @@ import (
 	"github.com/goamz/goamz/ec2"
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
-	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding"
 )
 
 func init() {

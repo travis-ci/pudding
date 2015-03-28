@@ -9,7 +9,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/goamz/goamz/ec2"
-	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding"
 )
 
 // BuildRedisPool builds a *redis.Pool given a redis URL yey ☃

@@ -6,7 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
 	"github.com/jrallison/go-workers"
-	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding"
 )
 
 // MiddlewareRaven is the go-workers compatible middleware for

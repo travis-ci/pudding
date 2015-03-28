@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/travis-ci/pudding/lib"
+	"github.com/travis-ci/pudding"
 )
 
 // EnqueueJob pushes a given payload onto the given queue name to
