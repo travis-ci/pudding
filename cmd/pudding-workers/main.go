@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/travis-ci/pudding/lib"
-	"github.com/travis-ci/pudding/lib/workers"
+	"github.com/travis-ci/pudding"
+	"github.com/travis-ci/pudding/workers"
 )
 
 func main() {
@@ -14,10 +14,10 @@ func main() {
 	app.Usage = "Working on the pudding"
 	app.Author = "Travis CI"
 	app.Email = "contact+pudding-workers@travis-ci.org"
-	app.Version = lib.VersionString
-	app.Compiled = lib.GeneratedTime()
+	app.Version = pudding.VersionString
+	app.Compiled = pudding.GeneratedTime()
 	app.Flags = []cli.Flag{
-		lib.RedisURLFlag,
+		pudding.RedisURLFlag,
 		cli.StringFlag{
 			Name:   "redis-pool-size",
 			Value:  "30",
@@ -73,13 +73,13 @@ func main() {
 			Usage:  "interval in seconds for the mini worker loop",
 			EnvVar: "PUDDING_MINI_WORKER_INTERVAL",
 		},
-		lib.SlackHookPathFlag,
-		lib.SlackUsernameFlag,
-		lib.SlackIconFlag,
-		lib.SentryDSNFlag,
-		lib.InstanceExpiryFlag,
-		lib.ImageExpiryFlag,
-		lib.DebugFlag,
+		pudding.SlackHookPathFlag,
+		pudding.SlackUsernameFlag,
+		pudding.SlackIconFlag,
+		pudding.SentryDSNFlag,
+		pudding.InstanceExpiryFlag,
+		pudding.ImageExpiryFlag,
+		pudding.DebugFlag,
 	}
 	app.Action = runWorkers
 	app.Run(os.Args)
@@ -88,20 +88,20 @@ func main() {
 func runWorkers(c *cli.Context) {
 	instanceRSA := c.String("instance-rsa")
 	if instanceRSA == "" {
-		instanceRSA = lib.GetInstanceRSAKey()
+		instanceRSA = pudding.GetInstanceRSAKey()
 	}
 
 	instanceYML := c.String("instance-yml")
 	if instanceYML == "" {
-		instanceYML = lib.GetInstanceYML()
+		instanceYML = pudding.GetInstanceYML()
 	}
 
 	initScriptTemplate := c.String("init-script-template")
 	if initScriptTemplate == "" {
-		initScriptTemplate = lib.GetInitScriptTemplate()
+		initScriptTemplate = pudding.GetInitScriptTemplate()
 	}
 
-	lib.WriteFlagsToEnv(c)
+	pudding.WriteFlagsToEnv(c)
 
 	workers.Main(&workers.Config{
 		ProcessID:   c.String("process-id"),

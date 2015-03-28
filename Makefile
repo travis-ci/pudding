@@ -2,18 +2,17 @@ PACKAGE := github.com/travis-ci/pudding
 SUBPACKAGES := \
 	$(PACKAGE)/cmd/pudding-server \
 	$(PACKAGE)/cmd/pudding-workers \
-	$(PACKAGE)/lib \
-	$(PACKAGE)/lib/db \
-	$(PACKAGE)/lib/server \
-	$(PACKAGE)/lib/server/jsonapi \
-	$(PACKAGE)/lib/server/negroniraven \
-	$(PACKAGE)/lib/workers
+	$(PACKAGE)/db \
+	$(PACKAGE)/server \
+	$(PACKAGE)/server/jsonapi \
+	$(PACKAGE)/server/negroniraven \
+	$(PACKAGE)/workers
 
-VERSION_VAR := $(PACKAGE)/lib.VersionString
+VERSION_VAR := $(PACKAGE)/pudding.VersionString
 VERSION_VALUE ?= $(shell git describe --always --dirty --tags 2>/dev/null)
-REV_VAR := $(PACKAGE)/lib.RevisionString
+REV_VAR := $(PACKAGE)/pudding.RevisionString
 REV_VALUE ?= $(shell git rev-parse --sq HEAD 2>/dev/null || echo "'???'")
-GENERATED_VAR := $(PACKAGE)/lib.GeneratedString
+GENERATED_VAR := $(PACKAGE)/pudding.GeneratedString
 GENERATED_VALUE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%S%z')
 
 FIND ?= find
@@ -31,12 +30,12 @@ PORT ?= 42151
 export PORT
 
 COVERPROFILES := \
-	lib-coverage.coverprofile \
-	lib-db-coverage.coverprofile \
-	lib-server-coverage.coverprofile \
-	lib-server-jsonapi-coverage.coverprofile \
-	lib-server-negroniraven-coverage.coverprofile \
-	lib-workers-coverage.coverprofile
+	coverage.coverprofile \
+	db-coverage.coverprofile \
+	server-coverage.coverprofile \
+	server-jsonapi-coverage.coverprofile \
+	server-negroniraven-coverage.coverprofile \
+	workers-coverage.coverprofile
 
 %-coverage.coverprofile:
 	$(GO) test -covermode=count -coverprofile=$@ \

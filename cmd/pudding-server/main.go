@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/travis-ci/pudding/lib"
-	"github.com/travis-ci/pudding/lib/server"
+	"github.com/travis-ci/pudding"
+	"github.com/travis-ci/pudding/server"
 )
 
 func main() {
@@ -13,11 +13,11 @@ func main() {
 	app.Usage = "Serving up the pudding"
 	app.Author = "Travis CI"
 	app.Email = "contact+pudding-server@travis-ci.org"
-	app.Version = lib.VersionString
-	app.Compiled = lib.GeneratedTime()
+	app.Version = pudding.VersionString
+	app.Compiled = pudding.GeneratedTime()
 	app.Flags = []cli.Flag{
-		lib.AddrFlag,
-		lib.RedisURLFlag,
+		pudding.AddrFlag,
+		pudding.RedisURLFlag,
 		cli.StringFlag{
 			Name:   "instance-builds-queue-name",
 			Value:  "instance-builds",
@@ -48,14 +48,14 @@ func main() {
 			Value:  "swordfish",
 			EnvVar: "PUDDING_AUTH_TOKEN",
 		},
-		lib.SlackHookPathFlag,
-		lib.SlackUsernameFlag,
-		lib.SlackChannelFlag,
-		lib.SlackIconFlag,
-		lib.SentryDSNFlag,
-		lib.InstanceExpiryFlag,
-		lib.ImageExpiryFlag,
-		lib.DebugFlag,
+		pudding.SlackHookPathFlag,
+		pudding.SlackUsernameFlag,
+		pudding.SlackChannelFlag,
+		pudding.SlackIconFlag,
+		pudding.SentryDSNFlag,
+		pudding.InstanceExpiryFlag,
+		pudding.ImageExpiryFlag,
+		pudding.DebugFlag,
 	}
 	app.Action = runServer
 
@@ -63,7 +63,7 @@ func main() {
 }
 
 func runServer(c *cli.Context) {
-	lib.WriteFlagsToEnv(c)
+	pudding.WriteFlagsToEnv(c)
 
 	server.Main(&server.Config{
 		Addr:      c.String("addr"),
