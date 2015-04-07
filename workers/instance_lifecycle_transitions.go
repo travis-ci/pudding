@@ -39,7 +39,12 @@ func instanceLifecycleTransitionsMain(cfg *internalConfig, msg *workers.Msg) {
 
 	err = handleInstanceLifecycleTransition(cfg, workers.Config.Pool.Get(), msg.Jid(), ilt)
 	if err != nil {
-		log.WithField("err", err).Panic("instance lifecycle transition handler returned an error")
+		switch err.(type) {
+		case *autoscaling.Error:
+			log.WithField("err", err).Error("discarding autoscaling error")
+		default:
+			log.WithField("err", err).Panic("instance lifecycle transition handler returned an error")
+		}
 	}
 }
 
