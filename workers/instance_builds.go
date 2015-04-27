@@ -138,8 +138,9 @@ func (ibw *instanceBuilderWorker) Build() error {
 	err = ibw.createInstance()
 	if err != nil {
 		log.WithFields(logrus.Fields{
-			"err": err,
-			"jid": ibw.jid,
+			"err":         err,
+			"err_details": fmt.Sprintf("%#v", err),
+			"jid":         ibw.jid,
 		}).Error("failed to create instance(s)")
 		return err
 	}
