@@ -5,8 +5,9 @@ import (
 	"net/url"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding"
 	"github.com/travis-ci/pudding/db"
 )
@@ -35,14 +36,14 @@ func newEC2Syncer(cfg *internalConfig, r *redis.Pool, log *logrus.Logger) (*ec2S
 		log: log,
 		i:   i,
 		img: img,
-		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
+		ec2: ec2.New(cfg.AWSConfig),
 	}, nil
 }
 
 func (es *ec2Syncer) Sync() error {
 	var (
-		instances map[string]ec2.Instance
-		images    map[string]ec2.Image
+		instances map[string]*ec2.Instance
+		images    map[string]*ec2.Image
 		err       error
 	)
 
@@ -95,9 +96,12 @@ func (es *ec2Syncer) Sync() error {
 	return nil
 }
 
-func (es *ec2Syncer) fetchInstances() (map[string]ec2.Instance, error) {
-	f := ec2.NewFilter()
-	f.Add("instance-state-name", "running")
+func (es *ec2Syncer) fetchInstances() (map[string]*ec2.Instance, error) {
+	f := &ec2.Filter{}
+	f.Name = aws.String("instance-state-name")
+	f.Values = []*string{
+		aws.String("running"),
+	}
 	instances, err := pudding.GetInstancesWithFilter(es.ec2, f)
 	if err == nil {
 		return instances, nil
@@ -112,9 +116,12 @@ func (es *ec2Syncer) fetchInstances() (map[string]ec2.Instance, error) {
 	}
 }
 
-func (es *ec2Syncer) fetchImages() (map[string]ec2.Image, error) {
-	f := ec2.NewFilter()
-	f.Add("tag-key", "role")
+func (es *ec2Syncer) fetchImages() (map[string]*ec2.Image, error) {
+	f := &ec2.Filter{}
+	f.Name = aws.String("tag-key")
+	f.Values = []*string{
+		aws.String("role"),
+	}
 	images, err := pudding.GetImagesWithFilter(es.ec2, f)
 	if err == nil {
 		return images, nil

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding"
 )
 
@@ -122,7 +122,7 @@ func SetInstanceAttributes(conn redis.Conn, instanceID string, attrs map[string]
 // given a redis conn and slice of ec2 instances, as well as an
 // expiry integer that is used to to run EXPIRE on all sets and
 // hashes involved
-func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry int) error {
+func StoreInstances(conn redis.Conn, instances map[string]*ec2.Instance, expiry int) error {
 	err := conn.Send("MULTI")
 	if err != nil {
 		return err
@@ -147,16 +147,16 @@ func StoreInstances(conn redis.Conn, instances map[string]ec2.Instance, expiry i
 
 		hmSet := []interface{}{
 			instanceAttrsKey,
-			"instance_id", inst.InstanceId,
+			"instance_id", inst.InstanceID,
 			"instance_type", inst.InstanceType,
-			"image_id", inst.ImageId,
-			"ip", inst.IPAddress,
+			"image_id", inst.ImageID,
+			"ip", inst.PublicIPAddress,
 			"private_ip", inst.PrivateIPAddress,
 			"launch_time", inst.LaunchTime,
 		}
 
 		for _, tag := range inst.Tags {
-			switch tag.Key {
+			switch *tag.Key {
 			case "queue", "env", "site", "role":
 				hmSet = append(hmSet, tag.Key, tag.Value)
 			case "Name":
@@ -264,7 +264,7 @@ func FetchImages(conn redis.Conn, f map[string]string) ([]*pudding.Image, error)
 // given a redis conn and slice of ec2 images, as well as an
 // expiry integer that is used to to run EXPIRE on all sets and
 // hashes involved
-func StoreImages(conn redis.Conn, images map[string]ec2.Image, expiry int) error {
+func StoreImages(conn redis.Conn, images map[string]*ec2.Image, expiry int) error {
 	err := conn.Send("MULTI")
 	if err != nil {
 		return err
@@ -289,13 +289,13 @@ func StoreImages(conn redis.Conn, images map[string]ec2.Image, expiry int) error
 
 		hmSet := []interface{}{
 			imageAttrsKey,
-			"image_id", img.Id,
+			"image_id", img.ImageID,
 			"name", img.Name,
 			"state", img.State,
 		}
 
 		for _, tag := range img.Tags {
-			switch tag.Key {
+			switch *tag.Key {
 			case "role":
 				hmSet = append(hmSet, tag.Key, tag.Value)
 			case "active":

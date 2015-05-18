@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/autoscaling"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/autoscaling"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding"
 	"github.com/travis-ci/pudding/db"
@@ -38,11 +39,11 @@ func instanceLifecycleTransitionsMain(cfg *internalConfig, msg *workers.Msg) {
 	}
 
 	err = handleInstanceLifecycleTransition(cfg, workers.Config.Pool.Get(), msg.Jid(), ilt)
-	if err != nil {
-		switch err.(type) {
-		case *autoscaling.Error:
+	awsErr := aws.Error(err)
+	if awsErr != nil || err != nil {
+		if awsErr != nil {
 			log.WithField("err", err).Error("discarding autoscaling error")
-		default:
+		} else {
 			log.WithField("err", err).Panic("instance lifecycle transition handler returned an error")
 		}
 	}
@@ -69,13 +70,13 @@ func handleInstanceLifecycleTransition(cfg *internalConfig, rc redis.Conn, jid s
 		return nil
 	}
 
-	as := autoscaling.New(cfg.AWSAuth, cfg.AWSRegion)
+	as := autoscaling.New(cfg.AWSConfig)
 
-	cla := &autoscaling.CompleteLifecycleActionParams{
-		AutoScalingGroupName:  ala.AutoScalingGroupName,
-		LifecycleActionResult: "CONTINUE",
-		LifecycleActionToken:  ala.LifecycleActionToken,
-		LifecycleHookName:     ala.LifecycleHookName,
+	cla := &autoscaling.CompleteLifecycleActionInput{
+		AutoScalingGroupName:  aws.String(ala.AutoScalingGroupName),
+		LifecycleActionResult: aws.String("CONTINUE"),
+		LifecycleActionToken:  aws.String(ala.LifecycleActionToken),
+		LifecycleHookName:     aws.String(ala.LifecycleHookName),
 	}
 
 	log.WithFields(logrus.Fields{

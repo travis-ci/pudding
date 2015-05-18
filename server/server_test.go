@@ -12,9 +12,11 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding"
 	"github.com/travis-ci/pudding/db"
 )
@@ -66,14 +68,15 @@ func ensureExampleDataPresent(redisURL string) {
 		panic(err)
 	}
 
-	err = db.StoreInstances(conn, map[string]ec2.Instance{
-		defaultTestInstanceID: ec2.Instance{
-			InstanceId:       defaultTestInstanceID,
-			InstanceType:     "c3.2xlarge",
-			ImageId:          "ami-abcd123",
-			IPAddress:        "",
-			PrivateIPAddress: "10.0.0.1",
-			LaunchTime:       "1955-11-05T21:30:19+0800",
+	now := time.Now().UTC()
+	err = db.StoreInstances(conn, map[string]*ec2.Instance{
+		defaultTestInstanceID: &ec2.Instance{
+			InstanceID:       aws.String(defaultTestInstanceID),
+			InstanceType:     aws.String("c3.2xlarge"),
+			ImageID:          aws.String("ami-abcd123"),
+			PublicIPAddress:  aws.String(""),
+			PrivateIPAddress: aws.String("10.0.0.1"),
+			LaunchTime:       &now,
 		},
 	}, 300)
 	if err != nil {
@@ -113,12 +116,11 @@ func makeAuthenticatedRequest(method, path string, body io.Reader) *httptest.Res
 
 func makeRequestWithHeaders(method, path string, body io.Reader, headers map[string]string) *httptest.ResponseRecorder {
 	srv := buildTestServer(nil)
-	// make the shutdown channel buffered so that we don't get deadlock in tests
-	srv.s.Shutdown = make(chan bool, 2)
 
 	if body == nil {
 		body = bytes.NewReader([]byte(""))
 	}
+
 	req, err := http.NewRequest(method, fmt.Sprintf("http://example.com%s", path), body)
 	if err != nil {
 		panic(err)

@@ -13,8 +13,9 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/gorilla/feeds"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding"
@@ -88,7 +89,7 @@ func newInstanceBuilderWorker(b *pudding.InstanceBuild, cfg *internalConfig, jid
 		cfg: cfg,
 		n:   []pudding.Notifier{notifier},
 		b:   b,
-		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
+		ec2: ec2.New(cfg.AWSConfig),
 		t:   t,
 	}
 
@@ -99,9 +100,12 @@ func newInstanceBuilderWorker(b *pudding.InstanceBuild, cfg *internalConfig, jid
 func (ibw *instanceBuilderWorker) Build() error {
 	var err error
 
-	f := ec2.NewFilter()
+	f := &ec2.Filter{}
 	if ibw.b.Role != "" {
-		f.Add("tag:role", ibw.b.Role)
+		f.Name = aws.String("tag:role")
+		f.Values = []*string{
+			aws.String(ibw.b.Role),
+		}
 	}
 
 	log.WithFields(logrus.Fields{
@@ -120,7 +124,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 	}
 
 	if ibw.b.SecurityGroupID != "" {
-		ibw.sg = &ec2.SecurityGroup{Id: ibw.b.SecurityGroupID}
+		ibw.sg = &ec2.SecurityGroup{GroupID: aws.String(ibw.b.SecurityGroupID)}
 	} else {
 		log.WithField("jid", ibw.jid).Debug("creating security group")
 		err = ibw.createSecurityGroup()
@@ -145,7 +149,7 @@ func (ibw *instanceBuilderWorker) Build() error {
 		return err
 	}
 
-	ibw.b.InstanceID = ibw.i.InstanceId
+	ibw.b.InstanceID = *ibw.i.InstanceID
 
 	for i := ibw.cfg.InstanceTagRetries; i > 0; i-- {
 		log.WithField("jid", ibw.jid).Debug("tagging instance")
@@ -171,9 +175,9 @@ func (ibw *instanceBuilderWorker) Build() error {
 }
 
 func (ibw *instanceBuilderWorker) createSecurityGroup() error {
-	newSg := ec2.SecurityGroup{
-		Name:        ibw.sgName,
-		Description: "custom security group",
+	newSg := &ec2.CreateSecurityGroupInput{
+		GroupName:   aws.String(ibw.sgName),
+		Description: aws.String("custom security group"),
 	}
 
 	log.WithFields(logrus.Fields{
@@ -190,27 +194,50 @@ func (ibw *instanceBuilderWorker) createSecurityGroup() error {
 		return err
 	}
 
-	ibw.sg = &resp.SecurityGroup
+	sgresp, err := ibw.ec2.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+		GroupIDs: []*string{resp.GroupID},
+	})
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"err": err,
+			"jid": ibw.jid,
+		}).Error("failed to get security group by id")
+		return err
+	}
+
+	ibw.sg = sgresp.SecurityGroups[0]
 
 	log.WithFields(logrus.Fields{
 		"jid": ibw.jid,
 		"security_group_name": ibw.sgName,
 	}).Debug("authorizing port 22 on security group")
 
-	_, err = ibw.ec2.AuthorizeSecurityGroup(*ibw.sg, []ec2.IPPerm{
-		ec2.IPPerm{
-			Protocol:  "tcp",
-			FromPort:  22,
-			ToPort:    22,
-			SourceIPs: []string{"0.0.0.0/0"},
+	sgIngressInput := &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupID:   ibw.sg.GroupID,
+		GroupName: ibw.sg.GroupName,
+		IPPermissions: []*ec2.IPPermission{
+			&ec2.IPPermission{
+				FromPort:   aws.Long(22),
+				ToPort:     aws.Long(22),
+				IPProtocol: aws.String("tcp"),
+				IPRanges: []*ec2.IPRange{
+					&ec2.IPRange{
+						CIDRIP: aws.String("0.0.0.0/0"),
+					},
+				},
+			},
 		},
-	})
-	if err != nil {
+	}
+
+	_, err = ibw.ec2.AuthorizeSecurityGroupIngress(sgIngressInput)
+	awsErr := aws.Error(err)
+	if awsErr != nil || err != nil {
 		log.WithFields(logrus.Fields{
-			"err": err,
 			"jid": ibw.jid,
 			"security_group_name": ibw.sgName,
-		}).Error("failed to authorize port 22")
+			"err":     err,
+			"aws_err": awsErr,
+		}).Error("failed to grant security group ssh ingress")
 		return err
 	}
 
@@ -221,7 +248,7 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 	log.WithFields(logrus.Fields{
 		"jid":           ibw.jid,
 		"instance_type": ibw.b.InstanceType,
-		"ami.id":        ibw.ami.Id,
+		"ami.id":        ibw.ami.ImageID,
 		"ami.name":      ibw.ami.Name,
 		"count":         ibw.b.Count,
 	}).Info("booting instance")
@@ -231,18 +258,18 @@ func (ibw *instanceBuilderWorker) createInstance() error {
 		return err
 	}
 
-	resp, err := ibw.ec2.RunInstances(&ec2.RunInstancesOptions{
-		ImageId:        ibw.ami.Id,
+	resp, err := ibw.ec2.RunInstances(&ec2.RunInstancesInput{
+		ImageID:        ibw.ami.ImageID,
 		UserData:       userData,
-		InstanceType:   ibw.b.InstanceType,
-		SecurityGroups: []ec2.SecurityGroup{*ibw.sg},
-		SubnetId:       ibw.b.SubnetID,
+		InstanceType:   aws.String(ibw.b.InstanceType),
+		SecurityGroups: []*string{ibw.sg.GroupID},
+		SubnetID:       aws.String(ibw.b.SubnetID),
 	})
 	if err != nil {
 		return err
 	}
 
-	ibw.i = &resp.Instances[0]
+	ibw.i = resp.Instances[0]
 	return nil
 }
 
@@ -258,12 +285,12 @@ func (ibw *instanceBuilderWorker) tagInstance() error {
 		return err
 	}
 
-	tags := []ec2.Tag{
-		ec2.Tag{Key: "Name", Value: nameBuf.String()},
-		ec2.Tag{Key: "role", Value: ibw.b.Role},
-		ec2.Tag{Key: "site", Value: ibw.b.Site},
-		ec2.Tag{Key: "env", Value: ibw.b.Env},
-		ec2.Tag{Key: "queue", Value: ibw.b.Queue},
+	tags := []*ec2.Tag{
+		&ec2.Tag{Key: aws.String("Name"), Value: aws.String(nameBuf.String())},
+		&ec2.Tag{Key: aws.String("role"), Value: aws.String(ibw.b.Role)},
+		&ec2.Tag{Key: aws.String("site"), Value: aws.String(ibw.b.Site)},
+		&ec2.Tag{Key: aws.String("env"), Value: aws.String(ibw.b.Env)},
+		&ec2.Tag{Key: aws.String("queue"), Value: aws.String(ibw.b.Queue)},
 	}
 
 	log.WithFields(logrus.Fields{
@@ -271,12 +298,17 @@ func (ibw *instanceBuilderWorker) tagInstance() error {
 		"tags": tags,
 	}).Debug("tagging instance")
 
-	_, err = ibw.ec2.CreateTags([]string{ibw.i.InstanceId}, tags)
+	_, err = ibw.ec2.CreateTags(&ec2.CreateTagsInput{
+		Resources: []*string{
+			ibw.i.InstanceID,
+		},
+		Tags: tags,
+	})
 
 	return err
 }
 
-func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
+func (ibw *instanceBuilderWorker) buildUserData() (*string, error) {
 	webURL, err := url.Parse(ibw.cfg.WebHost)
 	if err != nil {
 		return nil, err
@@ -379,13 +411,13 @@ func (ibw *instanceBuilderWorker) buildUserData() ([]byte, error) {
 		return nil, err
 	}
 
-	return []byte(fmt.Sprintf("#include %s\n", initScriptURL)), nil
+	return aws.String(fmt.Sprintf("#include %s\n", initScriptURL)), nil
 }
 
 func (ibw *instanceBuilderWorker) notifyInstanceLaunched() {
 	for _, notifier := range ibw.n {
 		notifier.Notify(ibw.b.SlackChannel,
 			fmt.Sprintf("Started instance `%s` for instance build *%s* %s",
-				ibw.i.InstanceId, ibw.b.ID, pudding.NotificationInstanceBuildSummary(ibw.b)))
+				*ibw.i.InstanceID, ibw.b.ID, pudding.NotificationInstanceBuildSummary(ibw.b)))
 	}
 }

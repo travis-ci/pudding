@@ -5,10 +5,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/goamz/goamz/aws"
+	"github.com/awslabs/aws-sdk-go/aws"
 )
 
 // Main is the whole shebang
@@ -18,6 +17,8 @@ func Main(cfg *Config) {
 	}
 
 	ic := &internalConfig{
+		AWSConfig: aws.DefaultConfig,
+
 		RedisPoolSize: cfg.RedisPoolSize,
 
 		SlackHookPath: cfg.SlackHookPath,
@@ -44,19 +45,7 @@ func Main(cfg *Config) {
 		InitScriptTemplateString: cfg.InitScriptTemplate,
 	}
 
-	auth, err := aws.GetAuth(cfg.AWSKey, cfg.AWSSecret, "", time.Now().UTC().Add(8766*time.Hour))
-	if err != nil {
-		log.WithField("err", err).Fatal("failed to load aws auth")
-		os.Exit(1)
-	}
-
-	region, ok := aws.Regions[cfg.AWSRegion]
-	if !ok {
-		log.WithField("region", cfg.AWSRegion).Fatal("invalid region")
-		os.Exit(1)
-	}
-	ic.AWSAuth = auth
-	ic.AWSRegion = region
+	ic.AWSConfig.Region = cfg.AWSRegion
 
 	if ic.InstanceRSA == "" {
 		log.Fatal("missing instance rsa key")

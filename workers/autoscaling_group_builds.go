@@ -7,10 +7,11 @@ import (
 	"html/template"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/autoscaling"
+	"github.com/awslabs/aws-sdk-go/service/cloudwatch"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/autoscaling"
-	"github.com/goamz/goamz/cloudwatch"
-	"github.com/goamz/goamz/ec2"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding"
 )
@@ -54,17 +55,14 @@ type autoscalingGroupBuilderWorker struct {
 	cw     *cloudwatch.CloudWatch
 	b      *pudding.AutoscalingGroupBuild
 	name   string
-	sopARN string
-	sipARN string
+	sopARN *string
+	sipARN *string
 }
 
 func newAutoscalingGroupBuilderWorker(b *pudding.AutoscalingGroupBuild, cfg *internalConfig, jid string, redisConn redis.Conn) (*autoscalingGroupBuilderWorker, error) {
 	notifier := pudding.NewSlackNotifier(cfg.SlackHookPath, cfg.SlackUsername, cfg.SlackIcon)
 
-	cw, err := cloudwatch.NewCloudWatch(cfg.AWSAuth, cfg.AWSRegion.CloudWatchServicepoint)
-	if err != nil {
-		return nil, err
-	}
+	cw := cloudwatch.New(cfg.AWSConfig)
 
 	return &autoscalingGroupBuilderWorker{
 		rc:  redisConn,
@@ -72,8 +70,8 @@ func newAutoscalingGroupBuilderWorker(b *pudding.AutoscalingGroupBuild, cfg *int
 		cfg: cfg,
 		n:   []pudding.Notifier{notifier},
 		b:   b,
-		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
-		as:  autoscaling.New(cfg.AWSAuth, cfg.AWSRegion),
+		ec2: ec2.New(cfg.AWSConfig),
+		as:  autoscaling.New(cfg.AWSConfig),
 		cw:  cw,
 	}, nil
 }
@@ -156,7 +154,7 @@ func (asgbw *autoscalingGroupBuilderWorker) Build() error {
 	return nil
 }
 
-func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscaling.CreateAutoScalingGroupParams, error) {
+func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscaling.CreateAutoScalingGroupInput, error) {
 	b := asgbw.b
 
 	nameTmpl, err := template.New(fmt.Sprintf("name-template-%s", asgbw.jid)).Parse(b.NameTemplate)
@@ -172,31 +170,31 @@ func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscali
 
 	asgbw.name = nameBuf.String()
 
-	tags := []autoscaling.Tag{
-		autoscaling.Tag{
-			Key: "role", Value: b.Role, PropagateAtLaunch: true,
+	tags := []*autoscaling.Tag{
+		&autoscaling.Tag{
+			Key: aws.String("role"), Value: aws.String(b.Role), PropagateAtLaunch: aws.Boolean(true),
 		},
-		autoscaling.Tag{
-			Key: "queue", Value: b.Queue, PropagateAtLaunch: true,
+		&autoscaling.Tag{
+			Key: aws.String("queue"), Value: aws.String(b.Queue), PropagateAtLaunch: aws.Boolean(true),
 		},
-		autoscaling.Tag{
-			Key: "site", Value: b.Site, PropagateAtLaunch: true,
+		&autoscaling.Tag{
+			Key: aws.String("site"), Value: aws.String(b.Site), PropagateAtLaunch: aws.Boolean(true),
 		},
-		autoscaling.Tag{
-			Key: "env", Value: b.Env, PropagateAtLaunch: true,
+		&autoscaling.Tag{
+			Key: aws.String("env"), Value: aws.String(b.Env), PropagateAtLaunch: aws.Boolean(true),
 		},
-		autoscaling.Tag{
-			Key: "Name", Value: asgbw.name, PropagateAtLaunch: true,
+		&autoscaling.Tag{
+			Key: aws.String("Name"), Value: aws.String(asgbw.name), PropagateAtLaunch: aws.Boolean(true),
 		},
 	}
 
-	asg := &autoscaling.CreateAutoScalingGroupParams{
-		AutoScalingGroupName: asgbw.name,
-		InstanceId:           b.InstanceID,
-		MinSize:              b.MinSize,
-		MaxSize:              b.MaxSize,
-		DesiredCapacity:      b.DesiredCapacity,
-		DefaultCooldown:      b.DefaultCooldown,
+	asg := &autoscaling.CreateAutoScalingGroupInput{
+		AutoScalingGroupName: aws.String(asgbw.name),
+		InstanceID:           aws.String(b.InstanceID),
+		MinSize:              aws.Long(int64(b.MinSize)),
+		MaxSize:              aws.Long(int64(b.MaxSize)),
+		DesiredCapacity:      aws.Long(int64(b.DesiredCapacity)),
+		DefaultCooldown:      aws.Long(int64(b.DefaultCooldown)),
 		Tags:                 tags,
 	}
 
@@ -209,45 +207,45 @@ func (asgbw *autoscalingGroupBuilderWorker) createAutoscalingGroup() (*autoscali
 	return asg, err
 }
 
-func (asgbw *autoscalingGroupBuilderWorker) createScaleOutPolicy() (string, error) {
+func (asgbw *autoscalingGroupBuilderWorker) createScaleOutPolicy() (*string, error) {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
 		"name": asgbw.name,
 	}).Debug("creating scale out policy")
 
-	sop := &autoscaling.PutScalingPolicyParams{
-		PolicyName:           fmt.Sprintf("%s-sop", asgbw.name),
-		AutoScalingGroupName: asgbw.name,
-		AdjustmentType:       "ChangeInCapacity",
-		Cooldown:             asgbw.b.ScaleOutCooldown,
-		ScalingAdjustment:    asgbw.b.ScaleOutAdjustment,
+	sop := &autoscaling.PutScalingPolicyInput{
+		PolicyName:           aws.String(fmt.Sprintf("%s-sop", asgbw.name)),
+		AutoScalingGroupName: aws.String(asgbw.name),
+		AdjustmentType:       aws.String("ChangeInCapacity"),
+		Cooldown:             aws.Long(int64(asgbw.b.ScaleOutCooldown)),
+		ScalingAdjustment:    aws.Long(int64(asgbw.b.ScaleOutAdjustment)),
 	}
 
 	resp, err := asgbw.as.PutScalingPolicy(sop)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return resp.PolicyARN, nil
 }
 
-func (asgbw *autoscalingGroupBuilderWorker) createScaleInPolicy() (string, error) {
+func (asgbw *autoscalingGroupBuilderWorker) createScaleInPolicy() (*string, error) {
 	log.WithFields(logrus.Fields{
 		"jid":  asgbw.jid,
 		"name": asgbw.name,
 	}).Debug("creating scale in policy")
 
-	sip := &autoscaling.PutScalingPolicyParams{
-		PolicyName:           fmt.Sprintf("%s-sip", asgbw.name),
-		AutoScalingGroupName: asgbw.name,
-		AdjustmentType:       "ChangeInCapacity",
-		Cooldown:             asgbw.b.ScaleInCooldown,
-		ScalingAdjustment:    asgbw.b.ScaleInAdjustment,
+	sip := &autoscaling.PutScalingPolicyInput{
+		PolicyName:           aws.String(fmt.Sprintf("%s-sip", asgbw.name)),
+		AutoScalingGroupName: aws.String(asgbw.name),
+		AdjustmentType:       aws.String("ChangeInCapacity"),
+		Cooldown:             aws.Long(int64(asgbw.b.ScaleInCooldown)),
+		ScalingAdjustment:    aws.Long(int64(asgbw.b.ScaleInAdjustment)),
 	}
 
 	resp, err := asgbw.as.PutScalingPolicy(sip)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return resp.PolicyARN, nil
@@ -259,29 +257,21 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleOutMetricAlarm() error {
 		"name": asgbw.name,
 	}).Debug("creating scale out metric alarm")
 
-	ma := &cloudwatch.MetricAlarm{
-		AlarmName:          fmt.Sprintf("%s-add-capacity", asgbw.name),
-		MetricName:         asgbw.b.ScaleOutMetricName,
-		Namespace:          asgbw.b.ScaleOutMetricNamespace,
-		Statistic:          asgbw.b.ScaleOutMetricStatistic,
-		Period:             asgbw.b.ScaleOutMetricPeriod,
-		Threshold:          asgbw.b.ScaleOutMetricThreshold,
-		ComparisonOperator: asgbw.b.ScaleOutMetricComparisonOperator,
-		EvaluationPeriods:  asgbw.b.ScaleOutMetricEvaluationPeriods,
-		AlarmActions: []cloudwatch.AlarmAction{
-			cloudwatch.AlarmAction{
-				ARN: asgbw.sopARN,
-			},
+	input := &cloudwatch.PutMetricAlarmInput{
+		AlarmName:          aws.String(fmt.Sprintf("%s-add-capacity", asgbw.name)),
+		MetricName:         aws.String(asgbw.b.ScaleOutMetricName),
+		Namespace:          aws.String(asgbw.b.ScaleOutMetricNamespace),
+		Statistic:          aws.String(asgbw.b.ScaleOutMetricStatistic),
+		Period:             aws.Long(int64(asgbw.b.ScaleOutMetricPeriod)),
+		Threshold:          aws.Double(asgbw.b.ScaleOutMetricThreshold),
+		ComparisonOperator: aws.String(asgbw.b.ScaleOutMetricComparisonOperator),
+		EvaluationPeriods:  aws.Long(int64(asgbw.b.ScaleOutMetricEvaluationPeriods)),
+		AlarmActions: []*string{
+			asgbw.sopARN,
 		},
-		//		Dimensions: []cloudwatch.Dimension{
-		//			cloudwatch.Dimension{
-		//				Name:  "AutoScalingGroupName",
-		//				Value: asgbw.name,
-		//			},
-		//		},
 	}
 
-	_, err := asgbw.cw.PutMetricAlarm(ma)
+	_, err := asgbw.cw.PutMetricAlarm(input)
 	return err
 }
 
@@ -291,29 +281,21 @@ func (asgbw *autoscalingGroupBuilderWorker) createScaleInMetricAlarm() error {
 		"name": asgbw.name,
 	}).Debug("creating scale in metric alarm")
 
-	ma := &cloudwatch.MetricAlarm{
-		AlarmName:          fmt.Sprintf("%s-remove-capacity", asgbw.name),
-		MetricName:         asgbw.b.ScaleInMetricName,
-		Namespace:          asgbw.b.ScaleInMetricNamespace,
-		Statistic:          asgbw.b.ScaleInMetricStatistic,
-		Period:             asgbw.b.ScaleInMetricPeriod,
-		Threshold:          asgbw.b.ScaleInMetricThreshold,
-		ComparisonOperator: asgbw.b.ScaleInMetricComparisonOperator,
-		EvaluationPeriods:  asgbw.b.ScaleInMetricEvaluationPeriods,
-		AlarmActions: []cloudwatch.AlarmAction{
-			cloudwatch.AlarmAction{
-				ARN: asgbw.sipARN,
-			},
+	input := &cloudwatch.PutMetricAlarmInput{
+		AlarmName:          aws.String(fmt.Sprintf("%s-remove-capacity", asgbw.name)),
+		MetricName:         aws.String(asgbw.b.ScaleInMetricName),
+		Namespace:          aws.String(asgbw.b.ScaleInMetricNamespace),
+		Statistic:          aws.String(asgbw.b.ScaleInMetricStatistic),
+		Period:             aws.Long(int64(asgbw.b.ScaleInMetricPeriod)),
+		Threshold:          aws.Double(asgbw.b.ScaleInMetricThreshold),
+		ComparisonOperator: aws.String(asgbw.b.ScaleInMetricComparisonOperator),
+		EvaluationPeriods:  aws.Long(int64(asgbw.b.ScaleInMetricEvaluationPeriods)),
+		AlarmActions: []*string{
+			asgbw.sipARN,
 		},
-		//		Dimensions: []cloudwatch.Dimension{
-		//			cloudwatch.Dimension{
-		//				Name:  "AutoScalingGroupName",
-		//				Value: asgbw.name,
-		//			},
-		//		},
 	}
 
-	_, err := asgbw.cw.PutMetricAlarm(ma)
+	_, err := asgbw.cw.PutMetricAlarm(input)
 	return err
 }
 
@@ -323,14 +305,14 @@ func (asgbw *autoscalingGroupBuilderWorker) createLaunchingLifecycleHook() error
 		"name": asgbw.name,
 	}).Debug("creating launching lifecycle hook")
 
-	llch := &autoscaling.PutLifecycleHookParams{
-		AutoScalingGroupName:  asgbw.name,
-		DefaultResult:         asgbw.b.LifecycleDefaultResult,
-		HeartbeatTimeout:      asgbw.b.LifecycleHeartbeatTimeout,
-		LifecycleHookName:     fmt.Sprintf("%s-lch-launching", asgbw.name),
-		LifecycleTransition:   "autoscaling:EC2_INSTANCE_LAUNCHING",
-		NotificationTargetARN: asgbw.b.TopicARN,
-		RoleARN:               asgbw.b.RoleARN,
+	llch := &autoscaling.PutLifecycleHookInput{
+		AutoScalingGroupName:  aws.String(asgbw.name),
+		DefaultResult:         aws.String(asgbw.b.LifecycleDefaultResult),
+		HeartbeatTimeout:      aws.Long(int64(asgbw.b.LifecycleHeartbeatTimeout)),
+		LifecycleHookName:     aws.String(fmt.Sprintf("%s-lch-launching", asgbw.name)),
+		LifecycleTransition:   aws.String("autoscaling:EC2_INSTANCE_LAUNCHING"),
+		NotificationTargetARN: aws.String(asgbw.b.TopicARN),
+		RoleARN:               aws.String(asgbw.b.RoleARN),
 	}
 
 	_, err := asgbw.as.PutLifecycleHook(llch)
@@ -343,14 +325,14 @@ func (asgbw *autoscalingGroupBuilderWorker) createTerminatingLifecycleHook() err
 		"name": asgbw.name,
 	}).Debug("creating terminating lifecycle hook")
 
-	tlch := &autoscaling.PutLifecycleHookParams{
-		AutoScalingGroupName:  asgbw.name,
-		DefaultResult:         asgbw.b.LifecycleDefaultResult,
-		HeartbeatTimeout:      asgbw.b.LifecycleHeartbeatTimeout,
-		LifecycleHookName:     fmt.Sprintf("%s-lch-terminating", asgbw.name),
-		LifecycleTransition:   "autoscaling:EC2_INSTANCE_TERMINATING",
-		NotificationTargetARN: asgbw.b.TopicARN,
-		RoleARN:               asgbw.b.RoleARN,
+	tlch := &autoscaling.PutLifecycleHookInput{
+		AutoScalingGroupName:  aws.String(asgbw.name),
+		DefaultResult:         aws.String(asgbw.b.LifecycleDefaultResult),
+		HeartbeatTimeout:      aws.Long(int64(asgbw.b.LifecycleHeartbeatTimeout)),
+		LifecycleHookName:     aws.String(fmt.Sprintf("%s-lch-terminating", asgbw.name)),
+		LifecycleTransition:   aws.String("autoscaling:EC2_INSTANCE_TERMINATING"),
+		NotificationTargetARN: aws.String(asgbw.b.TopicARN),
+		RoleARN:               aws.String(asgbw.b.RoleARN),
 	}
 
 	_, err := asgbw.as.PutLifecycleHook(tlch)
