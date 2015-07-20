@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding"
 	"github.com/travis-ci/pudding/db"
@@ -56,12 +57,17 @@ func newInstanceTerminatorWorker(instanceID, slackChannel string, cfg *internalC
 		nc:  slackChannel,
 		n:   []pudding.Notifier{notifier},
 		iid: instanceID,
-		ec2: ec2.New(cfg.AWSAuth, cfg.AWSRegion),
+		ec2: ec2.New(cfg.AWSConfig),
 	}
 }
 
 func (itw *instanceTerminatorWorker) Terminate() error {
-	_, err := itw.ec2.TerminateInstances([]string{itw.iid})
+	_, err := itw.ec2.TerminateInstances(&ec2.TerminateInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(itw.iid),
+		},
+	})
+
 	if err != nil {
 		return err
 	}

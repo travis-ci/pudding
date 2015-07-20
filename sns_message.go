@@ -5,7 +5,7 @@ import "encoding/json"
 // SNSMessage is totally an SNS message, eh
 type SNSMessage struct {
 	Message           string
-	MessageID         string `json:"MessageId"`
+	MessageID         string `json:"MessageID"`
 	Signature         string
 	SignatureVersion  string
 	SigningCertURL    string

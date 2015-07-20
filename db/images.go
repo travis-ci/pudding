@@ -2,8 +2,8 @@ package db
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding"
 )
 
@@ -11,7 +11,7 @@ import (
 // storing the internal image representation
 type ImageFetcherStorer interface {
 	Fetch(map[string]string) ([]*pudding.Image, error)
-	Store(map[string]ec2.Image) error
+	Store(map[string]*ec2.Image) error
 }
 
 // Images represents the instance collection
@@ -39,7 +39,7 @@ func (i *Images) Fetch(f map[string]string) ([]*pudding.Image, error) {
 }
 
 // Store accepts the ec2 representation of an image and stores it
-func (i *Images) Store(images map[string]ec2.Image) error {
+func (i *Images) Store(images map[string]*ec2.Image) error {
 	conn := i.r.Get()
 	defer conn.Close()
 

@@ -4,13 +4,12 @@ import (
 	"net/url"
 	"text/template"
 
-	"github.com/goamz/goamz/aws"
+	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/jrallison/go-workers"
 )
 
 type internalConfig struct {
-	AWSAuth   aws.Auth
-	AWSRegion aws.Region
+	AWSConfig *aws.Config
 
 	RedisURL      *url.URL
 	RedisPoolSize string

@@ -2,8 +2,8 @@ package db
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/garyburd/redigo/redis"
-	"github.com/goamz/goamz/ec2"
 	"github.com/travis-ci/pudding"
 )
 
@@ -11,7 +11,7 @@ import (
 // storing the internal instance representation
 type InstanceFetcherStorer interface {
 	Fetch(map[string]string) ([]*pudding.Instance, error)
-	Store(map[string]ec2.Instance) error
+	Store(map[string]*ec2.Instance) error
 }
 
 // Instances represents the instance collection
@@ -39,7 +39,7 @@ func (i *Instances) Fetch(f map[string]string) ([]*pudding.Instance, error) {
 }
 
 // Store accepts the ec2 representation of an instance and stores it
-func (i *Instances) Store(instances map[string]ec2.Instance) error {
+func (i *Instances) Store(instances map[string]*ec2.Instance) error {
 	conn := i.r.Get()
 	defer conn.Close()
 

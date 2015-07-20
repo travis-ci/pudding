@@ -159,7 +159,6 @@ func newServer(cfg *Config) (*server, error) {
 
 		n: negroni.New(),
 		r: mux.NewRouter(),
-		s: manners.NewServer(),
 	}
 
 	return srv, nil
@@ -172,7 +171,7 @@ func (srv *server) Setup() {
 
 func (srv *server) Run() {
 	srv.log.WithField("addr", srv.addr).Info("Listening")
-	_ = srv.s.ListenAndServe(srv.addr, srv.n)
+	_ = manners.ListenAndServe(srv.addr, srv.n)
 }
 
 func (srv *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -235,8 +234,14 @@ func (srv *server) handleGetRoot(w http.ResponseWriter, req *http.Request) {
 }
 
 func (srv *server) handleDeleteRoot(w http.ResponseWriter, req *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			srv.log.WithField("err", err).Error("failed to shut down server")
+		}
+	}()
+
 	w.WriteHeader(http.StatusNoContent)
-	srv.s.Shutdown <- true
+	manners.Close()
 }
 
 func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {

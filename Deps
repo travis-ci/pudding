@@ -1,74 +1,86 @@
 {
 	"ImportPath": "github.com/travis-ci/pudding",
-	"GoVersion": "go1.4",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.2-15-gd2f9ffa",
-			"Rev": "d2f9ffa1d9cf25b25191b221229effac1b6de526"
+			"Comment": "v0.7.3-8-g52919f1",
+			"Rev": "52919f182f9c314f8a38c5afe96506f73d02b4b2"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/aws",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/endpoints",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/ec2query",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/query",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/rest",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/signer/v4",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/service/autoscaling",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/service/cloudwatch",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/service/ec2",
+			"Rev": "c37b3cb43ea0ca2ee05432f620c06647491ba1dd"
 		},
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
-			"Comment": "v0.4.3-28-g3378bdc",
-			"Rev": "3378bdcb5cebedcbf8b5750edee28010f128fe24"
+			"Comment": "v0.4.3-30-g18db6e6",
+			"Rev": "18db6e68d8fd9cbf2e8ebe4c81a78b96fd9bf05a"
 		},
 		{
 			"ImportPath": "github.com/braintree/manners",
-			"Comment": "0.3.1-2-g5280e25",
-			"Rev": "5280e250f2795914acbeb2bf3b55dd5a2d1fba52"
+			"Comment": "0.4.0-5-g811f400",
+			"Rev": "811f40057a260997d28e4e49a01d77faaa6263f1"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-62-gbf4a526",
-			"Rev": "bf4a526f48af7badd25d2cb02d587e1b01be3b50"
+			"Comment": "1.2.0-107-g942282e",
+			"Rev": "942282e931e8286aa802a30b01fa7e16befb50f3"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/negroni",
-			"Comment": "v0.1-55-g1dd3ab0",
-			"Rev": "1dd3ab0ff59e13f5b73dcbf70703710aebe50d2f"
-		},
-		{
-			"ImportPath": "github.com/feyeleanor/raw",
-			"Rev": "724aedf6e1a5d8971aafec384b6bde3d5608fba4"
-		},
-		{
-			"ImportPath": "github.com/feyeleanor/sets",
-			"Rev": "6c54cb57ea406ff6354256a4847e37298194478f"
-		},
-		{
-			"ImportPath": "github.com/feyeleanor/slices",
-			"Rev": "bb44bb2e4817fe71ba7082d351fd582e7d40e3ea"
+			"Comment": "v0.1-70-gc7477ad",
+			"Rev": "c7477ad8e330bef55bf1ebe300cf8aa67c492d1b"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
-			"Rev": "61e2910408efd40dafb3c7d856a4cf8aeb5fb1c6"
+			"Rev": "535138d7bcd717d6531c701ef5933d98b1866257"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Rev": "61e2910408efd40dafb3c7d856a4cf8aeb5fb1c6"
+			"Rev": "535138d7bcd717d6531c701ef5933d98b1866257"
 		},
 		{
 			"ImportPath": "github.com/getsentry/raven-go",
-			"Rev": "3fd636ed242c26c0f55bc9ee1fe47e1d6d2d77f7"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/autoscaling",
-			"Rev": "a748daf209ba9ad8fedbe74d64df2bdc5f327463"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/aws",
-			"Rev": "a748daf209ba9ad8fedbe74d64df2bdc5f327463"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/cloudwatch",
-			"Rev": "a748daf209ba9ad8fedbe74d64df2bdc5f327463"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/ec2",
-			"Rev": "a748daf209ba9ad8fedbe74d64df2bdc5f327463"
+			"Rev": "c8f8fb7c415203f52ca882e2661d21bc6dcb54d7"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -76,11 +88,11 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/feeds",
-			"Rev": "2e133eb352fab1ff3569ee169e9a3a94f69c9081"
+			"Rev": "a1baeef20d925fde02b1575dbb1f587de6123af3"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
+			"Rev": "94903de8c98a68d8b4483c529b26a5d146e386a2"
 		},
 		{
 			"ImportPath": "github.com/hamfist/yaml",
@@ -88,7 +100,7 @@
 		},
 		{
 			"ImportPath": "github.com/jrallison/go-workers",
-			"Rev": "337a0b7bd0a4ad878d8f68e55f2208ab0889bebd"
+			"Rev": "a5368356aa61a226ca34f130ea9c312eda3d8d25"
 		},
 		{
 			"ImportPath": "github.com/meatballhat/expvarplus",
@@ -96,11 +108,15 @@
 		},
 		{
 			"ImportPath": "github.com/meatballhat/negroni-logrus",
-			"Rev": "d5e114d7a445f7a3652cf807d3f83d5dceb8de26"
+			"Rev": "eed9b3e979c39c3cd0a639b6c3a58d604f262b96"
 		},
 		{
 			"ImportPath": "github.com/phyber/negroni-gzip/gzip",
 			"Rev": "48f82605778a579cb8172122897f589e4023b537"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		}
 	]
 }
