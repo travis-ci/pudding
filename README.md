@@ -91,11 +91,16 @@ created.  The expected body is a jsonapi singular collection of
     "env": "staging",
     "instance_type": "c3.2xlarge",
     "count": 4,
-    "queue": "docker"
+    "queue": "docker",
+    "bootInstance": true
   }
 }
 
 ```
+
+> Note: You can prevent pudding from booting an instance by setting
+> the `bootInstance` flag to `false` -- in this case it will only
+> create a cloud-init script.
 
 #### `PATCH /instance-builds/{instance_build_id}` **requires auth**
 
