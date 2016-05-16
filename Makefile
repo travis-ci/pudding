@@ -41,7 +41,7 @@ COVERPROFILES := \
 		$(GOBUILD_LDFLAGS) $(PACKAGE)/$(subst -,/,$(subst -coverage.coverprofile,,$@))
 
 .PHONY: all
-all: clean deps test lintall
+all: clean deps test
 
 .PHONY: buildpack
 buildpack:
@@ -92,6 +92,5 @@ save:
 fmtpolice:
 	./bin/fmtpolice
 
-.PHONY: lintall
 lintall:
 	./bin/lintall
