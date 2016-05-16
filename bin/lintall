@@ -2,9 +2,7 @@
 
 set -e
 
-PACKAGE=${PACKAGE:-github.com/travis-ci/pudding}
-
-gometalinter -D structcheck -D errcheck "${PACKAGE}"
+gometalinter -D structcheck -D errcheck
 for pkg in server server/jsonapi db workers ; do
-  gometalinter -D structcheck -D errcheck "${PACKAGE}/${pkg}"
+  gometalinter -D structcheck -D errcheck "${pkg}"
 done

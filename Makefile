@@ -20,9 +20,9 @@ GO ?= go
 DEPPY ?= deppy
 GOPATH := $(shell echo $${GOPATH%%:*})
 GOBUILD_LDFLAGS ?= -ldflags "\
-	-X $(VERSION_VAR) '$(VERSION_VALUE)' \
-	-X $(REV_VAR) $(REV_VALUE) \
-	-X $(GENERATED_VAR) '$(GENERATED_VALUE)' \
+	-X $(VERSION_VAR)='$(VERSION_VALUE)' \
+	-X $(REV_VAR)=$(REV_VALUE) \
+	-X $(GENERATED_VAR)='$(GENERATED_VALUE)' \
 "
 GOBUILD_FLAGS ?= -x
 
@@ -30,7 +30,6 @@ PORT ?= 42151
 export PORT
 
 COVERPROFILES := \
-	coverage.coverprofile \
 	db-coverage.coverprofile \
 	server-coverage.coverprofile \
 	server-jsonapi-coverage.coverprofile \

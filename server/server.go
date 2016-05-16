@@ -74,6 +74,8 @@ type server struct {
 	i          db.InstanceFetcherStorer
 	img        db.ImageFetcherStorer
 
+	skipGracefulClose bool
+
 	n *negroni.Negroni
 	r *mux.Router
 	s *manners.GracefulServer
@@ -157,10 +159,16 @@ func newServer(cfg *Config) (*server, error) {
 		img:        img,
 		log:        log,
 
+		skipGracefulClose: false,
+
 		n: negroni.New(),
 		r: mux.NewRouter(),
-		s: manners.NewServer(),
 	}
+
+	srv.s = manners.NewWithServer(&http.Server{
+		Addr:    cfg.Addr,
+		Handler: srv.n,
+	})
 
 	return srv, nil
 }
@@ -172,7 +180,7 @@ func (srv *server) Setup() {
 
 func (srv *server) Run() {
 	srv.log.WithField("addr", srv.addr).Info("Listening")
-	_ = srv.s.ListenAndServe(srv.addr, srv.n)
+	_ = srv.s.ListenAndServe()
 }
 
 func (srv *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -236,7 +244,9 @@ func (srv *server) handleGetRoot(w http.ResponseWriter, req *http.Request) {
 
 func (srv *server) handleDeleteRoot(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
-	srv.s.Shutdown <- true
+	if !srv.skipGracefulClose {
+		srv.s.Close()
+	}
 }
 
 func (srv *server) handleKaboom(w http.ResponseWriter, req *http.Request) {

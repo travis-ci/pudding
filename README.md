@@ -18,6 +18,8 @@ is in a non-volatile location, you should Ask Someone &trade;
 go get github.com/hamfist/deppy
 go get github.com/golang/lint/golint
 go get golang.org/x/tools/cmd/cover
+
+gometalinter --install
 ```
 
 ### build/test cycle
