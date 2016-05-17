@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/travis-ci/pudding",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.6.2",
 	"Packages": [
 		"./..."
 	],
