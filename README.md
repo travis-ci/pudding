@@ -89,9 +89,11 @@ created.  The expected body is a jsonapi singular collection of
 ``` javascript
 {
   "instance_builds": {
+    "role": "worker",
     "site": "org",
     "env": "staging",
     "instance_type": "c3.2xlarge",
+    "slack_channel": "#general",
     "count": 4,
     "queue": "docker",
     "bootInstance": true
