@@ -96,14 +96,14 @@ created.  The expected body is a jsonapi singular collection of
     "slack_channel": "#general",
     "count": 4,
     "queue": "docker",
-    "bootInstance": true
+    "boot_instance": true
   }
 }
 
 ```
 
 > Note: You can prevent pudding from booting an instance by setting
-> the `bootInstance` flag to `false` -- in this case it will only
+> the `boot_instance` flag to `false` -- in this case it will only
 > create a cloud-init script.
 
 #### `PATCH /instance-builds/{instance_build_id}` **requires auth**

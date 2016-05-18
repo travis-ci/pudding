@@ -161,7 +161,7 @@ func makeTestInstanceBuildsRequest() io.Reader {
       "queue": "docker",
       "role": "worker",
       "instance_type": "c3.4xlarge",
-      "bootInstance": true
+      "boot_instance": true
     }
 }`)
 }
@@ -274,7 +274,7 @@ func TestInstanceBuildsCreate(t *testing.T) {
 	assertStatus(t, 202, w.Code)
 	assertBodyMatches(t, `^{"instance_builds":\[{"role":"worker","site":"org","env":"test","ami":"",`+
 		`"instance_type":"c3.4xlarge","slack_channel":"","count":1,"queue":"docker",`+
-		`"state":"pending","id":"[^"]{36}","bootInstance":true}\]}$`, collapsedJSON(w.Body.String()))
+		`"state":"pending","id":"[^"]{36}","boot_instance":true}\]}$`, collapsedJSON(w.Body.String()))
 }
 
 func TestInstancebuildsUpdate(t *testing.T) {
@@ -283,7 +283,7 @@ func TestInstancebuildsUpdate(t *testing.T) {
 	body := w.Body.String()
 	assertBodyMatches(t, `^{"instance_builds":\[{"role":"worker","site":"org","env":"test","ami":"",`+
 		`"instance_type":"c3.4xlarge","slack_channel":"","count":1,"queue":"docker",`+
-		`"state":"pending","id":"[^"]{36}","bootInstance":true}\]}$`, collapsedJSON(body))
+		`"state":"pending","id":"[^"]{36}","boot_instance":true}\]}$`, collapsedJSON(body))
 
 	bodyMap := map[string][]map[string]interface{}{}
 	err := json.Unmarshal([]byte(body), &bodyMap)
