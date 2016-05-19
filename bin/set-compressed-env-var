@@ -15,4 +15,4 @@ shift
 FILENAME="$1"
 shift
 
-exec hk set "$@" $ENVVAR="$(gzip < "$FILENAME" | base64)"
+exec heroku config:set "$@" $ENVVAR="$(gzip < "$FILENAME" | base64)"
