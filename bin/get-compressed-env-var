@@ -13,4 +13,4 @@ fi
 ENVVAR="$1"
 shift
 
-hk get "$@" $ENVVAR | base64 -D | exec gunzip
+heroku config:get "$@" $ENVVAR | base64 -D | exec gunzip
