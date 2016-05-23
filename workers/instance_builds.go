@@ -45,7 +45,13 @@ func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 		log.WithField("err", err).Panic("failed to make an instance build worker")
 	}
 
-	if b.BootInstance {
+	if b.BootInstance == nil {
+		bootInstance := new(bool)
+		*bootInstance = true
+		b.BootInstance = bootInstance
+	}
+
+	if *b.BootInstance {
 		ibw.Build()
 	} else {
 		ibw.CreateUserData()
