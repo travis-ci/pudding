@@ -178,9 +178,6 @@ func (ibw *instanceBuilderWorker) CreateUserData() ([]byte, error) {
 	log.WithFields(logrus.Fields{
 		"jid":           ibw.jid,
 		"instance_type": ibw.b.InstanceType,
-		"ami.id":        ibw.ami.Id,
-		"ami.name":      ibw.ami.Name,
-		"count":         ibw.b.Count,
 	}).Info("creating user data")
 
 	return ibw.buildUserData()
