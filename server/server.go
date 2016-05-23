@@ -308,7 +308,9 @@ func (srv *server) handleInstanceByIDTerminate(w http.ResponseWriter, req *http.
 }
 
 func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.Request) {
-	payload := &pudding.InstanceBuildsCollectionSingular{}
+	payload := &pudding.InstanceBuildsCollectionSingular{
+		InstanceBuilds: pudding.NewInstanceBuild(),
+	}
 	err := json.NewDecoder(req.Body).Decode(payload)
 	if err != nil {
 		jsonapi.Error(w, err, http.StatusBadRequest)
@@ -318,13 +320,6 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 	build := payload.InstanceBuilds
 	if build.ID == "" {
 		build.ID = feeds.NewUUID().String()
-	}
-
-	// set BootInstance to true by default
-	if build.BootInstance == nil {
-		bootInstance := new(bool)
-		*bootInstance = true
-		build.BootInstance = bootInstance
 	}
 
 	if build.State == "" {

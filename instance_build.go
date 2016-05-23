@@ -38,14 +38,15 @@ type InstanceBuild struct {
 	HREF            string `json:"href,omitempty"`
 	State           string `json:"state,omitempty"`
 	ID              string `json:"id,omitempty"`
-	BootInstance    *bool  `json:"boot_instance"`
+	BootInstance    bool   `json:"boot_instance"`
 }
 
 // NewInstanceBuild creates a new *InstanceBuild, along with
 // generating a unique ID and setting the State to "pending"
 func NewInstanceBuild() *InstanceBuild {
 	return &InstanceBuild{
-		ID: feeds.NewUUID().String(),
+		ID:           feeds.NewUUID().String(),
+		BootInstance: true,
 	}
 }
 
