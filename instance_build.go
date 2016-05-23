@@ -38,7 +38,7 @@ type InstanceBuild struct {
 	HREF            string `json:"href,omitempty"`
 	State           string `json:"state,omitempty"`
 	ID              string `json:"id,omitempty"`
-	BootInstance    bool   `json:"boot_instance"`
+	BootInstance    bool   `json:"boot_instance,omitempty"`
 }
 
 // NewInstanceBuild creates a new *InstanceBuild, along with
