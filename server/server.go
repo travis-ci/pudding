@@ -320,6 +320,13 @@ func (srv *server) handleInstanceBuildsCreate(w http.ResponseWriter, req *http.R
 		build.ID = feeds.NewUUID().String()
 	}
 
+	// set BootInstance to true by default
+	if build.BootInstance == nil {
+		bootInstance := new(bool)
+		*bootInstance = true
+		build.BootInstance = bootInstance
+	}
+
 	if build.State == "" {
 		build.State = "pending"
 	}
