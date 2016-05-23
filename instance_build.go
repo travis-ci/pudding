@@ -45,7 +45,8 @@ type InstanceBuild struct {
 // generating a unique ID and setting the State to "pending"
 func NewInstanceBuild() *InstanceBuild {
 	return &InstanceBuild{
-		ID: feeds.NewUUID().String(),
+		ID:           feeds.NewUUID().String(),
+		BootInstance: true,
 	}
 }
 
