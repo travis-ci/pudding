@@ -18,6 +18,8 @@ is in a non-volatile location, you should Ask Someone &trade;
 go get github.com/hamfist/deppy
 go get github.com/golang/lint/golint
 go get golang.org/x/tools/cmd/cover
+
+gometalinter --install
 ```
 
 ### build/test cycle
@@ -87,15 +89,22 @@ created.  The expected body is a jsonapi singular collection of
 ``` javascript
 {
   "instance_builds": {
+    "role": "worker",
     "site": "org",
     "env": "staging",
     "instance_type": "c3.2xlarge",
+    "slack_channel": "#general",
     "count": 4,
-    "queue": "docker"
+    "queue": "docker",
+    "boot_instance": true
   }
 }
 
 ```
+
+> Note: You can prevent pudding from booting an instance by setting
+> the `boot_instance` flag to `false` -- in this case it will only
+> create a cloud-init script.
 
 #### `PATCH /instance-builds/{instance_build_id}` **requires auth**
 

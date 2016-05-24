@@ -45,7 +45,11 @@ func instanceBuildsMain(cfg *internalConfig, msg *workers.Msg) {
 		log.WithField("err", err).Panic("failed to make an instance build worker")
 	}
 
-	ibw.Build()
+	if b.BootInstance {
+		ibw.Build()
+	} else {
+		ibw.CreateUserData()
+	}
 
 	if err != nil {
 		log.WithField("err", err).Panic("instance build failed")
@@ -168,6 +172,15 @@ func (ibw *instanceBuilderWorker) Build() error {
 
 	log.WithField("jid", ibw.jid).Debug("all done")
 	return nil
+}
+
+func (ibw *instanceBuilderWorker) CreateUserData() ([]byte, error) {
+	log.WithFields(logrus.Fields{
+		"jid":           ibw.jid,
+		"instance_type": ibw.b.InstanceType,
+	}).Info("creating user data")
+
+	return ibw.buildUserData()
 }
 
 func (ibw *instanceBuilderWorker) createSecurityGroup() error {

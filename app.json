@@ -22,7 +22,7 @@
       "description": "AWS secret access key",
       "required": true
     },
-    "BUILDPACK_URL": "https://github.com/meatballhat/heroku-buildpack-go",
+    "BUILDPACK_URL": "https://github.com/travis-ci/heroku-buildpack-go",
     "REDIS_PROVIDER": "REDISGREEN_URL",
     "PUDDING_AUTH_TOKEN": {
       "description": "A secret token used for web authentication",
