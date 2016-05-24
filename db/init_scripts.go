@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -94,5 +95,8 @@ func (is *InitScripts) HasValidAuth(ID, auth string) bool {
 		"db_auth":           dbAuth,
 	}).Debug("comparing auths")
 
-	return strings.TrimSpace(dbAuth) == strings.TrimSpace(auth)
+	return 0 == subtle.ConstantTimeCompare(
+		[]byte(strings.TrimSpace(dbAuth)),
+		[]byte(strings.TrimSpace(auth)),
+	)
 }

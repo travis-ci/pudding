@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/subtle"
 	"encoding/base64"
 	"net/http"
 	"regexp"
@@ -87,7 +88,8 @@ func (sa *serverAuther) Authenticate(w http.ResponseWriter, req *http.Request) b
 }
 
 func (sa *serverAuther) hasValidTokenAuth(authHeader string) bool {
-	if authHeader == ("token "+sa.Token) || authHeader == ("token="+sa.Token) {
+	authHeaderBytes := []byte(authHeader)
+	if subtle.ConstantTimeCompare(authHeaderBytes, []byte("token "+sa.Token)) == 0 || subtle.ConstantTimeCompare(authHeaderBytes, []byte("token="+sa.Token)) == 0 {
 		sa.log.Debug("token auth matches yey")
 		return true
 	}
