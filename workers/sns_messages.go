@@ -3,6 +3,9 @@ package workers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
@@ -13,11 +16,8 @@ import (
 var (
 	errMissingSNSMessage = fmt.Errorf("missing sns message")
 	snsMessageHandlers   = map[string]func(redis.Conn, *pudding.SNSMessage) error{
-		"SubscriptionConfirmation": func(rc redis.Conn, msg *pudding.SNSMessage) error {
-			log.WithField("msg", msg).Info("subscription confirmation not really being handled")
-			return nil
-		},
-		"Notification": handleSNSNotification,
+		"SubscriptionConfirmation": handleSubscriptionNotification,
+		"Notification":             handleSNSNotification,
 	}
 )
 
@@ -52,6 +52,39 @@ func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 	if err != nil {
 		log.WithField("err", err).Panic("sns handler returned an error")
 	}
+}
+
+// http://docs.aws.amazon.com/sns/latest/dg/SendMessageToHttp.html
+func handleSubscriptionNotification(rc redis.Conn, msg *pudding.SNSMessage) error {
+	if os.Getenv("SNS_CONFIRMATION") == "1" || os.Getenv("SNS_CONFIRMATION") == "true" {
+		log.WithField("msg", msg).Info("handling subscription confirmation")
+
+		// TODO: verify signature
+		// http://docs.aws.amazon.com/sns/latest/dg/SendMessageToHttp.verify.signature.html
+
+		resp, err := http.Get(msg.SubscribeURL)
+		if err != nil {
+			return err
+		}
+
+		resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		log.WithField("subscription", body).Info("confirmed subscription")
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("expected 200 status from aws, but got %d", resp.StatusCode)
+		}
+
+		return nil
+	}
+
+	log.WithField("msg", msg).Info("subscription confirmation not really being handled")
+
+	return nil
 }
 
 func handleSNSNotification(rc redis.Conn, msg *pudding.SNSMessage) error {
