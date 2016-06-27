@@ -16,7 +16,7 @@ import (
 var (
 	errMissingSNSMessage = fmt.Errorf("missing sns message")
 	snsMessageHandlers   = map[string]func(redis.Conn, *pudding.SNSMessage) error{
-		"SubscriptionConfirmation": handleSubscriptionNotification,
+		"SubscriptionConfirmation": handleSNSConfirmation,
 		"Notification":             handleSNSNotification,
 	}
 )
@@ -55,7 +55,7 @@ func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 }
 
 // http://docs.aws.amazon.com/sns/latest/dg/SendMessageToHttp.html
-func handleSubscriptionNotification(rc redis.Conn, msg *pudding.SNSMessage) error {
+func handleSNSConfirmation(rc redis.Conn, msg *pudding.SNSMessage) error {
 	if os.Getenv("SNS_CONFIRMATION") == "1" || os.Getenv("SNS_CONFIRMATION") == "true" {
 		log.WithField("msg", msg).Info("handling subscription confirmation")
 
