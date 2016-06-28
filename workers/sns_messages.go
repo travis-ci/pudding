@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
@@ -56,7 +57,7 @@ func snsMessagesMain(cfg *internalConfig, msg *workers.Msg) {
 
 // http://docs.aws.amazon.com/sns/latest/dg/SendMessageToHttp.html
 func handleSNSConfirmation(rc redis.Conn, msg *pudding.SNSMessage) error {
-	if os.Getenv("SNS_CONFIRMATION") == "1" || os.Getenv("SNS_CONFIRMATION") == "true" {
+	if v, _ := strconv.ParseBool(os.Getenv("SNS_CONFIRMATION")); v {
 		log.WithField("msg", msg).Info("handling subscription confirmation")
 
 		// TODO: verify signature
