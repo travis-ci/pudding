@@ -109,6 +109,10 @@
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",
 			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
 		}
 	]
 }

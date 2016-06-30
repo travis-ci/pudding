@@ -3,11 +3,12 @@ package workers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/garyburd/redigo/redis"
 	"github.com/jrallison/go-workers"
 	"github.com/travis-ci/pudding"
@@ -60,25 +61,18 @@ func handleSNSConfirmation(rc redis.Conn, msg *pudding.SNSMessage) error {
 	if v, _ := strconv.ParseBool(os.Getenv("SNS_CONFIRMATION")); v {
 		log.WithField("msg", msg).Info("handling subscription confirmation")
 
-		// TODO: verify signature
-		// http://docs.aws.amazon.com/sns/latest/dg/SendMessageToHttp.verify.signature.html
+		svc := sns.New(session.New())
 
-		resp, err := http.Get(msg.SubscribeURL)
+		params := &sns.ConfirmSubscriptionInput{
+			Token:    aws.String(msg.Token),
+			TopicArn: aws.String(msg.TopicARN),
+		}
+		resp, err := svc.ConfirmSubscription(params)
 		if err != nil {
 			return err
 		}
 
-		resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-
-		log.WithField("subscription", body).Info("confirmed subscription")
-
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("expected 200 status from aws, but got %d", resp.StatusCode)
-		}
+		log.WithField("subscription", resp.String()).Info("confirmed subscription")
 
 		return nil
 	}
