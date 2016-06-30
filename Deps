@@ -11,6 +11,36 @@
 			"Rev": "cd7d1bbe41066b6c1f19780f895901052150a575"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v1.2.1-1-g101d2e2",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/endpoints",
+			"Comment": "v1.2.1-1-g101d2e2",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol",
+			"Comment": "v1.2.1-1-g101d2e2",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/sns",
+			"Comment": "v1.2.1-1-g101d2e2",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/go-ini/ini",
+			"Comment": "v1.2.1-1-g101d2e2",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/jmespath/go-jmespath",
+			"Comment": "v1.2.1-1-g101d2e2",
+			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
+		},
+		{
 			"ImportPath": "github.com/bitly/go-simplejson",
 			"Comment": "v0.5.0",
 			"Rev": "aabad6e819789e569bd6aabf444c935aa9ba1e44"
@@ -44,12 +74,10 @@
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
-			"Comment": "v1.0.0",
 			"Rev": "8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Comment": "v1.0.0",
 			"Rev": "8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13"
 		},
 		{
@@ -109,10 +137,6 @@
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",
 			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go",
-			"Rev": "101d2e228fea0ab462a7e0180c607290c4850f15"
 		}
 	]
 }
