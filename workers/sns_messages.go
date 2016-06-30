@@ -61,7 +61,7 @@ func handleSNSConfirmation(rc redis.Conn, msg *pudding.SNSMessage) error {
 	if v, _ := strconv.ParseBool(os.Getenv("SNS_CONFIRMATION")); v {
 		log.WithField("msg", msg).Info("handling subscription confirmation")
 
-		svc := sns.New(session.New())
+		svc := sns.New(session.New(), &aws.Config{Region: aws.String(os.Getenv("SNS_REGION"))})
 
 		params := &sns.ConfirmSubscriptionInput{
 			Token:    aws.String(msg.Token),
