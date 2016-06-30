@@ -74,10 +74,12 @@
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Comment": "v1.0.0",
 			"Rev": "8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Comment": "v1.0.0",
 			"Rev": "8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13"
 		},
 		{
